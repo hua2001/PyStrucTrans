@@ -1,0 +1,4 @@
+include README.rst
+prune dev_test.py
+prune *.pyc
+prune *.hdf5
