@@ -1,8 +1,9 @@
-*
-
 !pystructrans/
 !.gitignore
 !COPYING
 !.README.rst
 !setup.py
 !MENIFEST.in
+
+*
+
