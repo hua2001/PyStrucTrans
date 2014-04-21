@@ -1,4 +1,4 @@
-.
+*
 
 !pystructrans/*
 !.gitignore
@@ -6,7 +6,3 @@
 !.README.rst
 !setup.py
 !MENIFEST.in
-
-*~
-*.pyc
-*.DS_Store
