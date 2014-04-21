@@ -1,6 +1,6 @@
 *
 
-!pystructrans/*
+!pystructrans*
 !.gitignore
 !COPYING
 !.README.rst
