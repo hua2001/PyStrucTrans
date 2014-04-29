@@ -5,8 +5,13 @@ import sys
 import h5py
 import logging
 
-from scipy import dot
-from scipy.linalg import inv, det, eig        
+try:
+    from scipy import dot
+    from scipy.linalg import inv, det, eig
+except:
+    from numpy import dot
+    from numpy.linalg import inv, det, eig
+            
 from timeit import default_timer as timer
 
 from lat_opt import lat_opt
@@ -183,7 +188,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
         #print(msg)
         logging.info(msg)
         
-        # update the final solutions
+        # update the final solutions within the process
         if success:
             no_update = True
             for iH in xrange(len(dopt_H)):
@@ -198,10 +203,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
                     else:
                         # insert the new solution
                         L_new = dot(H.reshape(dim,dim), l.reshape(dim,dim))
-                        if isnew(L_new, mat_dot(hopt, lopt), LG_A, LG_M)[0]:
-#                             print L_new,
-#                             print mat_dot(hopt, lopt)
-                            
+                        if isnew(L_new, mat_dot(hopt, lopt), LG_A, LG_M)[0]:                            
                             if len(np.where(dopt<=d)[0]):
                                 ins_idx = np.where(dopt<=d)[0][-1]+1
                             else:
@@ -255,7 +257,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
             hopt = hopt[uni_idx[sort_idx]]
             
             # delete redundant ones
-            if len(uni_idx) <= num_sol:
+            if len(uni_idx) > num_sol:
                 dopt = dopt[uni_idx[:num_sol]]
                 lopt = lopt[uni_idx[:num_sol]]
                 hopt = hopt[uni_idx[:num_sol]]
@@ -404,16 +406,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
             f.close()
         
         # All done! 
-        try:   
-            os.remove('lat_opt_dump.txt')
-            os.remove('shift_1.hdf5')
-        except:
-            pass
         t_end = timer()
         _rootprint('All done in %g secs.' % (t_end - t_start), comm)
-    
-#     # delete the logging if not saving it
-#     os.remove('lattcorr.log')
         
     # resume stdout
     if not disp:
