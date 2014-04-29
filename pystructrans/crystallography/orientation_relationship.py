@@ -1,21 +1,26 @@
 import numpy as np
-import numpy.linalg as la
-from numpy.linalg import inv
-import itertools
-
-def tuple(start, end):
-    x = np.arange(start, end)
-    a = [x,x,x]
-    Z = np.array(list(itertools.product(*a)))
-    return Z
+try:
+    from scipy.linalg import inv
+except:
+    from numpy.linalg import inv
 
 def vec_trans(L_cor, n_list):
+    # convert input list to ndarray
     n_list = np.array(n_list)
+    # assume not a 1d-array
     oned = False
-    if len(n_list.shape) < 2:
+    
+    if len(n_list.shape) < 2:   # if it is a 1d-array
+        # convert to 2d-array
         n_list = n_list.reshape(1,len(n_list))
+        # makr the flag. 
+        # we want to return an array having the same
+        # dimension as the input 
         oned = True
+    
+    # L_cor * new_n = n ==> new_n  = L_cor^-1 * n    
     new_n_list = [np.dot(inv(L_cor),n_list[i]) for i in xrange(len(n_list))]
+    
     if oned:
         return new_n_list[0]
     else:
@@ -27,7 +32,7 @@ def Rvec_trans(L_cor, n_list):
     if len(n_list.shape) < 2:
         n_list = n_list.reshape(1,len(n_list))
         oned = True
-    new_n_list = [np.dot(L_cor.T, n_list[i]) for i in xrange(len(n_list))]
+    new_n_list = [np.dot(L_cor, n_list[i]) for i in xrange(len(n_list))]
     if oned:
         return new_n_list[0]
     else:

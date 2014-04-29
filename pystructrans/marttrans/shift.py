@@ -4,7 +4,7 @@ This file contains functions and data related to lattice invariant shear matrice
 import numpy as np
 import h5py
 
-def get_shift(N, dim=3): 
+def _get_shift(N, dim=3): 
     # generate the list of shift matrices for shifting from -N to N
     bd = np.arange(-N,N+1)
     M = [bd]
@@ -32,4 +32,4 @@ def get_shift(N, dim=3):
     #np.savetxt('shift_matrices_{:d}.txt'.format(int(N)), M, delimiter=',')
     
 if __name__ == "__main__":
-    get_shift(2, dim=2)    
+    _get_shift(2, dim=2)    

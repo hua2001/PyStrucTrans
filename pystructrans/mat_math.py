@@ -2,18 +2,13 @@
 This file contains functions and data related to 
 matrix operation of a large number of matrices
 '''
-import sys
-import os
-import logging
-import string
-import random
-import h5py
 import numpy as np
-from math import sqrt, modf
+from math import sqrt
 try:
     from scipy.linalg import eig
 except:
     from numpy.linalg import eig
+import itertools
 
 def mat_dot (la, lb):
     '''
@@ -52,11 +47,6 @@ def mat_det (l):
     
     if d == 1:
         return l.flatten()
-#         try:
-#             det = l
-#         except:
-#             det = l.T
-#         return det
     
     det = np.zeros(len(l), dtype=l.dtype)        
     for n in xrange(d):
@@ -65,7 +55,6 @@ def mat_det (l):
         # remove the 0-th row and the n-th column
         rm_idx = range(d)
         rm_idx.extend([i*d+n for i in xrange(1,d)])
-        #rm_idx = set(rm_idx)
         # idx of the minors
         mn_idx = [i for i in xrange(d**2) if not i in rm_idx]
         # the n-th minor    
@@ -75,30 +64,30 @@ def mat_det (l):
     return det
 
 def mat_T(l):
-    d = int(sqrt(len(l[0])))
-    
-    T = np.empty_like(l) 
-        
-    for i in xrange(d):
-        for j in xrange(d):
-            T[:, i*d+j] = l[:, j*d+i]
-            
+    # dimension of the matrices
+    dim = int(sqrt(len(l[0])))   
+    # initiate an array 
+    T = np.empty_like(l)         
+    for i in xrange(dim):
+        for j in xrange(dim):
+            T[:, i*dim+j] = l[:, j*dim+i]            
     return T
 
 def mat_eig(l, MAX_MEM=1E9):
-    dim = sqrt(l.shape[1])
-    
-    eigs = np.empty((len(l),dim))
-    
+    dim = sqrt(l.shape[1])    
+    eigs = np.empty((len(l),dim))    
     for i in xrange(len(l)):
         M = l[i].reshape(dim, dim)
         eigs[i,:] = np.real(eig(M)[0])
-    return eigs
-    
+    return eigs    
 
 def unique_rows(a):
     b = np.ascontiguousarray(a).view(np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
     _, idx = np.unique(b, return_index=True)
     return a[idx], idx
     
-    
+def tuple(start, end):
+    x = np.arange(start, end)
+    a = [x,x,x]
+    Z = np.array(list(itertools.product(*a)))
+    return Z 

@@ -6,7 +6,6 @@ import os.path
 
 from scipy import dot
 from scipy.linalg import inv, det, eig
-
 try:
     from bottleneck import nanmin  # @UnusedImport
 except:
@@ -20,7 +19,7 @@ from timeit import default_timer as timer
 from dist import eric_dist, eric_dist_jac, eric_dist_mat, eric_dist_unique, eric_dist_isnew 
 from dist import strain_dist, strain_dist_mat
 from dist import Cauchy_dist, Cauchy_dist_mat
-from mat_math import mat_det, unique_rows, mat_dot
+from pystructrans.mat_math import mat_det, unique_rows, mat_dot
 from pystructrans.crystallography import Lattice, inPointGroup, LLL
 
 def lprint(s, rank, disp):

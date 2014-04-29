@@ -5,10 +5,9 @@ try:
 except:
     import numpy.linalg as la
 
-
 from pystructrans.crystallography.lattice import Lattice, LatticeError
 from pystructrans.crystallography.bravais_lattice import BravaisLattice, BravaisLatticeError
-from pystructrans.crystallography.sublattice import *
+from pystructrans.crystallography import vec_trans, Rvec_trans
 
 class TestLattice(unittest.TestCase):
 
@@ -52,9 +51,31 @@ class TestBravaisLattice(unittest.TestCase):
         A = LGZ[-1]
         self.assertTrue((np.dot(Q, E)==np.dot(E, A)).all())
         del L
-
-class TestSublattice(unittest.TestCase):
-
-    def test_divisors(self):
-        pass
+    
+class TestOrientationRelationship(unittest.TestCase):
+    def test_vec_trans(self):
+        # set a lattice correspondence
+        L = np.array([[1,0,-1],[0,1,0],[1,0,1]]).T
+        self.assertTrue(la.det(L)>0)
+        # one index
+        n_A = [1,0,0]
+        n_M = vec_trans(L, n_A)
+        self.assertTrue((n_M == np.array([0.5,0,0.5])).all())
+        # multiple index
+        n_A = [[1,0,0],[1,1,0],[1,1,1]]
+        n_M = vec_trans(L, n_A)
+        self.assertTrue((n_M == np.array([[ 0.5, 0., 0.5], [ 0.5, 1., 0.5], [ 0., 1., 1. ]])).all())
+        
+    def test_Rvec_trans(self):
+        # set a lattice correspondence
+        L = np.array([[1,0,-1],[0,1,0],[1,0,1]]).T
+        # one index
+        n_M = [0.5,0,0.5]
+        n_A = Rvec_trans(L, n_M)
+        self.assertTrue((n_A == np.array([1,0,0])).all())
+        # multiple index
+        n_M = [[ 0.5, 0., 0.5], [ 0.5, 1., 0.5], [ 0., 1., 1. ]]
+        n_A = Rvec_trans(L, n_M)
+        self.assertTrue((n_A == np.array([[1.,0,0],[1.,1.,0],[1.,1.,1.]])).all())
+        
         

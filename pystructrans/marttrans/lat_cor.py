@@ -11,7 +11,7 @@ from timeit import default_timer as timer
 
 from lat_opt import lat_opt
 from dist import dist_isnew, dist_unique, Cauchy_dist
-from mat_math import mat_dot
+from pystructrans.mat_math import mat_dot
 from pystructrans.crystallography import BravaisLattice, HermiteNormalForms, inPointGroup
 
 def _divide_work(W, comm): # divide W into sub-processes
@@ -54,7 +54,7 @@ class NullDevice():
 def lat_cor(ibrava, pbrava, ibravm, pbravm, 
             dim = 3, # dimension of the lattice
             num_sol=1, # number of solutions
-            distance='Ericksen', # distance function
+            distance='Cauchy', # distance function
             vol_th = 0.1, # volume change threshold
             disp=True, lat_opt_disp = False, 
             save_results=False, filename='lat_cor.hdf5',

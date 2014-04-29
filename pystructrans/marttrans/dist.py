@@ -5,8 +5,7 @@ try:
 except:
     from numpy import dot
     from numpy.linalg import inv, det, eig
-from mat_math import mat_dot, mat_T, mat_eig
-import logging
+from pystructrans.mat_math import mat_dot, mat_T, mat_eig
 
 def eric_dist(x, E1, E2):
     dim = len(E1)
