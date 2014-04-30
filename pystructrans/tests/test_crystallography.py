@@ -7,7 +7,7 @@ except:
 
 from pystructrans.crystallography.lattice import Lattice, LatticeError
 from pystructrans.crystallography.bravais_lattice import BravaisLattice, BravaisLatticeError
-from pystructrans.crystallography import vec_trans, Rvec_trans
+import pystructrans.crystallography as cry
 
 class TestLattice(unittest.TestCase):
 
@@ -59,11 +59,11 @@ class TestOrientationRelationship(unittest.TestCase):
         self.assertTrue(la.det(L)>0)
         # one index
         n_A = [1,0,0]
-        n_M = vec_trans(L, n_A)
+        n_M = cry.direc_trans(L, n_A)
         self.assertTrue((n_M == np.array([0.5,0,0.5])).all())
         # multiple index
         n_A = [[1,0,0],[1,1,0],[1,1,1]]
-        n_M = vec_trans(L, n_A)
+        n_M = cry.direc_trans(L, n_A)
         self.assertTrue((n_M == np.array([[ 0.5, 0., 0.5], [ 0.5, 1., 0.5], [ 0., 1., 1. ]])).all())
         
     def test_Rvec_trans(self):
@@ -71,11 +71,10 @@ class TestOrientationRelationship(unittest.TestCase):
         L = np.array([[1,0,-1],[0,1,0],[1,0,1]]).T
         # one index
         n_M = [0.5,0,0.5]
-        n_A = Rvec_trans(L, n_M)
-        self.assertTrue((n_A == np.array([1,0,0])).all())
+        n_A = cry.plane_trans(L, n_M)
+        self.assertTrue((n_A == np.array([0,0,1.])).all())
         # multiple index
         n_M = [[ 0.5, 0., 0.5], [ 0.5, 1., 0.5], [ 0., 1., 1. ]]
-        n_A = Rvec_trans(L, n_M)
-        self.assertTrue((n_A == np.array([[1.,0,0],[1.,1.,0],[1.,1.,1.]])).all())
-        
+        n_A = cry.plane_trans(L, n_M)
+        self.assertTrue((n_A == np.array([[0,0,1.],[0,1.,1.],[-1.,1.,1.]])).all())
         
