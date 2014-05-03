@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.linalg as la
+import numpy.linalg as la
 from math import copysign
 
 def Gram_Schmidt(E):

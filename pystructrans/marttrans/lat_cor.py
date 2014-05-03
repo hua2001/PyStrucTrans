@@ -5,19 +5,16 @@ import sys
 import h5py
 import logging
 
-try:
-    from scipy import dot
-    from scipy.linalg import inv, det, eig
-except:
-    from numpy import dot
-    from numpy.linalg import inv, det, eig
+
+from numpy import dot
+from numpy.linalg import inv, det, eig
             
 from timeit import default_timer as timer
 
 from lat_opt import lat_opt
-from dist import dist_isnew, dist_unique, Cauchy_dist
+from dist import dist_isnew, dist_unique
 from pystructrans.mat_math import mat_dot
-from pystructrans.crystallography import BravaisLattice, HermiteNormalForms, inPointGroup
+from pystructrans.crystallography import BravaisLattice, HermiteNormalForms
 
 def _divide_work(W, comm): # divide W into sub-processes
     rank = comm.Get_rank()
@@ -333,9 +330,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
                 for k in xrange(dim):
                     msg += '{:>9.6f} '.format(H[j, k])
                 msg = msg[:-1] + ']'
-                _rootprint(msg, comm)            
-            
-            
+                _rootprint(msg, comm)  
             
             # ordered eigen strains
             lambda_list[i,:] = np.sort(la)
