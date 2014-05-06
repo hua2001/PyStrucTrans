@@ -113,7 +113,7 @@ def lat_opt(E1, E2, distance='Ericksen', dim=3, num_sol=1, disp=True, rank=0, nh
     while len(dopt) < num_sol:
         # find minimum distances
         min_dist = nanmin(d_list)
-        min_idx = np.where((d_list-min_dist)/min_dist<1E-6)[0]
+        min_idx = np.where((d_list-min_dist)<=(1E-6)*min_dist)[0]
         # remove duplications caused by symmetry:
         # i.e. the distance between these two lattices is zero
         sol_idx = min_idx[dist_unique(l_list[min_idx], LG1, SOLG)]
