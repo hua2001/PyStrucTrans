@@ -63,7 +63,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
             vol_th = 0.1, # volume change threshold
             disp=True, lat_opt_disp = False, 
             save_results=False, filename='lat_cor.hdf5',
-            save_log = False, logfilename='lattcorr.log' # save the logging file
+            save_log = False, logfilename='lattcorr.log' # save the logging file            
             ):
     # start the timer
     t_start = timer()
@@ -414,6 +414,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
         sys.stdout = original_stdout
         
     if proc_rank  == 0:
-        return cor_list, U_list, lambda_list, lopt, dopt
+        return cor_list, U_list, dopt, lambda_list, lopt
     else:
         return [], [], [], [], []
