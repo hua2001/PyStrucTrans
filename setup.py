@@ -24,7 +24,7 @@ setup(name='pystructrans',
           'pystructrans.tests'
       ],
       install_requires=[
-          'numpy', 'scipy', 'h5py'
+          'numpy', 'h5py'
       ],
       entry_points = {
         'console_scripts': [

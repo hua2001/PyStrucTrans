@@ -1,10 +1,6 @@
 import numpy as np
-try:
-    from scipy import dot
-    from scipy.linalg import inv, det, eig
-except:
-    from numpy import dot
-    from numpy.linalg import inv, det, eig
+from numpy import dot
+from numpy.linalg import inv, eig
 from pystructrans.mat_math import mat_dot, mat_T, mat_eig
 
 def eric_dist(x, E1, E2):

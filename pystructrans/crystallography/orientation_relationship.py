@@ -1,8 +1,5 @@
 import numpy as np
-try:
-    from scipy.linalg import inv
-except:
-    from numpy.linalg import inv
+from numpy.linalg import inv
 
 def direc_trans(L_cor, n_list):
     # convert input list to ndarray
