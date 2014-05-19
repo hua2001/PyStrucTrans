@@ -91,3 +91,11 @@ def tuple(start, end):
     a = [x,x,x]
     Z = np.array(list(itertools.product(*a)))
     return Z 
+
+def eigSort(A):
+    e = eig(A)
+    e = [np.append(e[0][i],e[1][:,i]).real for i in xrange(3)]
+    e = np.array(sorted(e, key=lambda x:x[0]))
+    eval = e[:,0]
+    evec = np.array([[1.,0,0],[0,1.,0],[0,0,1.]]).dot(e[:,1:4])
+    return eval, evec
