@@ -8,6 +8,7 @@ try:
     from scipy.linalg import eig
 except:
     from numpy.linalg import eig
+from numpy.linalg import inv, det
 import itertools
 
 def mat_dot (la, lb):
@@ -99,3 +100,29 @@ def eigSort(A):
     eval = e[:,0]
     evec = np.array([[1.,0,0],[0,1.,0],[0,0,1.]]).dot(e[:,1:4])
     return eval, evec
+
+def cofactor(A):
+    m,n = A.shape
+    minor = []
+    if m == n:
+        for i in xrange(m):
+            for j in xrange(n):
+                a = np.delete(A, i, axis=0)
+                a = np.delete(a, j, axis=1)
+                minor = np.append(minor, (-1)**(i+j)*det(a))
+        return np.array(minor).reshape(3,3)
+                
+    else:
+        print 'Please input a square matrix.'
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
