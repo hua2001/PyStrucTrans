@@ -1,5 +1,8 @@
 import numpy as np
-import h5py
+try:
+    import h5py
+except:
+    pass
 import sys
 import logging
 import os.path
@@ -24,7 +27,7 @@ class NullDevice():
     def write(self, s):
         pass
 
-def lat_opt(E1, E2, distance='Ericksen', dim=3, num_sol=1, disp=True, rank=0, nhnf = 1):
+def lat_opt(E1, E2, distance='Ericksen', dim=3, num_sol=1, disp=True, rank=0, nhnf = 1, A=None):
     '''
     find the lattice invariant shear L_opt that brings the unit cell E1 closest to E2.
     '''
@@ -60,15 +63,20 @@ def lat_opt(E1, E2, distance='Ericksen', dim=3, num_sol=1, disp=True, rank=0, nh
     chi = np.rint(inv(Ep2).dot(E2).reshape(dim**2))
     
     # search shifts up to 1 lattice point
-    #print('Shifting matrices are generated.')    
-    h5_filename = 'shift_1_dim_'+str(dim)+'.hdf5'
-    data = os.path.join(os.path.dirname(__file__),h5_filename)
-    f = h5py.File(data, 'r')
-    A = f['shifts'].value
-    # add all zero
+    #print('Shifting matrices are generated.') 
+    if A==None:  
+        try: 
+            h5_filename = 'shift_1_dim_'+str(dim)+'.hdf5'
+            data = os.path.join(os.path.dirname(__file__),h5_filename)
+            f = h5py.File(data, 'r')
+            A = f['shifts'].value
+            # add all zero
+            f.close() 
+        except:
+            txt_filename = 'shift_1_dim_'+str(dim)+'.txt'
+            data = os.path.join(os.path.dirname(__file__),txt_filename)
+            A = np.loadtxt(data, delimiter=',') 
     A = np.append(A, np.zeros((dim**2,1)), axis=1).T
-    f.close()    
-    
     # copy lo 3^9 times and add to the list of shift matrices 
     l_shift = A + np.vstack([lo]*len(A))
     # get all the L's with determinant 1    
@@ -77,7 +85,7 @@ def lat_opt(E1, E2, distance='Ericksen', dim=3, num_sol=1, disp=True, rank=0, nh
     l_list = l_shift[det_idx]       # get all the L's with determinant 1 
     # release memory
     del A
-    del f
+   
     
     # timing integer points search
     t_int = timer()

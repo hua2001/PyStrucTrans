@@ -25,11 +25,11 @@ def _get_shift(N, dim=3):
     M = np.delete(M, del_idx, 1)
     #print(M.shape)
     
-    f = h5py.File('shift_{:d}_dim_{:d}.hdf5'.format(int(N), int(dim)),'w')
-    ds = f.create_dataset('shifts',M.shape,dtype='i')
-    ds[...] = M
-    f.close()
-    #np.savetxt('shift_matrices_{:d}.txt'.format(int(N)), M, delimiter=',')
+#     f = h5py.File('shift_{:d}_dim_{:d}.hdf5'.format(int(N), int(dim)),'w')
+#     ds = f.create_dataset('shifts',M.shape,dtype='i')
+#     ds[...] = M
+#     f.close()
+    np.savetxt('shift_{:d}_dim_{:d}.txt'.format(int(N), int(dim)), M, delimiter=',')
     
 if __name__ == "__main__":
-    _get_shift(2, dim=2)    
+    _get_shift(1, dim=3)    

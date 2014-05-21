@@ -2,9 +2,11 @@ import numpy as np
 import math
 import os
 import sys
-import h5py
+try:
+    import h5py
+except:
+    pass
 import logging
-
 
 from numpy import dot
 from numpy.linalg import inv, det, eig
@@ -169,6 +171,17 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
         h_idx = np.arange(len(hnfs))
     
     # initialize 
+    try: 
+        h5_filename = 'shift_1_dim_'+str(dim)+'.hdf5'
+        data = os.path.join(os.path.dirname(__file__),h5_filename)
+        f = h5py.File(data, 'r')
+        A = f['shifts'].value
+        # add all zero
+        f.close() 
+    except:
+        txt_filename = 'shift_1_dim_'+str(dim)+'.txt'
+        data = os.path.join(os.path.dirname(__file__),txt_filename)
+        A = np.loadtxt(data, delimiter=',') 
     min_d = 1e6
     dopt = []
     lopt = []
@@ -180,7 +193,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
         
         # optimize the unit cell for the given HNF
         H = sub_hnfs[i]
-        lopt_H,dopt_H,success = lat_opt(dot(E_A, H.reshape(dim,dim)), E_M, distance = distance, dim=dim, num_sol=num_sol, disp=lat_opt_disp, rank=proc_rank,nhnf = h_idx[i]+1)
+        lopt_H,dopt_H,success = lat_opt(dot(E_A, H.reshape(dim,dim)), E_M, distance = distance, dim=dim, num_sol=num_sol, disp=lat_opt_disp, rank=proc_rank,nhnf = h_idx[i]+1, A=A)
         msg = 'Processor %d: HNF No.%d finished! Checking update ... ' %  (proc_rank, h_idx[i]+1)
         #print(msg)
         logging.info(msg)
@@ -355,50 +368,50 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
             _rootprint('\n', comm) 
            
         # save results in HDF5 format
-        if save_results:
-            _rootprint('Saving results in "%s" ...' % filename, comm)
-            try:
-                os.remove(filename)
-            except OSError:
-                pass
-            f = h5py.File(filename, 'w')
-            ds = f.create_dataset('ibrava',(1,),dtype='int')
-            ds[...] = ibrava
-            ds = f.create_dataset('ibravm',(1,),dtype='int')
-            ds[...] = ibravm
-            try:
-                pbrava = np.array(pbrava)
-                ds = f.create_dataset('pbrava',pbrava.shape,dtype='float')
-                ds[...] = pbrava
-            except:
-                try: 
-                    ds = f.create_dataset('pbrava',(1,),dtype='float')
-                    ds[...] = pbrava
-                except:
-                    pass
-            try:
-                pbravm = np.array(pbravm)
-                ds = f.create_dataset('pbravm',pbravm.shape,dtype='float')
-                ds[...] = pbravm
-            except:
-                try: 
-                    ds = f.create_dataset('pbravm',(1,),dtype='float')
-                    ds[...] = pbravm
-                except:
-                    pass
-            ds = f.create_dataset('Hopt',hopt.shape,dtype='int')
-            ds[...] = hopt
-            ds = f.create_dataset('Lopt',lopt.shape,dtype='int')
-            ds[...] = lopt
-            ds = f.create_dataset('dopt',dopt.shape,dtype='float')
-            ds[...] = dopt
-            ds = f.create_dataset('Corr',cor_list.shape,dtype='float')
-            ds[...] = cor_list
-            ds = f.create_dataset('U',U_list.shape,dtype='float')
-            ds[...] = U_list
-            ds = f.create_dataset('lambda',lambda_list.shape,dtype='float')
-            ds[...] = lambda_list
-            f.close()
+#         if save_results:
+#             _rootprint('Saving results in "%s" ...' % filename, comm)
+#             try:
+#                 os.remove(filename)
+#             except OSError:
+#                 pass
+#             f = h5py.File(filename, 'w')
+#             ds = f.create_dataset('ibrava',(1,),dtype='int')
+#             ds[...] = ibrava
+#             ds = f.create_dataset('ibravm',(1,),dtype='int')
+#             ds[...] = ibravm
+#             try:
+#                 pbrava = np.array(pbrava)
+#                 ds = f.create_dataset('pbrava',pbrava.shape,dtype='float')
+#                 ds[...] = pbrava
+#             except:
+#                 try: 
+#                     ds = f.create_dataset('pbrava',(1,),dtype='float')
+#                     ds[...] = pbrava
+#                 except:
+#                     pass
+#             try:
+#                 pbravm = np.array(pbravm)
+#                 ds = f.create_dataset('pbravm',pbravm.shape,dtype='float')
+#                 ds[...] = pbravm
+#             except:
+#                 try: 
+#                     ds = f.create_dataset('pbravm',(1,),dtype='float')
+#                     ds[...] = pbravm
+#                 except:
+#                     pass
+#             ds = f.create_dataset('Hopt',hopt.shape,dtype='int')
+#             ds[...] = hopt
+#             ds = f.create_dataset('Lopt',lopt.shape,dtype='int')
+#             ds[...] = lopt
+#             ds = f.create_dataset('dopt',dopt.shape,dtype='float')
+#             ds[...] = dopt
+#             ds = f.create_dataset('Corr',cor_list.shape,dtype='float')
+#             ds[...] = cor_list
+#             ds = f.create_dataset('U',U_list.shape,dtype='float')
+#             ds[...] = U_list
+#             ds = f.create_dataset('lambda',lambda_list.shape,dtype='float')
+#             ds[...] = lambda_list
+#             f.close()
         
         # All done! 
         t_end = timer()
