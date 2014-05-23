@@ -5,19 +5,36 @@ from pystructrans.crystallography import BravaisLattice, CUBIC_LAUE_GROUP
 import pystructrans.mat_math as _math
 
 from Martensite import Martensite
-from Twin import TwinSystem, TwinSolver
+
+class CompatibilityError(Exception):
+    pass
+
+def isCompatible(A, B):
+    r'''
+    check rank1 connection between A and B
+    A - B = rank1
+    '''
+    if isinstance(A, np.ndarray) and isinstance(B, np.ndarray):
+        C = np.dot(inv(B.T).dot(A.T), A.dot(inv(B)))
+        e, v = _math.eigSort(C)
+        if abs(e[1])-1<1e-5:
+            return True
+        else:
+            return False
+    else:
+        print 'The input should be two arrays.'
+        return False
+
 
 def AM_Solver(A):
     
     kappa = 1
     
     if len(A) - 3 > 1e-9:
-        print 'The input should be a 3x3 symmetric matrix!'
-        return
+        raise CompatibilityError('The input should be a positive symmetric matrix!')
       
     if norm((A.T - A).reshape(9)) > 1e-9:
-        print 'The input should be a symmetric matrix!'
-        return 
+        raise CompatibilityError('The input should be a positive symmetric matrix!')
     
     e = eig(A)
     e = [np.append(e[0][i],e[1][:,i]).real for i in xrange(3)]
@@ -45,6 +62,7 @@ def AM_Solver(A):
             b2 = rho2*((sqrt(eval[2])*c1/c)*evec[0] - kappa*(sqrt(eval[0])*c3/c)*evec[2])
         
             return np.array([[b1,m1], [b2,m2]])
+        
 
 class Microstructure():
     r'''
