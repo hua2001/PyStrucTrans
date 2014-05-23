@@ -4,6 +4,8 @@ from math import sqrt
 from pystructrans.mat_math import unique_rows, eigSort
 from Martensite import Martensite
 from pystructrans.crystallography import CUBIC_LAUE_GROUP
+import pystructrans.mat_math as _math
+import Compatibility as cp
 
 class TwinSystemError(Exception):
     pass
@@ -73,10 +75,12 @@ class TwinSystem():
                 if tp.isTypeII():
                     con_idx.append([i+1,j+1])
         return np.array(con_idx)
+    
         
     
     
-        
+class TwinPairError(Exception):
+    pass     
 class TwinPair():
     r'''
     
@@ -126,8 +130,11 @@ class TwinPair():
         
     
     def isTwinnable(self):
-        if abs(self._e[1] - 1) < 1e-9:
-            return True
+        if norm((self._Ui - self._Uj).reshape(1,9))>1e-6:
+            if abs(self._e[1] - 1) < 1e-9:
+                return True
+            else:
+                return False
         else:
             return False
         
@@ -161,15 +168,158 @@ class TwinPair():
             return True
         else:
             return False
-
+    def satisfyCofI(self):
+        if abs(self.XI()-1)<1e-4:
+            return True
+        else:
+            return False
+    def satisfyCofII(self):
+        if abs(self.XII()-1)<1e-4:
+            return True
+        else:
+            return False
     
-    
+    def getTwinParam(self):
+        r'''
+        It returns twinning parameters for
+        the TwinPair class if it's twinnable.
+        The twinning parameters include
+        (a, n) where
+        q Uj - Ui = a \otimes n
+        Therefore there are two solutions usually.
         
+        '''
+        t_ax = self.getAx()
+        tParam = [np.zeros(6)]
+        if len(t_ax)>0:
+            for ehat in t_ax:
+                t1 = TwinSolver(self._Ui, ehat, 1).flatten()
+                t2 = TwinSolver(self._Ui, ehat, 2).flatten()
+                t1IsNew = True
+                t2IsNew = not isSameAN(t1, t2)
+                for t in tParam:
+                    if isSameAN(t,t1):
+                        t1IsNew = False
+                    if isSameAN(t,t2):
+                        t2IsNew = False
+                if t1IsNew:
+                    tParam.append(t1)
+                if t2IsNew:
+                    tParam.append(t2)
+            
+            return np.array(tParam[1:]).reshape(len(tParam)-1, 2,3)
+        else:
+            print 'The pair of variants is not twinnable!'
+            
+    def QI(self):
+        anlist = self.getTwinParam()
+        if len(anlist) == 2:
+            return (self._Ui + np.outer(anlist[0][0], anlist[0][1])).dot(inv(self._Uj))
+        else:
+            raise TwinPairError('Not a valid twin pair. Please check if it is twinnable.')
+        
+    def QII(self):
+        anlist = self.getTwinParam()
+        if len(anlist) == 2:
+            return (self._Ui + np.outer(anlist[1][0], anlist[1][1])).dot(inv(self._Uj))
+        else:
+            raise TwinPairError('Not a valid twin pair. Please check if it is twinnable.')
+    def XI(self):
+        if self.isTypeI():
+            t_ax = self.getAx()[0]
+            return norm(inv(self._Ui).dot(t_ax))
+    def XII(self):
+        if self.isTypeII():
+            t_ax = self.getAx()[0]
+            return norm(self._Ui.dot(t_ax))
+        
+    def volume_frac(self, *args):
+        anlist = self.getTwinParam()
+        if len(args)>0:
+            if args[0] == 1:
+                a = anlist[args[0]-1][0]
+                n = anlist[args[0]-1][1]
+                cofU = _math.cofactor(self._Ui.dot(self._Ui) - np.eye(3))
+                minus_alpha = 2*np.dot(self._Ui.dot(a), cofU.dot(n))    
+                beta = det(self._Ui.dot(self._Ui)-np.eye(3))+minus_alpha/4
+                if abs(minus_alpha)<1e-5:
+                    return np.array([0,1])
+                elif beta/minus_alpha > 1e-6:
+                    f = 0.5+sqrt(beta/minus_alpha)
+                    return np.array([f, 1-f])
+                else:
+                    return None
+                
+            elif args[0] == 2:
+                a = anlist[args[0]-1][0]
+                n = anlist[args[0]-1][1]
+                cofU = _math.cofactor(self._Ui.dot(self._Ui) - np.eye(3))
+                minus_alpha = 2*np.dot(self._Ui.dot(a), cofU.dot(n))    
+                beta = det(self._Ui.dot(self._Ui)-np.eye(3))+minus_alpha/4
+                if abs(minus_alpha)<1e-5:
+                    return np.array([0,1])
+                elif beta/minus_alpha > 1e-6:
+                    f = 0.5+sqrt(beta/minus_alpha)
+                    return np.array([f, 1-f])
+                else:
+                    return None
+            else:
+                raise TwinPairError('Please input n = 1 or 2, which means type 1 or 2 twin systems. Or leave it as blank.')
+        else:
+            vol = []
+            for an in anlist:
+                a = an[0]
+                n = an[1]
+                cofU = _math.cofactor(self._Ui.dot(self._Ui) - np.eye(3))
+                minus_alpha = 2*np.dot(self._Ui.dot(a), cofU.dot(n))    
+                beta = det(self._Ui.dot(self._Ui)-np.eye(3))+minus_alpha/4
+                if abs(minus_alpha)<1e-5:
+                    vol.append([0,1])
+                elif beta/minus_alpha > 1e-6:
+                    f = 0.5+sqrt(beta/minus_alpha)
+                    vol.append([f, 1-f])
+                else:
+                    pass
+            if len(vol)>0:
+                return np.array(vol)
+            else:
+                return None
+            
+    def habit_planes(self,n):
+        anlist = self.getTwinParam()
+        habit = []
+        if n==1 or n==2:
+            f = self.volume_frac(n)
+            if not f==None:
+                a = anlist[n-1][0]
+                n = anlist[n-1][1]
+                Cf = [(self._Ui + f[0]*np.outer(n, a)).dot(self._Ui + f[0]*np.outer(a, n)),
+                  (self._Ui + f[1]*np.outer(n, a)).dot(self._Ui + f[1]*np.outer(a, n))]
+                for cf in Cf:
+                    if cp.isCompatible(cf, np.eye(3)):
+                        habit.append(cp.AM_Solver(cf))
+        else:
+            raise TwinPairError('Please input n = 1 or 2.')
+        if len(habit)>0:
+            return np.array(habit)
+        else:
+            return None
+                
+            
+                
+            
+                
+                
     
                     
         
-            
         
+                
+            
+def isSameAN(t1, t2):
+    M1 = np.outer(t1[0:3], t1[3:6])
+    M2 = np.outer(t2[0:3], t2[3:6])   
+    return np.max(np.abs(M1-M2)) < 1E-6   
         
         
 def TwinSolver(U, e, type):
@@ -195,7 +345,9 @@ def TwinSolver(U, e, type):
         else:
             print 'Please input the type of twin system: 1 for Type I twin; 2 for Type II twin'
             return
-    
+    rho = norm(n)
+    a = np.round(rho*a, 6)
+    n = np.round(n/rho, 6)
     return np.array([a, n])
 
 
