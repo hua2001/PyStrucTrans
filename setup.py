@@ -32,7 +32,7 @@ setup(name='pystructrans',
                             'lattcorr = pystructrans.command_line:run_lat_cor'
                             ],
       },
-      data_files=[('pystructrans/marttrans', ['pystructrans/marttrans/shift_1_dim_3.hdf5', 'pystructrans/marttrans/shift_1_dim_2.hdf5'])],
+      data_files=[('pystructrans/marttrans', ['pystructrans/marttrans/shift_1_dim_3.txt','pystructrans/marttrans/shift_1_dim_3.hdf5', 'pystructrans/marttrans/shift_1_dim_2.hdf5'])],
       test_suite='nose.collector',
       tests_require=['nose'],
       zip_safe=False)
