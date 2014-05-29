@@ -4,7 +4,7 @@ from math import sqrt
 from pystructrans.crystallography import BravaisLattice, CUBIC_LAUE_GROUP
 import pystructrans.mat_math as _math
 
-from Martensite import Martensite
+from martensite import Martensite
 
 class CompatibilityError(Exception):
     pass

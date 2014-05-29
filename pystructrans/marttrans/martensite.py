@@ -67,7 +67,7 @@ class Martensite():
         U1 = np.array(self._U)
         ulist = U1.reshape(1,9)
 #         print ulist
-        laue_idx = [np.array([1])]
+        laue_idx = [np.array([0])]
         i_exist = [0];
         for i, lg in enumerate(self._Laue):
             utemp = (np.dot(lg, U1.dot(lg.T))).reshape(1, 9)
@@ -79,12 +79,12 @@ class Martensite():
                     flag = False
                     if not i in i_exist:
                         i_exist.append(i);
-                        laue_idx[j] = np.append(laue_idx[j], i+1);            
+                        laue_idx[j] = np.append(laue_idx[j], i);            
             
             if flag:
                 ulist = np.append(ulist, np.array(utemp), axis = 0)
                 i_exist.append(i);
-                laue_idx.append(np.array([i+1]))
+                laue_idx.append(np.array([i]))
                 
         laue_idx = np.array(laue_idx)
         
@@ -109,15 +109,29 @@ class Martensite():
             return self._laueIdx
         else:
             return self._laueIdx[args[0]-1]
-
-
-                  
-                    
-                    
-                 
         
-        
-
-        
-        
+    def getLaue_M(self):
+        idx = self._laueIdx[0]
+        return np.array([self._Laue[i] for i in idx])
     
+    def getCor_list(self, E, L):
+        if isinstance(E, np.ndarray) and isinstance(E, np.ndarray):
+            if E.shape == (3,3) and E.shape == (3,3):
+                laue_idx = self.getLaueIdx()
+                lg_a = self.getLaue()
+                lcor = []
+                for i in xrange(len(laue_idx)):
+                    ltemp = []
+                    for j in xrange(len(laue_idx[0])):
+                        ltemp.append((np.dot(inv(E), lg_a[laue_idx[i][j]].dot(E))).dot(L))
+                    lcor.append(ltemp)
+                return np.array(lcor)
+            else:
+                raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+        else:
+            raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+        
+        
+        
+        
+        
