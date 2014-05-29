@@ -288,20 +288,25 @@ class TwinPair():
     def habit_planes(self,n):
         anlist = self.getTwinParam()
         habit = []
+        rotation = []
         if n==1 or n==2:
             f = self.volume_frac(n)
             if not f==None:
                 a = anlist[n-1][0]
                 n = anlist[n-1][1]
-                Cf = [(self._Ui + f[0]*np.outer(n, a)).dot(self._Ui + f[0]*np.outer(a, n)),
-                  (self._Ui + f[1]*np.outer(n, a)).dot(self._Ui + f[1]*np.outer(a, n))]
-                for cf in Cf:
-                    if cp.isCompatible(cf, np.eye(3)):
-                        habit.append(cp.AM_Solver(cf))
+                Uf = [self._Ui + f[0]*np.outer(a, n),
+                  self._Ui + f[1]*np.outer(a, n)]
+                for uf in Uf:
+                    if cp.isCompatible(uf.T.dot(uf), np.eye(3)):
+                        [[b1,m1], [b2,m2]] = cp.AM_Solver(uf.T.dot(uf))
+                        R = [(np.eye(3) + np.outer(b1, m1)).dot(inv(uf)), 
+                             (np.eye(3) + np.outer(b2, m2)).dot(inv(uf))]
+                        habit.append([[b1, m1], [b2, m2]])
+                        rotation.append(R)
         else:
             raise TwinPairError('Please input n = 1 or 2.')
         if len(habit)>0:
-            return np.array(habit)
+            return np.array(habit), np.array(rotation)
         else:
             return None
                 
