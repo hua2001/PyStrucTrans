@@ -43,13 +43,13 @@ class UnitCell():
     def setOrigin(self, new_origin):
         self._o = new_origin
         
-    
     def getPrimitive(self):
-        E = self._lattice.getBase()
+        E = self._lattice.getBase().T
+        print E
         return vertex(self._o, E, self._dim)
     
     def getConventional(self):
-        C = self._lattice.getConventionalBase()
+        C = self._lattice.getConventionalBase().T
         return vertex(self._o, C, self._dim)
         
         
