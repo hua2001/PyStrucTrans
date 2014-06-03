@@ -7,4 +7,4 @@ from bravais_lattice import BravaisLattice
 from sublattice import hnf_from_det as HermiteNormalForms
 from lattice_reduction import LLL
 from orientation_relationship import direc_trans, plane_trans, euler, Rot
-from visualization import UnitCell, box
+from visualization import UnitCell, box, vertex

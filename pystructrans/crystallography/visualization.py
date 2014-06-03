@@ -55,23 +55,26 @@ def box(v_list, E, n=3):
             print "E has to be a 2x2 matrix!"
     else:
         raise visualError("The dimension n has to be 2 or 3!")
-    return np.array(inside)
+    if np.array(inside).shape[0]>0:
+        return np.array(inside)
+    else:
+        return np.array([0, 0, 0])
     
 
-def bonds(o, E, n=3):
-    verts = vertex(o, E, n)
-    if len(verts)==8:
-        idx_1 = [0,0,0,1,1,4,4,7,7,6,3,5]
-        idx_2 = [1,2,3,4,6,2,7,6,5,3,5,2]
-#         idx = np.array([0,1,0,2,0,3,1,4,1,5,2,4,3,5,3,6,4,7,5,7,7,6,2,6])
-        idx = np.vstack((idx_1, idx_2)).T
-        bds = [[verts[i[0]], verts[i[1]]] for i in idx]
-        return np.array(bds)
-    elif len(verts)==4:
-        idx = [[0,1],[0,2],[1,3],[2,3]]
-        return np.array([[verts[i[0]], verts[i[1]]] for i in len(idx)])
-    else:
-        raise visualError('The number of vertices is not valid.')
+# def bonds(o, E, n=3):
+#     verts = vertex(o, E, n)
+#     if len(verts)==8:
+#         idx_1 = [0,0,0,1,1,4,4,7,7,6,3,5]
+#         idx_2 = [1,2,3,4,6,2,7,6,5,3,5,2]
+# #         idx = np.array([0,1,0,2,0,3,1,4,1,5,2,4,3,5,3,6,4,7,5,7,7,6,2,6])
+#         idx = np.vstack((idx_1, idx_2)).T
+#         bds = [[verts[i[0]], verts[i[1]]] for i in idx]
+#         return np.array(bds)
+#     elif len(verts)==4:
+#         idx = [[0,1],[0,2],[1,3],[2,3]]
+#         return np.array([[verts[i[0]], verts[i[1]]] for i in len(idx)])
+#     else:
+#         raise visualError('The number of vertices is not valid.')
         
             
 class UnitCell():
@@ -90,21 +93,46 @@ class UnitCell():
     def setOrigin(self, new_origin):
         self._o = new_origin
         
+    def bonds(self, verts):
+        '''
+        Verts are a list of vertices, 
+        which are 8x3 for 3D, 4x2 for 2D
+        '''
+        verts = np.array(verts)
+                
+        if len(verts[0])==3:
+            idx_1 = [0,0,0,1,1,4,4,7,7,6,3,5]
+            idx_2 = [1,2,3,4,6,2,7,6,5,3,5,2]
+            idx = np.vstack((idx_1, idx_2)).T
+            bds = [[verts[i[0]], verts[i[1]]] for i in idx]
+            return np.array(bds)
+
+        elif len(verts[0])==2:
+            idx = [[0,1],[0,2],[1,3],[2,3]]
+            return np.array([[verts[i[0]], verts[i[1]]] for i in len(idx)])
+        else:
+            raise visualError('The number of vertices is not valid.')
+        
     def getPrimitive(self):
         E = self._lattice.getBase().T
         return vertex(self._o, E, self._dim)
-    
+    def getConventionalVex(self):
+        C = self._lattice.getConventionalBase().T
+        return vertex(self._o, C, self._dim)
     def getConventional(self):
         C = self._lattice.getConventionalBase().T
         inside = box(self.getPrimitive(), C, self._dim)
-        print np.array(inside).shape
+#         print np.array(inside).shape
         return np.vstack((vertex(self._o, C, self._dim), inside))
     def getConventionalbonds(self):
-        C = self._lattice.getConventionalBase().T
-        return bonds(self._o, C, self._dim)
+        verts = vertex(self._o, self._lattice.getConventionalBase().T, self._dim)
+        return self.bonds(verts)
     def getPrimitivebonds(self):
-        E = self._lattice.getBase().T
-        return bonds(self._o, E, self._dim)
+        verts = vertex(self._o, self._lattice.getBase().T, self._dim)
+        return self.bonds(verts)
+    def copyTo(self, new_origin, v_list):
+#         verts = self.getConventional()
+        return v_list+np.vstack([new_origin]*len(v_list))
 
             
         
