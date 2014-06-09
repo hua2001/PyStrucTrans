@@ -115,6 +115,9 @@ class Martensite():
         return np.array([self._Laue[i] for i in idx])
     
     def getCor_list(self, E, L):
+        r'''
+        E should be the primitive lattice base
+        '''
         if isinstance(E, np.ndarray) and isinstance(E, np.ndarray):
             if E.shape == (3,3) and E.shape == (3,3):
                 laue_idx = self.getLaueIdx()
