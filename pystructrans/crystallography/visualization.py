@@ -1,6 +1,9 @@
 import numpy as np
 from bravais_lattice import BravaisLattice
-from scipy.linalg import inv, norm
+try:
+    from scipy.linalg import inv, norm
+except:
+    from numpy.linalg import inv, norm
 
 class visualError(Exception):
     pass
@@ -26,6 +29,7 @@ def vertex(o, E, n=3):
             return None
     else:
         raise visualError('The dimension n has to be 2 or 3!')
+    
 def box(v_list, E, n=3):
     dim = np.array(E).shape
     v_list = np.array(v_list)
