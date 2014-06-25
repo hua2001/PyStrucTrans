@@ -15,8 +15,8 @@ from timeit import default_timer as timer
 
 from lat_opt import lat_opt
 from dist import dist_isnew, dist_unique
-from pystructrans.mat_math import mat_dot
-from pystructrans.crystallography import BravaisLattice, HermiteNormalForms
+from mat_math import mat_dot
+from crystallography import BravaisLattice, HermiteNormalForms
 
 def _divide_work(W, comm): # divide W into sub-processes
     rank = comm.Get_rank()
@@ -69,14 +69,14 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm,
     
     # configure the log file
     if save_log:
-        logging.basicConfig(format='%(message)s', filename=logfilename,filemode='w',level=logging.DEBUG)
+        logging.basicConfig(format='%(message)s', filename=logfilename,filemode='w',level=logging.INFO)
         cnsl = logging.StreamHandler()
         cnsl.setLevel(logging.INFO)
         fmt = logging.Formatter('%(message)s')
         cnsl.setFormatter(fmt)
         logging.getLogger('').addHandler(cnsl)
     else:
-        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+        logging.basicConfig(format='%(message)s', level=logging.INFO)
     
     # configure display
     if not disp:

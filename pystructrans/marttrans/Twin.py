@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.linalg import inv, det, eig, norm
 from math import sqrt
-from pystructrans.mat_math import unique_rows, eigSort
+from mat_math import unique_rows, eigSort
 from martensite import Martensite
-from pystructrans.crystallography import CUBIC_LAUE_GROUP
-import pystructrans.mat_math as _math
+from crystallography import CUBIC_LAUE_GROUP
+import mat_math as _math
 import Compatibility as cp
 
 class TwinSystemError(Exception):

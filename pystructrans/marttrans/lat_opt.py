@@ -1,161 +1,243 @@
+from __future__ import print_function
+
+import logging, threading
 import numpy as np
-try:
-    import h5py
-except:
-    pass
-import sys
-import logging
-import os.path
+import numpy.linalg as la
+import copy
+from itertools import chain
 
-from numpy import dot
-from numpy.linalg import inv
-from numpy import nanmin
-
-from timeit import default_timer as timer
-from dist import eric_dist, eric_dist_mat, eric_dist_unique
+from dist import Eric_dist, eric_dist_mat, eric_dist_unique
 from dist import strain_dist, strain_dist_mat
 from dist import Cauchy_dist, Cauchy_dist_mat
-from pystructrans.mat_math import mat_det, mat_dot
-from pystructrans.crystallography import Lattice, LLL
+from dist import dist_isnew
 
-def lprint(s, rank, disp):
-    msg = ('Processor %d: ' % rank)+s
-    if disp:
-        logging.info(msg)
+from crystallography import Lattice, LLL
+from mat_math import mat_dot
 
-class NullDevice():
-    def write(self, s):
-        pass
+from timeit import default_timer as timer
 
-def lat_opt(E1, E2, distance='Ericksen', dim=3, num_sol=1, disp=True, rank=0, nhnf = 1, A=None):
+def lat_opt(E1, E2, **kwargs):
     '''
-    find the lattice invariant shear L_opt that brings the unit cell E1 closest to E2.
+    find the optimal lattice invarient shear move E1 as close as possible to E2
+    allowed kwargs:
+     - dist: choose from "Cauchy", "Ericksen" and "strain", default is "Cauchy"
+     - hdlr: logger handler, default is basicConfigure 
     '''
-    if not disp:
-        original_stdout = sys.stdout
-        sys.stdout = NullDevice()
-    log_writer = lambda s: lprint(s, rank, disp)
+    ''' 
+    ===========
+    Preparation
+    =========== 
+    '''
+    def print_ary(A):
+        return "{:s}".format(A.tolist())
     
-    # set distance functions
-    if distance == 'Ericksen':
-        dist=eric_dist
-#         dist_jac=eric_dist_jac
-        dist_mat=eric_dist_mat
-        dist_unique = eric_dist_unique
-    if distance == 'strain':
-        dist=strain_dist
-        dist_mat=strain_dist_mat
-        dist_unique = eric_dist_unique
-    if distance == 'Cauchy':
-        dist=Cauchy_dist
-        dist_mat=Cauchy_dist_mat
-        dist_unique = eric_dist_unique
-        
+    # create logger
+    logger = logging.getLogger(__name__)
+    if 'hdlr' in kwargs:
+        hdlr = kwargs['hdlr']
+        logger.propagate = False
+        logger.addHandler(hdlr)
+    
+    # number of solutions
+    nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
+    logger.debug("nsol = {:d}".format(nsol))
+    
+    # get dimension of the problem
+    dim = len(E1) 
+    logger.debug("E1 = "+print_ary(E1))
+    logger.debug("E2 = "+print_ary(E2))
+    logger.debug("dimemsion = {:d}".format(dim))
+    
     # start timer
     t_start = timer()
-    '''
-    find LLL-reduced basis for the sublattice
-    '''
-    #log_writer(str(E1))
-    Ep2 = LLL(E2)
-    Er = LLL(E1)
-    lo = np.rint(dot(inv(E1), Er).reshape(dim**2))
-    chi = np.rint(inv(Ep2).dot(E2).reshape(dim**2))
+    logger.debug("timer starts")
+        
+    # LLL-reduction
+    Er2 = LLL(E2)
+    Er1 = LLL(E1)
+    logger.debug("LLL-reduced E1 = "+print_ary(Er1))
+    logger.debug("LLL-reduced E2 = "+print_ary(Er2))
     
-    # search shifts up to 1 lattice point
-    #print('Shifting matrices are generated.') 
-    if A==None:  
-        try: 
-            h5_filename = 'shift_1_dim_'+str(dim)+'.hdf5'
-            data = os.path.join(os.path.dirname(__file__),h5_filename)
-            f = h5py.File(data, 'r')
-            A = f['shifts'].value
-            # add all zero
-            f.close() 
-        except:
-            txt_filename = 'shift_1_dim_'+str(dim)+'.txt'
-            data = os.path.join(os.path.dirname(__file__),txt_filename)
-            A = np.loadtxt(data, delimiter=',') 
-    A = np.append(A, np.zeros((dim**2,1)), axis=1).T
-    # copy lo 3^9 times and add to the list of shift matrices 
-    l_shift = A + np.vstack([lo]*len(A))
-    # get all the L's with determinant 1    
-    l_det = mat_det(l_shift)
-    det_idx = np.where(np.abs(l_det-1.0)<1.e-6)[0]
-    l_list = l_shift[det_idx]       # get all the L's with determinant 1 
-    # release memory
-    del A
-   
+    # starting point
+    lo = np.rint(np.dot(la.inv(E1), Er1))
+    chi = np.rint(la.inv(Er2).dot(E2))
+    logger.debug("starting point = "+print_ary(lo))
+    logger.debug("E2 recovery matrix = "+print_ary(chi))
     
-    # timing integer points search
-    t_int = timer()
+    # determine distance function
+    distance = kwargs['dist'] if 'dist' in kwargs else 'Cauchy'
+    logger.debug("distance is \"{:s}\"".format(distance))
+    if distance == 'Ericksen':
+        dist = eric_dist
+        dist_mat = eric_dist_mat
+        dist_unique = eric_dist_unique
+    if distance == 'strain':
+        dist = strain_dist
+        dist_mat = strain_dist_mat
+        dist_unique = eric_dist_unique
+    if distance == 'Cauchy':
+        dist = Cauchy_dist
+        dist_mat = Cauchy_dist_mat
+        dist_unique = eric_dist_unique
     
-    # calculate all the distance
-    if len(l_list)==0:
-        log_writer('no determinant 1')
-        return np.empty([]), None, False
-    d_list = dist_mat(l_list, E1, Ep2)
-     
-    '''
-    look for the required number of solutions
-    '''
-    # initialization
-    dopt = np.array([])
-    lopt = np.zeros((1,dim**2))
-    # calculate the distance for all the L's
-#     d_list = dist_mat(l_list, E1, E2)
-    # Instanciate a Lattice object for E1
-    Lat1 = Lattice(E1)
-    # lattice group of E1
+    # lattice groups
+    Lat1 = Lattice(Er1)
     LG1 = Lat1.getSpecialLatticeGroup().astype('float')
-    # Instanciate a Lattice object for E2
-    Lat2 = Lattice(Ep2)
-    # lattice group of E2
+    Lat2 = Lattice(Er2)
     LG2 = Lat2.getSpecialLatticeGroup().astype('float') 
     SOLG = LG2
-#     SOLG = np.array([np.eye(dim).reshape(dim**2)]) 
-#     for i,Q in enumerate(LG2):
-#         if inPointGroup(Q, np.eye(dim)):
-#             # if Q is not in SO(d), add to SOLG
-#             SOLG = np.append(SOLG, Q.reshape((1,dim**2)), axis=0)   
-    while len(dopt) < num_sol:
-        # find minimum distances
-        min_dist = nanmin(d_list)
-        min_idx = np.where((d_list-min_dist)<=(1E-6)*min_dist)[0]
-        # remove duplications caused by symmetry:
-        # i.e. the distance between these two lattices is zero
-        sol_idx = min_idx[dist_unique(l_list[min_idx], LG1, SOLG)]
-        
-        # store new solutions and corresponding distances in the return paramters
-        lopt = np.append(lopt, l_list[sol_idx], axis=0)
-        dopt = np.append(dopt, [min_dist]*len(sol_idx))
-#         log_writer('the same distance %s but not symmetry related lopt'%(str(dopt)))
-#         log_writer('%s'%(str(lopt)))
-        
-        
-        
-        # remove found solutions from l_list
-        rem_idx = [i for i in xrange(len(l_list)) if i not in min_idx]
-        if len(rem_idx) == 0:
-            # no remaining L's
-            log_writer('only found %d solutions for this HNF, less than the required number %d!' % (len(dopt), num_sol))
-            return lopt[1:], dopt, True
-        l_list = l_list[rem_idx]
-        d_list = d_list[rem_idx]
-        
-    # if more than required solutions are found
-    if len(dopt) > num_sol:
-        log_writer('found %d solutions, which is more than %d!' % (len(dopt), num_sol))
-        
-    # stop timer
-    t_end = timer()
     
-    # resume stdout
-    if not disp:
-        sys.stdout = original_stdout
+    ''' 
+    ====================
+    Preparation - finish
+    ==================== 
+    '''
     
-    ltemp = mat_dot(lopt[1:], np.vstack([chi]*(len(lopt)-1)))
-    lopt = ltemp
+    ''' 
+    ==================
+    Tree datastructure
+    ================== 
+    '''
+    class GLTree:
+        "Tree structure of GL(3,Z) group"   
+        
+        # all 12 transvectives in the form of a 6x2 array of matrices
+        _EYE = np.eye(dim, dtype="float")
+        _T = np.array([
+            _EYE + np.tensordot(_EYE[i], _EYE[j], axes=0) 
+             for i in xrange(dim) 
+             for j in xrange(dim) 
+             if i!=j ] + [
+            _EYE - np.tensordot(_EYE[i], _EYE[j], axes=0) 
+             for i in xrange(dim) 
+             for j in xrange(dim) 
+             if i!=j ])
+        CACHE = {}
+        caches = 0
+        
+        def __init__(self, elem, generator=-2, parent=None):
+            "constructed by node element and the generator of getting this node from its parent"
+            if print_ary(elem) in GLTree.CACHE:
+                GLTree.caches += 1
+                existing = GLTree.CACHE[print_ary(elem)]
+                self.copy(existing)
+                self.cached = True
+            else:
+                self.elem = elem
+                self.elem_dist = self.calc_elem_dist()
+                self.parent = parent
+                self.generator = generator
+                self.children = self.generate_children()
+                self.children_dist = self.calc_children_dist
+                GLTree.CACHE[print_ary(elem)] = self
+                self.cached = False
+        
+        def generate_children(self):
+            "generate children nodes"
+            # reverse generator, by default is -1   
+            rgen = self.generator + 1 if (self.generator % 2 == 0) else self.generator - 1 
+            return [((self.elem).dot(t), i) for i,t in enumerate(GLTree._T) if not i == rgen]
+            #return [((self.elem).dot(t), i) for i,t in enumerate(GLTree._T)]
+        
+        def calc_elem_dist(self):
+            "distance value of the node element"
+            return dist(self.elem, E1, Er2)
+         
+        def calc_children_dist(self):
+            "distance values of childrens as list"
+            return [dist(c, E1, Er2) for c,_ in self.children]
+         
+        def is_min(self):
+            if self.generator == -2:
+                return all(self.chil_dist()>=self.elem_dist())
+            else:
+                # restore parent
+                parent = self.elem.dot(GLTree._T[self.r_generator])
+                return all(self.chil_dist()>=self.elem_dist()) and dist(parent, E1, Er2)
+        
+        def copy(self, that):
+            self.elem = that.elem
+            self.elem_dist = that.elem_dist
+            self.parent = that.parent
+            self.generator = that.generator
+            self.children = that.children
+            self.children_dist = that.children_dist
+            
+        def __str__(self):
+            return "GLTree - "+print_ary(self.elem)
+        
+        
+    ''' 
+    ===========================
+    Tree datastructure - finish
+    =========================== 
+    '''
+           
+    ''' 
+    ==============
+    Core procedure
+    ============== 
+    '''
+    lo, _ = GLTree(lo).children[3]
+    GLTree.CACHE = {}
+    roots = [GLTree(lo)]    
+    dopt = []
+    lopt = []
+     
+    # update strategy
+    def update_solutions(ds, ls, tree):
+        # otherwise, update existing solutions
+        for i, d in enumerate(ds):
+            if tree.elem_dist <= d and dist_isnew(tree.elem.flatten(), ls, LG1, LG2)[0]:
+                ds.insert(i, tree.elem_dist)
+                ls.insert(i, tree.elem.flatten())
+                # TODO: truncation strategy
+                if len(ds) > nsol:
+                    ds = ds[:nsol]
+                    ls = ls[:nsol]
+                return copy.copy(ds), copy.copy(ls)
+        # directly append if not full
+        if len(ds) < nsol:
+            ds.append(tree.elem_dist)
+            ls.append(tree.elem.flatten())
+            return copy.copy(ds), copy.copy(ls)
+        return None, None
+     
+    depth = 0
+    dopt,lopt = update_solutions([],[],roots[0])
+    logger.debug("loop starts with the first trial {:s} => {:g}".format(print_ary(lopt[0]), dopt[0]))
+    while depth < 3:
+        depth += 1
+         
+        # update roots, generator first
+        t0 = timer()
+         
+        # going down on the tree by iteration    
+        new_roots = []
+        for root in roots:
+            for elem, gen in root.children:
+                t = GLTree(elem, generator=gen, parent=root)
+                # try to update the solution if the node element is colser than the last solution
+                if not t.cached and (len(dopt) < nsol or t.elem_dist <= dopt[-1]):
+                    ds, ls = update_solutions(dopt, lopt, t)
+                    if ds:
+                        logger.debug("update solution by {:s} => {:g}".format(print_ary(t.elem), t.elem_dist))
+                        dopt, lopt = ds, ls
+                new_roots.append(t)
+        roots = new_roots
+        logger.debug("number of roots at depth {:d} is {:d}, construction time: {:g}".format(depth, len(roots), timer()-t0))
+     
+    ''' 
+    =======================
+    Core procedure - finish
+    ======================= 
+    '''
+     
+    # finish timer
+    t_elapsed = timer() - t_start
+    logger.debug("time elapsed for this search is {:g} sec.".format(t_elapsed))
+     
+    lopt = mat_dot(np.array(lopt), np.vstack([chi.flatten()]*len(lopt)))
+     
+    return lopt, dopt, True
     
-    # return solutions
-    return np.rint(lopt), dopt, True

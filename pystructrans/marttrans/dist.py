@@ -1,7 +1,17 @@
 import numpy as np
 from numpy import dot
 from numpy.linalg import inv, eig
-from pystructrans.mat_math import mat_dot, mat_T, mat_eig
+from mat_math import mat_dot, mat_T, mat_eig
+
+def Eric_dist(x, E1, E2):
+    dim = len(E1)
+    L = x.reshape(dim,dim)
+    g1 = dot(E1.T, E1)
+    g2 = dot(E2.T, E2)
+    M = dot(L.T, dot(g1, L)) - g2
+    # normalization factor
+    nf = np.trace(dot(g2.T, g2))
+    return np.trace(dot(M.T, M))/nf
 
 def eric_dist(x, E1, E2):
     dim = len(E1)
@@ -104,11 +114,11 @@ def dist_isnew(ln, l, LG1, LG2):
     ex_idx = np.where(np.max(np.abs(c-ln), axis=1) < 1e-10)[0]
     
     if len(ex_idx) == 0:
-        return True,np.array([], 'int16')
+        return True, np.array([], 'int16')
     else:
         # mod by the length of l to know which one in l is the same as ln
         ex_idx = np.array(list(set(np.mod(ex_idx, len(l)))), 'int16')
-        return False,ex_idx
+        return False, ex_idx
 
 def dist_unique(l, LG1, LG2):
     # unique upto Q1LQ2, Q1 in LG1, Q2 in LG2

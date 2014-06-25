@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.linalg import inv, det, eig, norm
 from math import sqrt
-from pystructrans.crystallography import BravaisLattice, CUBIC_LAUE_GROUP
-import pystructrans.mat_math as _math
+from crystallography import BravaisLattice, CUBIC_LAUE_GROUP
+import mat_math as _math
 
 from martensite import Martensite
 
