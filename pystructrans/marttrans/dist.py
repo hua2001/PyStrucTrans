@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import dot
 from numpy.linalg import inv, eig
-from mat_math import mat_dot, mat_T, mat_eig
+from pystructrans.mat_math import mat_dot, mat_T, mat_eig
 
 def Eric_dist(x, E1, E2):
     dim = len(E1)

@@ -11,8 +11,8 @@ from dist import strain_dist, strain_dist_mat
 from dist import Cauchy_dist, Cauchy_dist_mat
 from dist import dist_isnew
 
-from crystallography import Lattice, LLL
-from mat_math import mat_dot
+from pystructrans.crystallography import Lattice, LLL
+from pystructrans.mat_math import mat_dot
 
 from timeit import default_timer as timer
 
@@ -31,6 +31,8 @@ def lat_opt(E1, E2, **kwargs):
      - nsol: number of solutions
      - dist: choose from "Cauchy", "Ericksen" and "strain", default is "Cauchy"
      - hdlr: logger handler, default is basicConfigure
+     - logfile: log file
+     - loglevel: log level for the log file
      - level: logging level 
      - maxiter: maximum iteration depth, default is 3
      - ihnf: number of the HNF
@@ -48,13 +50,20 @@ def lat_opt(E1, E2, **kwargs):
     nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
     maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else 3
     
-    lev = kwargs['level'] if 'level' in kwargs else logging.INFO    
     if 'hdlr' in kwargs:
         hdlr = kwargs['hdlr']
         logger.propagate = False
-        logger.addHandler(hdlr)
+        logger.addHandler(hdlr)    
     else:
-        logger.setLevel(lev)    
+        lev = kwargs['level'] if 'level' in kwargs else logging.INFO 
+        logger.setLevel(lev)   
+    
+    if 'logfile' in kwargs:
+        logfile = kwargs['logfile']
+        fhdlr = logging.FileHandler(logfile, mode='a')
+        fhdlr.setLevel(kwargs['loglevel'] if 'loglevel' in kwargs else logging.INFO)
+        fhdlr.setFormatter(logging.Formatter('%(message)s'))
+        logger.addHandler(fhdlr)
     
     if 'ihnf' in kwargs:
         logger.warning("Processing the HNF No. {:d}".format(kwargs['ihnf']+1))
@@ -218,7 +227,7 @@ def lat_opt(E1, E2, **kwargs):
      
     depth = 0
     dopt,lopt = update_solutions([],[],roots[0])
-    logger.info("loop starts with the first trial {:s} => {:g}".format(print_ary(lopt[0]), dopt[0]))
+    logger.debug("loop starts with the first trial {:s} => {:g}".format(print_ary(lopt[0]), dopt[0]))
     updated = True;
     while updated and depth < maxiter:
         # update roots, generator first
@@ -236,7 +245,7 @@ def lat_opt(E1, E2, **kwargs):
                 if not t.cached and (len(dopt) < nsol or t.elem_dist <= dopt[-1]):
                     ds, ls = update_solutions(dopt, lopt, t)
                     if ds:
-                        logger.info("solutions updated by {:s} => {:g}".format(print_ary(t.elem), t.elem_dist))
+                        logger.debug("solutions updated by {:s} => {:g}".format(print_ary(t.elem), t.elem_dist))
                         dopt, lopt = ds, ls
                         updated = True
                 new_roots.append(t)
@@ -244,7 +253,7 @@ def lat_opt(E1, E2, **kwargs):
         logger.debug("number of roots at depth {:d} is {:d}, construction time: {:g}".format(depth, len(roots), timer()-t0))
     
     if depth == maxiter and updated:
-        logger.info("WARNING: maximum depth {:d} reached before solutions gauranteed".format(maxiter))
+        logger.debug("WARNING: maximum depth {:d} reached before solutions gauranteed".format(maxiter))
      
     ''' 
     =======================

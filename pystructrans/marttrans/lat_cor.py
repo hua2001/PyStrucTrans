@@ -15,8 +15,8 @@ from timeit import default_timer as timer
 from lat_opt import lat_opt
 from lat_opt import logger as lo_logger
 from dist import dist_isnew, dist_unique
-from mat_math import mat_dot
-from crystallography import BravaisLattice, HermiteNormalForms
+from pystructrans.mat_math import mat_dot
+from pystructrans.crystallography import BravaisLattice, HermiteNormalForms
     
 class NullDevice():
     def write(self, s):
@@ -49,6 +49,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 return pool.map(lat_opt_unpack, args, chuncksize)
         finally call lat_cor in __main__
      - logfile: save log into the given file
+     - loglevel: log level of the log file
     '''
     
     ''' 
@@ -84,10 +85,14 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         logger.propagate = False
     if 'logfile' in kwargs:
         logfile = kwargs['logfile']
-        fhdlr = logging.FileHandler(logfile, mode='w')
-        fhdlr.setLevel(logging.INFO)
-        logger.addHandler(fhdlr)
-        
+        try:
+            os.remove(logfile)
+        except OSError:
+            pass
+        fhdlr = logging.FileHandler(logfile, mode='a')
+        fhdlr.setLevel(readkw('loglevel', logging.INFO))
+        fhdlr.setFormatter(logging.Formatter('%(message)s'))
+        logger.addHandler(fhdlr)        
     
     ''' 
     ====================
@@ -173,6 +178,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     if disp == 4:
         lo_level = logging.DEBUG
     options['level'] = lo_level
+    if 'logfile' in kwargs: options['logfile'] = kwargs['logfile'] 
+    if 'loglevel' in kwargs: options['loglevel'] = kwargs['loglevel']
     
     if 'lat_opt_par' in kwargs:
         logger.info('HNFs are being solved in parallel ...')
@@ -297,6 +304,9 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         logger.info('    dist = {:g}'.format(sol['d']))
         logger.info('')     
     
+    # close log file
+    if 'logfile' in kwargs: fhdlr.close()
+    # timer
     logger.info("All done in {:g} secs.".format(timer()-t_start))
     
     return sols
