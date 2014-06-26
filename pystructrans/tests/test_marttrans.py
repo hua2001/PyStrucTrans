@@ -2,8 +2,6 @@ from __future__ import print_function
 
 import unittest
 import numpy as np
-import sys
-print(sys.path)
 from pystructrans.marttrans.lat_opt import lat_opt
 
 class TestMartTrans(unittest.TestCase):
@@ -21,5 +19,5 @@ class TestMartTrans(unittest.TestCase):
         #    5.00271946e+00   5.25241719e+00]
           
         lopt, dopt, _ = lat_opt(E1, E2)
-        print(lopt[0])
         self.assertTrue((lopt[0]==[1.,  0., -1.,  0.,  1.,  1.,  0.,  0.,  1.]).all())
+        self.assertEqual(1.8251822436107899e-07, dopt[0])

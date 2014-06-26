@@ -1,4 +1,8 @@
 import unittest
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(BASE_DIR))
 
 # from tests.test_crystallography import TestLattice, TestBravaisLattice,TestOrientationRelationship
 from tests.test_marttrans import TestMartTrans
@@ -21,11 +25,11 @@ def test():
     unittest.TextTestRunner(verbosity=1).run(alltest)
     
 if __name__ == "__main__":
-    import os
-    import sys
-    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-    sys.path.insert(0, os.path.join(BASE_DIR))
-    print sys.path
+#     import os
+#     import sys
+#     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+#     sys.path.insert(0, os.path.join(BASE_DIR))
+#     print sys.path
     
     test()
     
