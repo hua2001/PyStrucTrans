@@ -69,6 +69,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     disp = readkw('disp', 1)
     dim = readkw('dim', 3)
     dist = readkw('dist', 'Cauchy')
+    maxiter = readkw('maxiter', 3)
     
     # display
     if disp > 0:
@@ -175,7 +176,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         return usols
     
     # options for lat_opt
-    options = {'nsol': nsol, 'dist': dist}
+    options = {'nsol': nsol, 'dist': dist, 'maxiter': maxiter}
     lo_level = logging.CRITICAL
     if disp == 2:
         lo_level = logging.WARNING
@@ -245,7 +246,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             logger.info('Done.')    
         
         logger.debug("")
-        logger.debug("Got {:d} solutions in total after finishing {:d}/{:d} jobs.".format(len(sols), ig, len(job_grps))) 
+        logger.debug("Got {:d} solutions in total after finishing {:d}/{:d} jobs.".format(len(sols), ig+1, len(job_grps))) 
         # remove symmetry induced duplication
         sols = unique_sols(sols)
         logger.debug("{:d} solutions are not symmetry related.".format(len(sols))) 
@@ -253,7 +254,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     
         # cutoff extra solutions
         if len(sols)>nsol:
-            while sols[-1]['d'] > sols[nsol]['d']:
+            while sols[-1]['d'] > sols[nsol-1]['d']:
                 sols.pop()
         logger.debug("Cutoff extra solutions: {:d} remain.".format(len(sols))) 
         logger.debug("")
