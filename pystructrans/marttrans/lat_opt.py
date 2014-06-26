@@ -50,13 +50,8 @@ def lat_opt(E1, E2, **kwargs):
     nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
     maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else 3
     
-    if 'hdlr' in kwargs:
-        hdlr = kwargs['hdlr']
-        logger.propagate = False
-        logger.addHandler(hdlr)    
-    else:
-        lev = kwargs['level'] if 'level' in kwargs else logging.INFO 
-        logger.setLevel(lev)   
+    lev = kwargs['level'] if 'level' in kwargs else logging.CRITICAL 
+    logger.setLevel(lev)
     
     if 'logfile' in kwargs:
         logfile = kwargs['logfile']

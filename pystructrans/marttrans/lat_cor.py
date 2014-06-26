@@ -43,7 +43,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
      - maxiter: maximum iteration depth, default is 3
      - lat_opt_par: a map function for parallel excution of lat_opt, for example
         define a pool in __main__ first:
-             pool = Pool(processes=cpu_count())
+             pool = multiprocessing.Pool()
         then define the mapping function
              def lat_opt_par(args, chuncksize):
                 return pool.map(lat_opt_unpack, args, chuncksize)
@@ -98,6 +98,12 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     ====================
     Preparation - finish
     ====================
+    '''
+        
+    ''' 
+    ============
+    Core process
+    ============
     '''
     
     logger.info("Input data")
@@ -181,52 +187,91 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     if 'logfile' in kwargs: options['logfile'] = kwargs['logfile'] 
     if 'loglevel' in kwargs: options['loglevel'] = kwargs['loglevel']
     
-    if 'lat_opt_par' in kwargs:
-        logger.info('HNFs are being solved in parallel ...')
-        lat_opt_par = kwargs['lat_opt_par']
-        args = [(np.dot(E_A, h.reshape(dim,dim)), E_M, options, ih)
-                for ih,h in enumerate(hnfs)]
-        chuncksize = len(hnfs)
-        map = lat_opt_par(args, 1)
-        logger.info('Parallel excution is done.')
-        # chain solutions together
-        sols = []    
-        for i in xrange(len(hnfs)):
-#             sols = merge_sols(sols, list({'d':d, 'l':l, 'h':hnfs[i]} for l,d in zip(map[i][0], map[i][1])))
-            sols.extend(list({'d':d, 'l':l, 'h':hnfs[i]} for l,d in zip(map[i][0], map[i][1])))
-                
-    else:
-        sols = []  
-        logger.info('HNFs are being solved ...')
-        for ih,h in enumerate(hnfs):
-            logger.debug('Processing the HNF No. {:d}'.format(ih+1))
-            res = lat_opt(np.dot(E_A, h.reshape(dim,dim)), E_M, **options)
-#             sols = merge_sols(sols, [{'d':d, 'l':l, 'h':hnfs[i]} for l,d in zip(res[0], res[1])])
-            sols.extend([{'d':d, 'l':l, 'h':hnfs[i]} for l,d in zip(res[0], res[1])])
-        logger.info('Done.')    
-    
-    logger.debug("") 
-    logger.debug("Got {:d} solutions in total.".format(len(sols)))    
+    # chunck hnfs into groups if there are too many
+    def divide_work(W, size): # divide W into sub-groups
+        if size >= len(W): # processes more than HNFs
+            w_idx = -np.ones((size,1))
+            w_idx[:len(W),0] = range(len(W))
+        else:
+            quo = np.divide(len(W), size)
+            rem = np.mod(len(W), size)
+            if rem == 0:
+                w_idx = np.arange(len(W)).reshape(size, quo)
+            else:
+                w_idx = -np.ones((size, quo + 1))
+                w_idx[:, :quo] = np.arange(len(W))[:len(W)-rem].reshape(size, quo)
+                [w_idx[:rem, -1]] = [range(len(W)-rem,len(W))]
+        return [np.delete(row, np.where(row==-1)).astype('i').tolist() for row in w_idx]
+    # each group has at most 500 solutions
+    grp_sz = 500.0/nsol
+    job_grps = divide_work(hnfs, int(math.ceil(len(hnfs)/grp_sz)))
+#     job_grps = divide_work(hnfs, 3)
     def unique_sols(sols):
+        "get unique solutions"
         if len(sols) == 1:
             return copy.copy(sols)
         else:
             # partial solutions
             ps = unique_sols(sols[:-1])
-            ls = [s['l'] for s in ps]
-            if dist_isnew(sols[-1]['l'], ls, LG_A, LG_M)[0]:
+            ls = [(s['h'].reshape(dim,dim).dot(s['l'].reshape(dim, dim))).flatten() for s in ps]
+            nl = (sols[-1]['h'].reshape(dim,dim).dot(sols[-1]['l'].reshape(dim, dim))).flatten()
+            if dist_isnew(nl, ls, LG_A, LG_M)[0]:
                 ps.append(sols[-1])
             return copy.copy(ps)
-    sols = unique_sols(sols)
-    logger.debug("{:d} solutions are not symmetry related.".format(len(sols))) 
-    sols.sort(key = lambda s: s['d'])
     
-    # cutoff extra solutions
-    if len(sols)>nsol:
-        while sols[-1]['d'] > sols[nsol]['d']:
-            sols.pop()
+    sols = []  
+    for ig, g in enumerate(job_grps):
+        job = [(i, hnfs[i]) for i in g]
+        if 'lat_opt_par' in kwargs:
+            # parallel excution
+            logger.info('HNFs are being solved in parallel ...')
+            lat_opt_par = kwargs['lat_opt_par']
+            args = [(np.dot(E_A, h.reshape(dim,dim)), E_M, options, ih)
+                    for ih, h in job]
+            map = lat_opt_par(args, 1)
+            logger.info('Parallel excution is done.')
+            # chain solutions together 
+            for j in xrange(len(job)):
+    #             sols = merge_sols(sols, list({'d':d, 'l':l, 'h':hnfs[i]} for l,d in zip(map[i][0], map[i][1])))
+                sols.extend(list({'d':d, 'l':l, 'h':job[j][1]} for l,d in zip(map[j][0], map[j][1])))
+        else:
+            # sequential exuction
+            logger.info('HNFs are being solved ...')
+            for ih, h in job:
+                logger.debug('Processing the HNF No. {:d}'.format(ih+1))
+                res = lat_opt(np.dot(E_A, h.reshape(dim,dim)), E_M, **options)
+    #             sols = merge_sols(sols, [{'d':d, 'l':l, 'h':hnfs[i]} for l,d in zip(res[0], res[1])])
+                sols.extend([{'d':d, 'l':l, 'h':hnfs[ih]} for l,d in zip(res[0], res[1])])
+            logger.info('Done.')    
+        
+        logger.debug("")
+        logger.debug("Got {:d} solutions in total after finishing {:d}/{:d} jobs.".format(len(sols), ig, len(job_grps))) 
+        # remove symmetry induced duplication
+        sols = unique_sols(sols)
+        logger.debug("{:d} solutions are not symmetry related.".format(len(sols))) 
+        sols.sort(key = lambda s: s['d'])
+    
+        # cutoff extra solutions
+        if len(sols)>nsol:
+            while sols[-1]['d'] > sols[nsol]['d']:
+                sols.pop()
+        logger.debug("Cutoff extra solutions: {:d} remain.".format(len(sols))) 
+        logger.debug("")
+        
+    logger.debug("")    
     logger.debug("Finally {:d} / {:d} solutions are found.".format(len(sols), nsol)) 
     
+    ''' 
+    =====================
+    Core process - finish
+    =====================
+    '''
+    
+    ''' 
+    ============
+    Print result
+    ============
+    '''
     # if disp > 0:
     # Print and save the results
     logger.info('\n')
@@ -302,7 +347,12 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         logger.info(msg)
           
         logger.info('    dist = {:g}'.format(sol['d']))
-        logger.info('')     
+        logger.info('')
+    ''' 
+    =====================
+    Print result - finish
+    =====================
+    '''
     
     # close log file
     if 'logfile' in kwargs: fhdlr.close()

@@ -18,6 +18,6 @@ class TestMartTrans(unittest.TestCase):
         #    3.00060436e+00   3.00241737e+00   3.25271955e+00   4.25271946e+00
         #    5.00271946e+00   5.25241719e+00]
           
-        lopt, dopt, _ = lat_opt(E1, E2)
+        lopt, dopt = lat_opt(E1, E2)
         self.assertTrue((lopt[0]==[1.,  0., -1.,  0.,  1.,  1.,  0.,  0.,  1.]).all())
         self.assertEqual(1.8251822436107899e-07, dopt[0])
