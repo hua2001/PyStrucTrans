@@ -33,11 +33,8 @@ def run_lat_cor():
 #                      help="don't print status messages to stdout")
     # define options
     parser.add_option("-n","--number-of-solutions", dest="N", default=1, type="int", help="Number of solutions. default = 1")
-    parser.add_option("-s","--save-results", dest="save", action='store_true', default=False, help="Save the results in an HDF5 file. default = False")
-    parser.add_option("-f","--filename",dest="filename",metavar="FILE",default="lat_cor.hdf5",
-                      help="The name of the HDF5 file that stores the results. default=lat_cor.hdf5")
-    parser.add_option("-d","--display",dest="display",action='store_true', default=False,help="Display the calculation process and results. default = False")
-    parser.add_option("-l","--logging",dest="logging",action='store_true', default=False,help="Save the log in \"lattcorr.log\". default = False")
+    parser.add_option("-d","--display", dest="display", action='store_true', default=False,help="Display the calculation process and results. default = False")
+    parser.add_option("-l","--log-file", dest="logfile", default=False, help="Save the log in \"lattcorr.log\". default = False")
     
     # parse the options
     (opts, args) = parser.parse_args()
