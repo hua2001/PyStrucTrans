@@ -30,6 +30,26 @@ def vertex(o, E, n=3):
     else:
         raise visualError('The dimension n has to be 2 or 3!')
     
+def bonds(verts):
+        '''
+        Verts are a list of vertices, 
+        which are 8x3 for 3D, 4x2 for 2D
+        '''
+        verts = np.array(verts)
+                
+        if len(verts[0])==3:
+            idx_1 = [0,0,0,1,1,4,4,7,7,6,3,5]
+            idx_2 = [1,2,3,4,6,2,7,6,5,3,5,2]
+            idx = np.vstack((idx_1, idx_2)).T
+            bds = [[verts[i[0]], verts[i[1]]] for i in idx]
+            return np.array(bds)
+
+        elif len(verts[0])==2:
+            idx = [[0,1],[0,2],[1,3],[2,3]]
+            return np.array([[verts[i[0]], verts[i[1]]] for i in len(idx)])
+        else:
+            raise visualError('The number of vertices is not valid.')
+    
 def box(v_list, E, n=3):
     dim = np.array(E).shape
     v_list = np.array(v_list)
