@@ -212,6 +212,9 @@ class TwinPair():
             print 'The pair of variants is not twinnable!'
             
     def QI(self):
+        r'''
+        return the rotation matrix of Uj relative to Ui for the first solution
+        '''
         anlist = self.getTwinParam()
         if len(anlist) == 2:
             return (self._Ui + np.outer(anlist[0][0], anlist[0][1])).dot(inv(self._Uj))
@@ -219,6 +222,9 @@ class TwinPair():
             raise TwinPairError('Not a valid twin pair. Please check if it is twinnable.')
         
     def QII(self):
+        r'''
+        return the rotation matrix of Uj relative to Ui for the second solution
+        '''
         anlist = self.getTwinParam()
         if len(anlist) == 2:
             return (self._Ui + np.outer(anlist[1][0], anlist[1][1])).dot(inv(self._Uj))
@@ -273,6 +279,10 @@ class TwinPair():
                 cofU = _math.cofactor(self._Ui.dot(self._Ui) - np.eye(3))
                 minus_alpha = 2*np.dot(self._Ui.dot(a), cofU.dot(n))    
                 beta = det(self._Ui.dot(self._Ui)-np.eye(3))+minus_alpha/4
+#                 print("minus_alpha=%.5f"%minus_alpha)
+#                 print("g(0)g(1/2)=%.5f"%(beta*(-minus_alpha/4+beta)))
+#                 print("g(0)=%.5f"%(-minus_alpha/4+beta))
+#                 print("g(1/2)=%.5f"%(beta))
                 if abs(minus_alpha)<1e-5:
                     vol.append([0,1])
                 elif beta/minus_alpha > 1e-6:
@@ -324,7 +334,7 @@ class TwinPair():
 def isSameAN(t1, t2):
     M1 = np.outer(t1[0:3], t1[3:6])
     M2 = np.outer(t2[0:3], t2[3:6])   
-    return np.max(np.abs(M1-M2)) < 1E-6   
+    return np.max(np.abs(M1-M2)) < 1E-3  
         
         
 def TwinSolver(U, e, type):

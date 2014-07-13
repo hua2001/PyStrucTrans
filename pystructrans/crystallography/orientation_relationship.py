@@ -62,6 +62,7 @@ def euler(phi_1, Psi, phi_2):
     Psi = rad(Psi)
     phi_2 = rad(phi_2)
     return np.dot(rZ(phi_2), rY(Psi).dot(rX(phi_1)))
+
 def Rot(t, z):
     r'''
     calculate the rotation matrix about axis z

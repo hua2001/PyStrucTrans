@@ -133,6 +133,25 @@ class Martensite():
                 raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
         else:
             raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+    def getLc_list(self, C, Lc):
+        r'''
+        C should be the conventional lattice base
+        '''
+        if isinstance(C, np.ndarray) and isinstance(C, np.ndarray):
+            if C.shape == (3,3) and C.shape == (3,3):
+                laue_idx = self.getLaueIdx()
+                lg_a = self.getLaue()
+                lcor = []
+                for i in xrange(len(laue_idx)):
+                    ltemp = []
+                    for j in xrange(len(laue_idx[0])):
+                        ltemp.append((np.dot(inv(C), lg_a[laue_idx[i][j]].dot(C))).dot(Lc))
+                    lcor.append(ltemp)
+                return np.array(lcor)
+            else:
+                raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+        else:
+            raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
         
         
         
