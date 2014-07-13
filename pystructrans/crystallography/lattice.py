@@ -1,5 +1,4 @@
-import numpy as np
-import numpy.linalg as la
+from pystructrans.general_imports import *
 
 CUBIC_LAUE_GROUP = np.array([# identity
                              [[1,0,0],[0,1,0],[0,0,1]],
@@ -79,7 +78,6 @@ class Lattice():
     .. py:attribute:: __E (2D numpy array) - base matrix of the lattice, each column is a lattice vector
     .. py:attribute:: __N (integer) - the dimension of the vector space where the lattice lives
     
-    Methods:
     '''   
     
     def __init__(self, E):

@@ -1,6 +1,7 @@
 /*
 
-!/pystructrans
+!pystructrans/
+!doc/
 !.gitignore
 !COPYING
 !.README.rst
