@@ -19,10 +19,8 @@ def mat_dot (la, lb):
     d = int(sqrt(len(la[0]))) # dimension
     lc = np.zeros_like(la)
     
-    
     for i in xrange(d):
         for j in xrange(d):
-#             lc[:, i*d+j] = np.zeros(len(la))
             for k in xrange(d):
                 # C_ij = A_ik*B_kj                
                 lc[:, i*d+j] += la[:,i*d+k] * lb[:,k*d+j]
