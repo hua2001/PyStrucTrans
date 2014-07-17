@@ -125,10 +125,10 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     lprint("", 1)
     
     # Determine the list of Hermite Normal Forms
-    r = la.det(E_M)/la.det(E_A) # ratio of the volumes of the unit cells
+    r = la.det(E_M)/la.det(E_A)  # ratio of the volumes of the unit cells
     
     # find all the sizes of sublattices corresponding to 
-    # volume changes less than the thershold "vol_th"
+    # volume changes less than the threshold "vol_th"
     vf = np.arange(
               math.ceil((1-vol_th)*r), # lower bound
               math.floor((1+vol_th)*r)+1,  # upper bound
@@ -170,12 +170,14 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     
     # options for lat_opt
     options = {'nsol': nsol, 'dist': dist, 'disp': disp - 1, 'maxiter': maxiter}
-    if 'logfile' in kwargs: options['logfile'] = kwargs['logfile'] 
-    if 'loglevel' in kwargs: options['loglevel'] = kwargs['loglevel']
+    if 'logfile' in kwargs:
+        options['logfile'] = kwargs['logfile']
+    if 'loglevel' in kwargs:
+        options['loglevel'] = kwargs['loglevel']
     
     # unique ones in a list of solutions
     def unique_sols(sols):
-        "get unique solutions"
+        """get unique solutions"""
         if len(sols) == 1:
             return sols[:]
         else:
@@ -186,7 +188,54 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             if dist_isnew(nl, ls, LG_A, LG_M)[0]:
                 ps.append(sols[-1])
             return copy.copy(ps)
-    
+
+    EXT_SOLS = {}
+    def ext_sols(l):
+        """add l to extended solution dictionary"""
+        L = l.reshape(dim, dim)
+        ls = [q1.dot(L).dot(q2) for q1 in LG_A for q2 in LG_M]
+        for c in ls:
+            EXT_SOLS[tuple(c.flatten())] = True
+
+    def add_sol(sols, s):
+        """add new solution s to the list of solutions"""
+        if tuple(s['l']) in EXT_SOLS:
+            return
+        else:
+            pos = len(sols)
+            for i in xrange(len(sols)):
+                if sols[i]['d'] >= s['d']:
+                    pos = i
+                    break
+            sols.insert(pos, s)
+            ext_sols(s['l'])
+            truncate_sols(sols, nsol)
+
+    def truncate_sols(sols, nsol):
+        """truncate sols to number of solutions"""
+        if len(sols) > nsol:
+            t = 0
+            for i in xrange(len(sols)):
+                if i >= nsol and sols[- 1 - i]['d'] > sols[nsol-1]['d']:
+                    t += 1
+                else:
+                    break
+            sols = sols[:-t]
+
+    def merge_sols(sols, new):
+        """merge new solutions into old ones"""
+        if len(sols) == 0:
+            sols.extend(new)
+            for s in new:
+                ext_sols(s['l'])
+        else:
+            for s in xrange(len(new)):
+                if new[s]['d'] <= sols[-1]['d']:
+                    add_sol(sols, new[s])
+                else:
+                    return
+
+
     # chunck hnfs into groups if there are too many
     def divide_work(W, size): # divide W into sub-groups
         if size >= len(W): # processes more than HNFs
@@ -231,15 +280,16 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             for ih, h in job:
                 lprint('Processing the HNF No. {:d}'.format(ih+1), 2)
                 res = lat_opt(np.dot(E_A, h.reshape(dim,dim)), E_M, **options)
-                sols.extend([{'d':d, 'l':l, 'h':hnfs[ih]} for l,d in zip(res[0], res[1])])
+                merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res[0], res[1])])
+                # sols.extend([{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res[0], res[1])])
             lprint('Done.', 1)    
         
         lprint("\nGot {:d} solutions in total after finishing {:d}/{:d} jobs.".format(len(sols), ig+1, len(job_grps)), 2) 
         # remove symmetry induced duplication
-        sols = unique_sols(sols)
-        lprint("{:d} solutions are not symmetry related.".format(len(sols)), 3) 
+        # sols = unique_sols(sols)
+        # lprint("{:d} solutions are not symmetry related.".format(len(sols)), 3)
         
-        sols.sort(key = lambda s: s['d'])
+        sols.sort(key=lambda s: s['d'])
     
         # cutoff extra solutions
         if len(sols)>nsol:
