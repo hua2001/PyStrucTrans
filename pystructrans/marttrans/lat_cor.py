@@ -174,20 +174,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     if 'loglevel' in kwargs:
         options['loglevel'] = kwargs['loglevel']
     
-    # unique ones in a list of solutions
-    def unique_sols(sols):
-        """get unique solutions"""
-        if len(sols) == 1:
-            return sols[:]
-        else:
-            # partial solutions
-            ps = unique_sols(sols[:-1])
-            ls = [(s['h'].reshape(dim,dim).dot(s['l'].reshape(dim, dim))).flatten() for s in ps]
-            nl = (sols[-1]['h'].reshape(dim,dim).dot(sols[-1]['l'].reshape(dim, dim))).flatten()
-            if dist_isnew(nl, ls, LG_A, LG_M)[0]:
-                ps.append(sols[-1])
-            return copy.copy(ps)
-
     EXT_SOLS = {}
     def ext_sols(l):
         """add l to extended solution dictionary"""
@@ -235,27 +221,11 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
 
 
     # chunck hnfs into groups if there are too many
-    def divide_work(W, size): # divide W into sub-groups
-        if size >= len(W): # processes more than HNFs
-            w_idx = -np.ones((size,1))
-            w_idx[:len(W),0] = range(len(W))
-        else:
-            quo = np.divide(len(W), size)
-            rem = np.mod(len(W), size)
-            if rem == 0:
-                w_idx = np.arange(len(W)).reshape(size, quo)
-            else:
-                w_idx = -np.ones((size, quo + 1))
-                w_idx[:, :quo] = np.arange(len(W))[:len(W)-rem].reshape(size, quo)
-                [w_idx[:rem, -1]] = [range(len(W)-rem,len(W))]
-        return [np.delete(row, np.where(row==-1)).astype('i').tolist() for row in w_idx]
-    # each group has at most 500 solutions
-    grp_sz = 500.0/nsol
-    job_grps = divide_work(hnfs, int(math.ceil(len(hnfs)/grp_sz)))
-    
     def divide_work(W, size): # divide W into sub-groups of at most size
         ngrp = int(np.ceil(len(W)/float(size)))
         return [W[int(g*size) : min(int((g+1)*size), len(W))] for g in xrange(ngrp)]
+    # each group has at most 500 solutions
+    grp_sz = 500.0/nsol
     job_grps = divide_work(range(len(hnfs)), grp_sz)
     sols = []  
     for ig, g in enumerate(job_grps):
@@ -266,12 +236,12 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             
             lat_opt_par = kwargs['lat_opt_par']
             args = [(np.dot(E_A, h.reshape(dim,dim)), E_M, options, ih) for ih, h in job]
-            map = lat_opt_par(args, 1)
-            
-            lprint('Parallel excution is done.', 1)
-            # chain solutions together 
-            for j in xrange(len(job)):
-                sols.extend(list({'d':d, 'l':l, 'h':job[j][1]} for l,d in zip(map[j][0], map[j][1])))
+            async_results = [lat_opt_par([arg]) for arg in args]
+            for ir, ares in enumerate(async_results):
+                res = ares.get()
+                merge_sols(sols, [{'d': d, 'l': l, 'h': job[ir][1]} for l, d in zip(res[0], res[1])])
+                
+            lprint("\n{:d}/{:d} job groups finished\n".format(ig+1, len(job_grps)), 2)
         else:
             # sequential exuction
             lprint('HNFs are being solved ...', 1)
@@ -280,9 +250,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 res = lat_opt(np.dot(E_A, h.reshape(dim,dim)), E_M, **options)
                 merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res[0], res[1])])
                 # sols.extend([{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res[0], res[1])])
-            lprint('Done.', 1)    
-        
-        lprint("\nGot {:d} solutions in total after finishing {:d}/{:d} jobs.".format(len(sols), ig+1, len(job_grps)), 2) 
+            lprint('Done.', 1)   
         
     lprint("\nFinally {:d} / {:d} solutions are found.".format(len(sols), nsol), 3) 
     
