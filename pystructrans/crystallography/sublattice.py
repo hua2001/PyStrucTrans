@@ -1,4 +1,6 @@
-import numpy as np
+from pystructrans.general_imports import *
+import itertools
+from operator import mul
 
 def _divisors(n):
     '''
@@ -9,16 +11,11 @@ def _divisors(n):
     :return: vector - the list of all the divisors of n
     '''
 
-    d = np.array([])
-    for i in range(np.int_(np.floor(n/2))):
-        if np.remainder(n,i+1) == 0:
-            d = np.append(d, [i+1], axis=0)
-    if n==1:
-        d = np.array([1])
-    else:
-        d = np.append(d, [n], axis=0)
-            
-    return np.int_(d)
+    dvrs = [ i + 1
+        for i in xrange(int(np.floor(n/2)))
+        if n % (i + 1) == 0 ]
+    dvrs.append(n)
+    return tuple(dvrs)
 
 def hnf_from_diag(diag):
     '''
@@ -27,25 +24,22 @@ def hnf_from_diag(diag):
     :param diag: diagonal elments [d1, ..., dN]
     :type diag: list or 1D array
     :return: [n x N^2] matrix, where n is the number of HNFs with the given diagonal.
-    '''        
+    '''
     N = len(diag)
-    H = np.zeros((1, N**2))
-    for i in range(N):
-        H[0, i+N*i] = diag[i]
-    
-    for i in range(1, N):
-        for j in range(i):
-            # modify the (i,j) component
-            # copy the H list as a temporary new list
-            H_new = np.empty_like(H)
-            H_new[:] = H
-            for d in range(1, int(max(diag))):
-                if d < diag[i]:
-                    # modify the (i,j) component of all the new matrices
-                    H_new[:, j+N*i] = -d
-                    # stack the new list to the old one
-                    H = np.vstack((H, H_new))
-    return H
+    def set_ij(hnfs, modif):
+        newH = []
+        for H in hnfs:
+            if H[modif[0], modif[1]] == 0:
+                M = H.copy()
+                M[modif[0], modif[1]] = modif[2]
+                newH.append(M)
+        hnfs.extend(newH)
+        return hnfs
+    hnfs = [np.diag(diag)]
+    # hnfs = [[diag[a] if a == b else 0 for a in xrange(N) for b in xrange(N)]]
+    modifs = ((i, j, -d) for i in xrange(N) for j in xrange(i) for d in xrange(1, int(diag[i])))
+    reduce(set_ij, modifs, hnfs)
+    return np.array(hnfs)
 
 def hnf_from_det(n, N=3):
     '''    
@@ -55,28 +49,57 @@ def hnf_from_det(n, N=3):
     :type n: integer
     :return: [9 x N] matrix, where N is the number of HNFs with the given diagonal.
     '''
+    if n < 0:
+        raise ValueError("negative determinant of HNF")
     # get all the divisors of n
-    ds = _divisors(n)
-    # list all the combinations of the divisors
-    diags = np.ones((1,N))  
-    if n != 1: # if more than one divisors
-        for i in range(N):
-            # copy the list of diagonals
-            diags_new = diags.copy()
-            for d in ds[1:]:
-                diags_new[:,i] = d
-                diags = np.vstack((diags, diags_new))
-    
-    # find the diagonals giving the correct determinant
-    PI = np.ones(len(diags))
-    for i in range(N):
-        PI = PI * diags[:,i]
-    diags = diags[np.where(PI==n)]
-    
-    # generate Hermite normal forms from the list of diagonals
-    H = np.zeros([1, N**2])
-    for row in diags:
-        H = np.vstack((H, hnf_from_diag(row)))
-    del diags
-    return H[1:]
-    
+    diags = (d for d in itertools.product(_divisors(n), repeat=N) if reduce(mul, d) == n)
+    def ext(x, y):
+        if x is None:
+            return hnf_from_diag(y)
+        return np.append(x, hnf_from_diag(y), axis=0)
+    return np.array(reduce(ext, diags, None))
+
+import unittest
+
+class TestSublattice(unittest.TestCase):
+    def test_divisor(self):
+        self.assertEqual(_divisors(1), (1,))
+        self.assertEqual(_divisors(14), (1, 2, 7, 14))
+        self.assertEqual(_divisors(18), (1, 2, 3, 6, 9, 18))
+
+    def test_hnf_from_diag(self):
+        self.assertIn([[2, 0, 0], [0, 2, 0], [0, 0, 1]], hnf_from_diag([2, 2, 1]))
+        hnfs = [
+            [[6, 0, 0], [0, 3, 0], [0, 0, 2]],
+            [[6, 0, 0], [-1, 3, 0], [0, 0, 2]],
+            [[6, 0, 0], [-2, 3, 0], [0, 0, 2]],
+            [[6, 0, 0], [0, 3, 0], [-1, 0, 2]],
+            [[6, 0, 0], [-1, 3, 0], [-1, 0, 2]],
+            [[6, 0, 0], [-2, 3, 0], [-1, 0, 2]],
+            [[6, 0, 0], [0, 3, 0], [0, -1, 2]],
+            [[6, 0, 0], [-1, 3, 0], [0, -1, 2]],
+            [[6, 0, 0], [-2, 3, 0], [0, -1, 2]],
+            [[6, 0, 0], [0, 3, 0], [-1, -1, 2]],
+            [[6, 0, 0], [-1, 3, 0], [-1, -1, 2]],
+            [[6, 0, 0], [-2, 3, 0], [-1, -1, 2]]
+        ]
+        self.assertEqual(len(hnf_from_diag([6, 3, 2])), len(hnfs))
+        for h in hnf_from_diag([6, 3, 2]):
+            self.assertIn(h.tolist(), hnfs)
+
+    def test_hnf_from_det(self):
+        self.assertListEqual(hnf_from_det(0).tolist(), [[[0, 0, 0], [0, 0, 0], [0, 0, 0]]])
+        hnfs = [
+            [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
+            [[1, 0, 0], [0, 1, 0], [-1, 0, 2]],
+            [[1, 0, 0], [0, 1, 0], [0, -1, 2]],
+            [[1, 0, 0], [0, 1, 0], [-1, -1, 2]],
+            [[1, 0, 0], [0, 2, 0], [0, 0, 1]],
+            [[1, 0, 0], [-1, 2, 0], [0, 0, 1]],
+            [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
+        ]
+        self.assertEqual(len(hnf_from_det(2)), len(hnfs))
+        for h in hnf_from_det(2):
+            self.assertIn(h.tolist(), hnfs)
+
+        self.assertRaises(ValueError, hnf_from_det, -2)
