@@ -14,7 +14,6 @@ from timeit import default_timer as timer
 
 from lat_opt import lat_opt
 from lat_opt import logger as lo_logger
-from dist import dist_isnew, dist_unique
 from pystructrans.mat_math import mat_dot
 from pystructrans.crystallography import BravaisLattice, HermiteNormalForms
     
@@ -199,16 +198,15 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
 
     def add_sol(sols, s):
         """add new solution s to the list of solutions"""
-        if tuple(s['l']) in EXT_SOLS:
-            return
-        else:
+        ltot = np.dot(s['h'].reshape(dim, dim), s['l'].reshape(dim,dim)).flatten()
+        if not tuple(ltot) in EXT_SOLS:
             pos = len(sols)
             for i in xrange(len(sols)):
                 if sols[i]['d'] >= s['d']:
                     pos = i
                     break
             sols.insert(pos, s)
-            ext_sols(s['l'])
+            ext_sols(ltot)
             truncate_sols(sols, nsol)
 
     def truncate_sols(sols, nsol):
@@ -216,18 +214,18 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         if len(sols) > nsol:
             t = 0
             for i in xrange(len(sols)):
-                if i >= nsol and sols[- 1 - i]['d'] > sols[nsol-1]['d']:
+                if i < len(sols) - nsol and sols[- 1 - i]['d'] > sols[nsol - 1]['d']:
                     t += 1
                 else:
                     break
-            sols = sols[:-t]
+            for _ in xrange(t):
+                sols.pop(-1)
 
     def merge_sols(sols, new):
         """merge new solutions into old ones"""
         if len(sols) == 0:
-            sols.extend(new)
             for s in new:
-                ext_sols(s['l'])
+                add_sol(sols, s)
         else:
             for s in xrange(len(new)):
                 if new[s]['d'] <= sols[-1]['d']:
@@ -285,17 +283,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             lprint('Done.', 1)    
         
         lprint("\nGot {:d} solutions in total after finishing {:d}/{:d} jobs.".format(len(sols), ig+1, len(job_grps)), 2) 
-        # remove symmetry induced duplication
-        # sols = unique_sols(sols)
-        # lprint("{:d} solutions are not symmetry related.".format(len(sols)), 3)
-        
-        sols.sort(key=lambda s: s['d'])
-    
-        # cutoff extra solutions
-        if len(sols)>nsol:
-            while sols[-1]['d'] > sols[nsol-1]['d']:
-                sols.pop()
-        lprint("Cutoff extra solutions: {:d} remain.\n".format(len(sols)), 3)
         
     lprint("\nFinally {:d} / {:d} solutions are found.".format(len(sols), nsol), 3) 
     
@@ -357,7 +344,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             else:
                 msg = '       ['
             for k in xrange(dim):
-                msg += '{:>9.6f} '.format(H[j, k])
+                msg += '{:>3g} '.format(H[j, k])
             msg = msg[:-1] + ']'
             lprint(msg, 1)  
      

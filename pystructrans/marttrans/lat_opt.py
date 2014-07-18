@@ -6,10 +6,9 @@ import numpy.linalg as la
 import copy
 from itertools import chain
 
-from dist import Eric_dist, eric_dist_mat, eric_dist_unique
+from dist import Eric_dist, eric_dist_mat
 from dist import strain_dist, strain_dist_mat
 from dist import Cauchy_dist, Cauchy_dist_mat
-from dist import dist_isnew
 
 from pystructrans.crystallography import Lattice, LLL
 from pystructrans.mat_math import mat_dot
@@ -78,32 +77,31 @@ def lat_opt(E1, E2, **kwargs):
     # LLL-reduction
     Er2 = LLL(E2)
     Er1 = LLL(E1)
+    Er2inv = la.inv(Er2)
     
     # starting point
     lo = np.rint(np.dot(la.inv(E1), Er1))
-    chi = np.rint(la.inv(Er2).dot(E2))
+    chi = np.rint(Er2inv.dot(E2))
     
     # determine distance function
     distance = kwargs['dist'] if 'dist' in kwargs else 'Cauchy'
     
     lprint("distance is \"{:s}\"".format(distance), 2)
     
+    # distance functions
     if distance == 'Ericksen':
-        dist = eric_dist
+        dist = lambda x: Eric_dist(x, E1, Er2)
         dist_mat = eric_dist_mat
-        dist_unique = eric_dist_unique
     if distance == 'strain':
-        dist = strain_dist
+        dist = lambda x: strain_dist(x, E1, Er2inv)
         dist_mat = strain_dist_mat
-        dist_unique = eric_dist_unique
     if distance == 'Cauchy':
-        dist = Cauchy_dist
+        dist = lambda x: Cauchy_dist(x, E1, Er2inv)
         dist_mat = Cauchy_dist_mat
-        dist_unique = eric_dist_unique
     
     # lattice groups
-    LG1 = Lattice(Er1).getSpecialLatticeGroup().astype('float')
-    LG2 = Lattice(Er1).getSpecialLatticeGroup().astype('float') 
+    LG1 = Lattice(E1).getSpecialLatticeGroup()
+    LG2 = Lattice(Er2).getSpecialLatticeGroup()
     SOLG2 = LG2
     
     ''' 
@@ -148,11 +146,11 @@ def lat_opt(E1, E2, **kwargs):
         
         def generate_children(self):
             "generate children nodes"
-            return [(self.elem).dot(t) for i,t in enumerate(GLTree._T)]
+            return [self.elem.dot(t) for i, t in enumerate(GLTree._T)]
         
         def calc_elem_dist(self):
             "distance value of the node element"
-            return dist(self.elem, E1, Er2)
+            return dist(self.elem)
          
         def calc_children_dist(self):
             "distance values of childrens as list"
@@ -161,7 +159,7 @@ def lat_opt(E1, E2, **kwargs):
                 if print_ary(c) in GLTree.CACHE:
                     res.append(GLTree.CACHE[tuple(c.flatten())].elem_dist)
                 else:
-                    res.append(dist(c, E1, Er2))
+                    res.append(dist(c))
             return res
          
         def is_min(self):
@@ -206,7 +204,7 @@ def lat_opt(E1, E2, **kwargs):
                         ls = ls[:-1]
                     return ds[:], ls[:]
         # directly append if not full
-        else:
+        elif tuple(tree.elem.flatten()) not in EXT_SOLS:
             ds.append(tree.elem_dist)
             ls.append(tree.elem.flatten())
             ext_sols(tree.elem)
