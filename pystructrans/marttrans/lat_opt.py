@@ -94,7 +94,6 @@ def lat_opt(E1, E2, **kwargs):
     # lattice groups
     LG1 = Lattice(E1).getSpecialLatticeGroup()
     SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(Er2).getSpecialLatticeGroup()
-
     ''' 
     ====================
     Preparation - finish
@@ -136,6 +135,7 @@ def lat_opt(E1, E2, **kwargs):
                 self.children_dist = None
                 GLTree.CACHE[self.hashcode] = self
                 self.cached = False
+                self.children_dist = None
         
         def generate_children(self):
             "generate children nodes"

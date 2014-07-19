@@ -226,7 +226,7 @@ class Lattice():
         if self.__SLatticeGroup is None:
             E = self.__E
             Einv = la.inv(E)
-            return np.array([np.rint(Einv.dot(Q.dot(E))) for Q in self.getLaueGroup()], dtype='int')
+            return np.array([(Einv.dot(Q.dot(E))).astype('int') for Q in self.getLaueGroup()])
     
     def getLatticeGroup(self):
         '''
@@ -283,17 +283,3 @@ def _in_O3(Q):
         return False
     else:
         return abs(la.det(Q)) == 1.0 and (np.dot(Q, Q.T) == np.eye(len(Q))).all()
-
-# def inPointGroup(Q, L):
-#     '''
-#     :return: if Q is in the point group of L
-#     '''
-#     # if Q is not an orthogonal matrix, return false
-#     if not _in_O3(Q):
-#         return False
-#     if not (isinstance(L, Lattice) and L.getDimension() == len(Q)):
-#         return False
-#     L_old = L
-#     E = L.getBase()
-#     L_new = Lattice(np.dot(Q, E))
-#     return L_new == L_old

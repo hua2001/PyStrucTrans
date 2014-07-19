@@ -56,7 +56,7 @@ def hnf_from_det(n, N=3):
         if x is None:
             return hnf_from_diag(y)
         return np.append(x, hnf_from_diag(y), axis=0)
-    return reduce(ext, diags, None)
+    return np.array(reduce(ext, diags, None))
 
 import unittest
 
