@@ -134,11 +134,13 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
               dtype='int')
     if len(vf)==0:
         vf = (np.round(r),)     
-            
-    hnfs = np.zeros((1,dim**2))
+
+    hnfs = None
     for i in vf:
-        hnfs = np.vstack((hnfs, HermiteNormalForms(i, N=dim)))
-    hnfs = hnfs[1:] # remove the all-zero first row
+        if hnfs == None:
+            hnfs = HermiteNormalForms(i, dim)
+        else:
+            hnfs = np.append(hnfs, HermiteNormalForms(i, dim), axis=0)
     
     lprint('The ratio between the volume of unit cells is {:g}.'.format(r), 2)
     lprint('The volume change threshold is {:.2%}.'.format(vol_th), 2)
@@ -150,25 +152,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     lprint('Search over {:d} sublattices'.format(len(hnfs)), 1)
     lprint('===========================', 1)
     
-    def merge_sols(a, b):
-        # combine and sort
-        tsols = copy.copy(a)
-        tsols.extend(b)
-        tsols.sort(key=lambda sol: sol['d'])
-        # construct unique sols
-        usols = copy.copy(tsols[:1])
-        for sol in tsols[1:]:
-            ls = [us['l'] for us in usols]
-            if dist_isnew(sol['l'], ls, LG_A, LG_M)[0]:
-                usols.append(sol)
-        # cutoff extra solutions
-        if len(usols)>nsol:
-            while usols[-1]['d'] > usols[nsol]['d']:
-                usols.pop()
-        return usols
-    
     # options for lat_opt
-    options = {'nsol': nsol, 'dist': dist, 'disp': disp - 1, 'maxiter': maxiter}
+    options = {'nsol': nsol, 'dist': dist, 'disp': disp - 1, 'maxiter': maxiter, 'SOLG2': LG_M}
     if 'logfile' in kwargs:
         options['logfile'] = kwargs['logfile']
     if 'loglevel' in kwargs:
@@ -177,19 +162,19 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     EXT_SOLS = {}
     def ext_sols(l):
         """add l to extended solution dictionary"""
-        L = l.reshape(dim, dim)
-        ls = [q1.dot(L).dot(q2) for q1 in LG_A for q2 in LG_M]
+        ls = (q1.dot(l).dot(q2) for q1 in LG_A for q2 in LG_M)
         for c in ls:
-            EXT_SOLS[tuple(c.flatten())] = True
+            EXT_SOLS[c.tostring()] = True
 
     def add_sol(sols, s):
         """add new solution s to the list of solutions"""
-        ltot = np.dot(s['h'].reshape(dim, dim), s['l'].reshape(dim,dim)).flatten()
-        if not tuple(ltot) in EXT_SOLS:
+        ltot = np.dot(s['h'], s['l'])
+        if not ltot.tostring() in EXT_SOLS:
+        # if True:
             pos = len(sols)
-            for i in xrange(len(sols)):
-                if sols[i]['d'] >= s['d']:
-                    pos = i
+            for k in xrange(len(sols)):
+                if sols[k]['d'] >= s['d']:
+                    pos = k
                     break
             sols.insert(pos, s)
             ext_sols(ltot)
@@ -219,13 +204,12 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 else:
                     return
 
-
     # chunck hnfs into groups if there are too many
     def divide_work(W, size): # divide W into sub-groups of at most size
         ngrp = int(np.ceil(len(W)/float(size)))
         return [W[int(g*size) : min(int((g+1)*size), len(W))] for g in xrange(ngrp)]
     # each group has at most 500 solutions
-    grp_sz = 500.0/nsol
+    grp_sz = 1000.0/nsol
     job_grps = divide_work(range(len(hnfs)), grp_sz)
     sols = []  
     for ig, g in enumerate(job_grps):
@@ -235,11 +219,11 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             lprint('HNFs are being solved in parallel ...', 1)
             
             lat_opt_par = kwargs['lat_opt_par']
-            args = [(np.dot(E_A, h.reshape(dim,dim)), E_M, options, ih) for ih, h in job]
+            args = [(np.dot(E_A, h), E_M, options, ih) for ih, h in job]
             async_results = [lat_opt_par([arg]) for arg in args]
             for ir, ares in enumerate(async_results):
                 res = ares.get()
-                merge_sols(sols, [{'d': d, 'l': l, 'h': job[ir][1]} for l, d in zip(res[0], res[1])])
+                merge_sols(sols, [{'d': d, 'l': l, 'h': job[ir][1]} for l, d in zip(res['lopt'], res['dopt'])])
                 
             lprint("\n{:d}/{:d} job groups finished\n".format(ig+1, len(job_grps)), 2)
         else:
@@ -247,9 +231,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             lprint('HNFs are being solved ...', 1)
             for ih, h in job:
                 lprint('Processing the HNF No. {:d}'.format(ih+1), 2)
-                res = lat_opt(np.dot(E_A, h.reshape(dim,dim)), E_M, **options)
-                merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res[0], res[1])])
-                # sols.extend([{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res[0], res[1])])
+                res = lat_opt(np.dot(E_A, h), E_M, **options)
+                merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res['lopt'], res['dopt'])])
             lprint('Done.', 1)   
         
     lprint("\nFinally {:d} / {:d} solutions are found.".format(len(sols), nsol), 3) 
@@ -259,7 +242,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     Core process - finish
     =====================
     '''
-    
+
     ''' 
     ============
     Print result
@@ -272,19 +255,19 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     for i, sol in enumerate(sols):
         lprint('\nSolution {:d} out of {:d}:'.format(i+1, nsol), 1)
         lprint('----------------------', 1)
-        H = sol['h'].reshape(dim, dim)
-        L = sol['l'].reshape(dim, dim)
+        H = sol['h']
+        L = sol['l']
          
-        cor = np.dot(np.dot(la.inv(C_A), np.dot(H, L)), C_M).reshape(dim*dim)
+        cor = np.dot(np.dot(la.inv(C_A), np.dot(H, L)), C_M)
         sol['cor'] = copy.copy(cor)
         lprint(' - Lattice correspondence:', 1)
         for j in xrange(dim):
             msg = '    ['
             for k in xrange(dim):
-                msg += '{:>5.2f} '.format(cor[dim*k+j])
+                msg += '{:>5.2f} '.format(cor[k ,j])
             msg = msg[:-1] + '] ==> [ '
             for k in xrange(dim):
-                msg += '%1d ' % np.eye(dim)[j,k]
+                msg += '%1d ' % np.eye(dim)[j, k]
             msg +=']'
             lprint(msg, 1)
          
@@ -304,7 +287,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 msg += '{:>9.6f} '.format(U[j, k])
             msg = msg[:-1] + ']'
             lprint(msg, 1)            
-        sol['U'] = copy.copy(U.reshape(dim*dim))
+        sol['U'] = copy.copy(U)
          
         for j in xrange(dim):
             if j == 0:
@@ -312,7 +295,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             else:
                 msg = '       ['
             for k in xrange(dim):
-                msg += '{:>3g} '.format(H[j, k])
+                msg += '{:>4g} '.format(H[j, k])
             msg = msg[:-1] + ']'
             lprint(msg, 1)  
      
@@ -343,7 +326,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     Print result - finish
     =====================
     '''
-    
+
     # close log file
     if 'logfile' in kwargs: fhdlr.close()
     # timer

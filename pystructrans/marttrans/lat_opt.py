@@ -1,17 +1,12 @@
 from pystructrans.general_imports import *
 
-import logging, threading
+import logging
 import numpy as np
 import numpy.linalg as la
-import copy
-from itertools import chain
 
-from dist import Eric_dist, eric_dist_mat
-from dist import strain_dist, strain_dist_mat
-from dist import Cauchy_dist, Cauchy_dist_mat
+from dist import Eric_dist, strain_dist, Cauchy_dist
 
 from pystructrans.crystallography import Lattice, LLL
-from pystructrans.mat_math import mat_dot
 
 from timeit import default_timer as timer
 
@@ -19,7 +14,6 @@ from timeit import default_timer as timer
 logger = logging.getLogger(__name__)
 
 def lat_opt_unpack(args):
-#     print("args = {:s}".format(args))
     args[2]['ihnf'] = args[3]
     return lat_opt(args[0], args[1], **(args[2]))
 
@@ -27,6 +21,7 @@ def lat_opt(E1, E2, **kwargs):
     '''
     find the optimal lattice invarient shear move E1 as close as possible to E2
     allowed kwargs:
+     - LG2: special lattice group of E2
      - nsol: number of solutions
      - dist: choose from "Cauchy", "Ericksen" and "strain", default is "Cauchy"
      - hdlr: logger handler, default is basicConfigure
@@ -80,8 +75,8 @@ def lat_opt(E1, E2, **kwargs):
     Er2inv = la.inv(Er2)
     
     # starting point
-    lo = np.rint(np.dot(la.inv(E1), Er1))
-    chi = np.rint(Er2inv.dot(E2))
+    lo = np.array(np.rint(np.dot(la.inv(E1), Er1)), dtype='int')
+    chi = np.array(np.rint(Er2inv.dot(E2)), dtype='int')
     
     # determine distance function
     distance = kwargs['dist'] if 'dist' in kwargs else 'Cauchy'
@@ -91,19 +86,15 @@ def lat_opt(E1, E2, **kwargs):
     # distance functions
     if distance == 'Ericksen':
         dist = lambda x: Eric_dist(x, E1, Er2)
-        dist_mat = eric_dist_mat
     if distance == 'strain':
         dist = lambda x: strain_dist(x, E1, Er2inv)
-        dist_mat = strain_dist_mat
     if distance == 'Cauchy':
         dist = lambda x: Cauchy_dist(x, E1, Er2inv)
-        dist_mat = Cauchy_dist_mat
     
     # lattice groups
     LG1 = Lattice(E1).getSpecialLatticeGroup()
-    LG2 = Lattice(Er2).getSpecialLatticeGroup()
-    SOLG2 = LG2
-    
+    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(Er2).getSpecialLatticeGroup()
+
     ''' 
     ====================
     Preparation - finish
@@ -119,7 +110,7 @@ def lat_opt(E1, E2, **kwargs):
         "Tree structure of GL(n,Z) group"   
         
         # all 12 transvectives in the form of a 6x2 array of matrices
-        _EYE = np.eye(dim, dtype="float")
+        _EYE = np.eye(dim, dtype="int")
         _T = np.array([
             _EYE + np.tensordot(_EYE[i], _EYE[j], axes=0) 
              for i in xrange(dim) 
@@ -128,39 +119,35 @@ def lat_opt(E1, E2, **kwargs):
             _EYE - np.tensordot(_EYE[i], _EYE[j], axes=0) 
              for i in xrange(dim) 
              for j in xrange(dim) 
-             if i!=j ])
+             if i!=j ], dtype='int')
         CACHE = {}
         
         def __init__(self, elem):
             "constructed by node element"
-            if print_ary(elem) in GLTree.CACHE:
-                existing = GLTree.CACHE[tuple(elem.flatten())]
+            if elem.tostring() in GLTree.CACHE:
+                existing = GLTree.CACHE[elem.tostring()]
                 self.copy(existing)
                 self.cached = True
             else:
                 self.elem = elem
+                self.hashcode = elem.tostring()
                 self.elem_dist = self.calc_elem_dist()
                 self.children = self.generate_children()
-                GLTree.CACHE[tuple(elem.flatten())] = self
+                self.children_dist = None
+                GLTree.CACHE[self.hashcode] = self
                 self.cached = False
         
         def generate_children(self):
             "generate children nodes"
-            return [self.elem.dot(t) for i, t in enumerate(GLTree._T)]
+            return (self.elem.dot(t) for t in GLTree._T)
         
         def calc_elem_dist(self):
             "distance value of the node element"
-            return dist(self.elem)
+            return dist(np.array(self.elem))
          
         def calc_children_dist(self):
             "distance values of childrens as list"
-            res = []
-            for c in self.children:
-                if print_ary(c) in GLTree.CACHE:
-                    res.append(GLTree.CACHE[tuple(c.flatten())].elem_dist)
-                else:
-                    res.append(dist(c))
-            return res
+            return (dist(c) for c in self.generate_children())
          
         def is_min(self):
             if self.children_dist is None:
@@ -170,11 +157,12 @@ def lat_opt(E1, E2, **kwargs):
         def copy(self, that):
             self.elem = that.elem
             self.elem_dist = that.elem_dist
-            self.children = that.children
+            self.children = self.generate_children()
+            self.hashcode = that.hashcode
             
         def __str__(self):
             return "GLTree - "+print_ary(self.elem)
-        
+
     ''' 
     ===========================
     Tree datastructure - finish
@@ -186,27 +174,26 @@ def lat_opt(E1, E2, **kwargs):
     def ext_sols(l):
         ls = [q1.dot(l).dot(q2) for q1 in LG1 for q2 in SOLG2]
         for c in ls:
-            EXT_SOLS[tuple(c.flatten())] = True
+            EXT_SOLS[c.tostring()] = True
         
     # update strategy
     def update_solutions(ds, ls, tree):
         # otherwise, update existing solutions
-        if len(ds) >= nsol and tuple(tree.elem.flatten()) not in EXT_SOLS:
+        if len(ds) >= nsol and tree.hashcode not in EXT_SOLS:
             for i, d in enumerate(ds):
                 if tree.elem_dist <= d:
                     ds.insert(i, tree.elem_dist)
-                    ls.insert(i, tree.elem.flatten())
+                    ls.insert(i, tree.elem)
                     ext_sols(tree.elem)
-                    # TODO: truncation strategy
                     # delete last one as long as it is not the same as the supposed tail
-                    while len(ds) > nsol and abs(ds[-1]-ds[nsol-1])>1E-10:
+                    while len(ds) > nsol and abs(ds[-1]-ds[nsol-1]) > 1.0E-12:
                         ds = ds[:-1]
                         ls = ls[:-1]
                     return ds[:], ls[:]
         # directly append if not full
-        elif tuple(tree.elem.flatten()) not in EXT_SOLS:
+        elif tree.hashcode not in EXT_SOLS:
             ds.append(tree.elem_dist)
-            ls.append(tree.elem.flatten())
+            ls.append(tree.elem)
             ext_sols(tree.elem)
             return ds[:], ls[:]
         return None, None
@@ -216,33 +203,29 @@ def lat_opt(E1, E2, **kwargs):
     Core procedure
     ============== 
     '''
-    roots = [GLTree(lo)]    
-    dopt = []
-    lopt = []
-     
+    roots = [GLTree(lo)]
     depth = 0
-    dopt,lopt = update_solutions([],[],roots[0])
-    lprint("loop starts with the first trial {:s} => {:g}".format(print_ary(lopt[0]), dopt[0]), 2)
-    updated = True;
+    dopt, lopt = update_solutions([], [], roots[0])
+    lprint("loop starts with the first trial {:s} => {:g}".format(lopt[0], dopt[0]), 2)
+    updated = True
     while updated and depth < maxiter:
         # update roots, generator first
         t0 = timer()
         # clear update flag
-        updated = False;
+        updated = False
         # change depth tracker
         depth += 1
         # going down on the tree by iteration    
         new_roots = []
-        uncached = 0
         for root in roots:
             for elem in root.children:
-                if not tuple(elem.flatten()) in GLTree.CACHE:
-                    t = GLTree(elem)    
+                if not elem.tostring() in GLTree.CACHE:
+                    t = GLTree(elem)
                     new_roots.append(t)
                     # try to update the solution if the node element is closer than the last solution
-                    if (len(dopt) < nsol or t.elem_dist <= dopt[-1]):
+                    if len(dopt) < nsol or t.elem_dist <= dopt[-1]:
                         ds, ls = update_solutions(dopt, lopt, t)
-                        if ds:
+                        if ds is not None:
                             dopt, lopt = ds, ls
                             updated = True
         roots = new_roots
@@ -262,7 +245,7 @@ def lat_opt(E1, E2, **kwargs):
     # finish timer
     t_elapsed = timer() - t_start
     
-    # change back to the original E2 
-    lopt = mat_dot(np.array(lopt), np.vstack([chi.flatten()]*len(lopt)))
+    # change back to the original E2
+    lopt = [l.dot(chi) for l in lopt]
     lprint("{:d} / {:d} solution(s) found by {:d} iterations and in {:g} sec.".format(len(dopt), nsol, depth, t_elapsed), 2)
-    return lopt, dopt
+    return {'lopt': lopt, 'dopt': dopt}

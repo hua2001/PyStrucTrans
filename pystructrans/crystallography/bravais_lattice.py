@@ -1,10 +1,5 @@
-import numpy as np
-import numpy.linalg as la
-from math import sqrt
-from lattice import Lattice, inPointGroup
-
-class BravaisLatticeError(Exception):
-    pass
+from pystructrans.general_imports import *
+from lattice import Lattice
 
 class BravaisLattice(Lattice):
     '''
@@ -23,25 +18,35 @@ class BravaisLattice(Lattice):
         '''
         Constructor
         '''
-        if isinstance(latParam, int) or isinstance(latParam, float):
-            latParam = np.array([latParam])
-        if len(np.where(latParam<=0)[0])>0:
-            raise BravaisLatticeError('All lattice parameters musth be positive.')
+        try:
+            if not isinstance(latParam, np.ndarray):
+                if isinstance(latParam, list):
+                    latParam = np.array(latParam)
+                else:
+                    latParam = np.array([latParam])
+            if len(latParam.shape) > 1:
+                raise ValueError('lattice parameters is not a 1D list nor single value')
+            elif any(latParam <= 0):
+                raise ValueError('non-positive lattice parameters')
+        except Exception:
+            raise ValueError('invalid lattice parameters')
+
         # 3D Bravais lattices        
         if N == 3:
-            if not latID in range(1,15):
-                raise BravaisLatticeError('no such Bravais lattice. ID must be between 1 and 14 for a 3D Bravais lattice.')
+            if not latID in range(1, 15):
+                raise ValueError('3D Bravais lattice ID must between 1 and 14')
             pramlen = [1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 6] 
-            if not np.alen(latParam) == pramlen[latID-1]:
-                raise BravaisLatticeError('the number of lattice parameters does not match the type of Bravais lattice.')
+            if not np.alen(latParam) == pramlen[latID - 1]:
+                raise ValueError('the number of lattice parameters does not match the type of Bravais lattice.')
             E, C = self.__primitiveBase3D__(latID, latParam)
         if N == 2:
-            if not latID in range(1,6):
-                raise BravaisLatticeError('no such Bravais lattice. ID must be between 1 and 5 for a 2D Bravais lattice.')
+            if not latID in range(1, 6):
+                raise ValueError('2D Bravais lattice ID must be between 1 and 5.')
             pramlen = [1, 2, 2, 1, 3] 
             if not np.alen(latParam) == pramlen[latID-1]:
-                raise BravaisLatticeError('the number of lattice parameters does not match the type of Bravais lattice.')
+                raise ValueError('the number of lattice parameters does not match the type of Bravais lattice.')
             E, C = self.__primitiveBase2D__(latID, latParam)
+
         Lattice.__init__(self, E)
         self.__latID = latID        
         self.__latParam = latParam
@@ -94,7 +99,7 @@ class BravaisLattice(Lattice):
             C = 0.5*np.array([[ 1,  0,  1],
                               [ 1,  1,  0],
                               [ 0,  1,  1]])        
-        elif n==3:
+        elif n == 3:
             #bcc
             e1 = 0.5*p[0]*np.array([ 1, 1, 1])
             e2 = 0.5*p[0]*np.array([-1, 1, 1])
@@ -102,12 +107,12 @@ class BravaisLattice(Lattice):
             C = 0.5*np.array([[ 1, -1, -1],
                               [ 1,  1, -1],
                               [ 1,  1,  1]])
-        elif n==4:
+        elif n == 4:
             #hexagonal
             e1 = p[0]*np.array([1,0,0])
             e2 = p[0]*np.array([0.5,np.sqrt(3)/2, 0])
             e3 = np.array([0,0,p[1]])
-        elif n==5:
+        elif n == 5:
             #trigonal
             #<111> is the 3fold axis
             c = np.cos(p[1]*np.pi/180)
@@ -119,13 +124,13 @@ class BravaisLattice(Lattice):
             e1 = a/np.sqrt(3)*np.array([u,v,v])
             e2 = a/np.sqrt(3)*np.array([v,u,v])
             e3 = a/np.sqrt(3)*np.array([v,v,u])
-        elif n==6:
+        elif n == 6:
             #simple tetragonal
             a = p[0]; c = p[1];
             e1 = a*np.array([1,0,0])
             e2 = a*np.array([0,1,0])
             e3 = c*np.array([0,0,1])
-        elif n==7:
+        elif n == 7:
             #body centered tetragonal
             a = p[0]; c = p[1];
             e1 = (a/2)*np.array([ 1, 1, c/a])
@@ -134,13 +139,13 @@ class BravaisLattice(Lattice):
             C = 0.5*np.array([[ 1, -1, -1],
                               [ 1,  1, -1],
                               [ 1,  1,  1]])
-        elif n==8:
+        elif n == 8:
             #simple orthorhombic
             a = p[0]; b = p[1]; c = p[2];
             e1 = np.array([a,0,0])
             e2 = np.array([0,b,0])
             e3 = np.array([0,0,c])
-        elif n==9:
+        elif n == 9:
             #base centered orthorhombic
             a = p[0]; b = p[1]; c = p[2];
             e1 = np.array([a/2, b/2,0])
@@ -149,7 +154,7 @@ class BravaisLattice(Lattice):
             C = np.array([[0.5, -0.5, 0],
                           [0.5, 0.5, 0],
                           [  0,   0, 1]])
-        elif n==10:
+        elif n == 10:
             #face centered orthorhombic
             a = p[0]; b = p[1]; c = p[2];
             e1 = np.array([a/2, b/2,   0])
@@ -158,7 +163,7 @@ class BravaisLattice(Lattice):
             C = 0.5*np.array([[ 1,  0,  1],
                               [ 1,  1,  0],
                               [ 0,  1,  1]])  
-        elif n==11:
+        elif n == 11:
             #body centered orthorhombic
             a = p[0]; b = p[1]; c = p[2];
             e1 = np.array([a/2,b/2,c/2])
@@ -167,13 +172,13 @@ class BravaisLattice(Lattice):
             C = 0.5*np.array([[ 1, -1, -1],
                               [ 1,  1, -1],
                               [ 1,  1,  1]])
-        elif n==12:
+        elif n == 12:
             #monoclinic unique axis b
             a = p[0]; b = p[1]; c = p[2]; beta = p[3]*np.pi/180.;
             e1 = np.array([a,0,0])
             e2 = np.array([0,b,0])
             e3 = np.array([c*np.cos(beta),0,c*np.sin(beta)])
-        elif n== 13:
+        elif n == 13:
             #base centered monoclinic
             a = p[0]; b = p[1]; c = p[2]; beta = p[3]*np.pi/180;
             e1 = np.array([a/2, b/2, 0])
@@ -182,7 +187,7 @@ class BravaisLattice(Lattice):
             C = np.array([[0.5, -0.5, 0],
                           [0.5, 0.5, 0],
                           [  0,    0, 1]])
-        elif n==14:
+        elif n == 14:
             #triclinic
             a = p[0]; b = p[1]; c = p[2]; alpha = p[3]*np.pi/180; beta = p[4]*np.pi/180; gamma = p[5]*np.pi/180;
             e1 = np.array([a,0,0])
@@ -191,19 +196,7 @@ class BravaisLattice(Lattice):
                         c*np.sqrt(1+2*np.cos(alpha)*np.cos(beta)*np.cos(gamma) - np.cos(alpha)**2 - np.cos(beta)**2 - np.cos(gamma)**2)/np.sin(gamma)])
     
         return np.array([e1, e2, e3]).T, la.inv(C)
-    
-    def getLatID(self):
-        '''
-        get the lattice ID
-        '''
-        return self.__latID
-    
-    def getLatParam(self):
-        '''
-        get the lattice parameters
-        '''
-        return self.__latParam
-    
+
     def __str__(self):
         '''
         Get the description of the Bravais lattice
@@ -227,7 +220,7 @@ class BravaisLattice(Lattice):
                         'Monoclinic C (base centered monoclinic)',
                         'Triclinic P']
             # print the type of Bravais lattice
-            des_str = des_str + des_list[self.__latID-1]
+            des_str += des_list[self.__latID - 1]
             # print the first lattice parameter
             des_str = des_str+':    a = {:g}'.format(self.__latParam[0])
             # print b if it exists
@@ -251,7 +244,7 @@ class BravaisLattice(Lattice):
             # print gamma if it exists
             if self.__latID == 14.:
                 des_str = des_str+u',    gamma = {:g}'.format(self.__latParam[5])
-        elif self.getDimension() == 2:
+        else:
             des_str = '2D Bravais Lattice - '
             des_list = ['Square P', 
                         'Rectangular P',
@@ -259,7 +252,7 @@ class BravaisLattice(Lattice):
                         'Hexagonal P',
                         'Oblique P']
             # print the type of Bravais lattice
-            des_str = des_str + des_list[self.__latID-1]
+            des_str += des_list[self.__latID - 1]
             # print the first lattice parameter
             des_str = des_str+':    a = {:g}'.format(self.__latParam[0])
             # print b if it exists
@@ -267,21 +260,31 @@ class BravaisLattice(Lattice):
                 des_str = des_str+',    b = {:g}'.format(self.__latParam[1])
             # print gamma if it exists
             if self.__latID == 5.:
-                des_str = des_str+u',    gamma = {:g}'.format(self.__latParam[2])            
-        else:
-            raise BravaisLatticeError('only 2D and 3D Bravais lattices are acceptable.')  
+                des_str = des_str+u',    gamma = {:g}'.format(self.__latParam[2])
               
         return des_str
-    
+
+    def getLatID(self):
+        '''
+        get the lattice ID
+        '''
+        return self.__latID
+
+    def getLatParam(self):
+        '''
+        get the lattice parameters
+        '''
+        return self.__latParam
+
     def getConventionalTrans(self):
         '''
         get the conversion matrix from the primitive base to the conventional base
         
-        prim_base = conv_base * trans_mat
+        conv_base = prim_base * trans_mat
         
         or 
         
-        conv_idx = trans_mat * prim_idx
+        prim_idx = trans_mat * conv_idx
         
         :return: (*2D numpy array*) conversion matrix
         '''
@@ -295,5 +298,55 @@ class BravaisLattice(Lattice):
         '''
         return np.dot(self.getBase(), self.getConventionalTrans())
 
+    def toPrimitive(self, idx):
+        """
+        convert a index or a list of indices
+        from conventional to primitive
+
+        :param idx: a index
+        :return: the index in primitive base
+        or
+        :param idx: list of indices
+        :return: the list of indices in primitive base
+        """
+        try:
+            idx = np.array(idx)
+            if idx.ndim == 1:
+                idx = np.array([idx])
+            elif idx.ndim > 2:
+                raise ValueError("invalid input")
+            if idx.shape[1] is not self.getDimension():
+                raise ValueError("dimensions of lattice and indices not match")
+        except:
+            raise ValueError("invalid input of index (indices)")
+
+        res = (self.__C.dot(idx.T)).T
+        return res[0] if len(idx) == 1 else res
+
+    def toConventional(self, idx):
+        """
+        convert a Miller index or a list of Miller indices
+        from primitive to conventional
+
+        :param idx: a index
+        :return: the index in conventional base
+        or
+        :param idx: list of indices
+        :return: the list of indices in conventional base
+        """
+        try:
+            if not isinstance(idx, np.ndarray):
+                idx = np.array(idx)
+            if idx.ndim == 1:
+                idx = np.array([idx])
+            elif idx.ndim > 2:
+                raise ValueError("invalid input")
+            if idx.shape[1] is not self.getDimension():
+                raise ValueError("dimensions of lattice and indices not match")
+        except:
+            raise ValueError("invalid input of index (indices)")
+
+        res = (la.inv(self.__C).dot(idx.T)).T
+        return res[0] if len(idx) == 1 else res
     
     
