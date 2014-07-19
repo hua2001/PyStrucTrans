@@ -1,5 +1,4 @@
-import numpy as np
-import numpy.linalg as la
+from pystructrans.general_imports import *
 from math import copysign
 
 def Gram_Schmidt(E):

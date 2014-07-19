@@ -1,13 +1,15 @@
 from pystructrans.general_imports import *
-from pystructrans import Lattice, BravaisLattice
 import unittest
+
+from pystructrans import Lattice, BravaisLattice
+
 
 class TestLattice(unittest.TestCase):
     def test_construction(self):
         E = np.eye(4)
         L = Lattice(E)
         self.assertEqual(L.getDimension(), 4)
-        self.assertTrue(all(L.getBase()[:, 0] == np.array([1, 0, 0, 0])))
+        self.assertListEqual(L.getBase()[:, 0].tolist(), [1, 0, 0, 0])
         E = "adfda"
         self.assertRaises(ValueError, Lattice, E)
         E = [[1, 0, 0], [0, 0, 0], [0, 0, 1]]
@@ -67,6 +69,7 @@ class TestLattice(unittest.TestCase):
             else:
                 self.assertTrue(la.det(M) == -1)
 
+
 class TestBravaisLattice(unittest.TestCase):
     def test_construction(self):
         L = BravaisLattice(2, 2)
@@ -84,7 +87,7 @@ class TestBravaisLattice(unittest.TestCase):
     def test_conversion(self):
         L = BravaisLattice(2, 2)
         T = L.getConventionalTrans()
-        self.assertTrue((T == np.array([[1, 1, -1], [-1, 1, 1], [1, -1, 1]])).all())
+        self.assertListEqual(T.tolist(), [[1, 1, -1], [-1, 1, 1], [1, -1, 1]])
         E = L.getBase()
         self.assertListEqual(E.dot(T).tolist(), [[2, 0, 0], [0, 2, 0], [0, 0, 2]])
 
@@ -101,20 +104,71 @@ class TestBravaisLattice(unittest.TestCase):
         idx = [[2, 0, 0], [1, -1, 1], [1, 1, 1]]
         self.assertListEqual(L.toConventional(idx).tolist(), [[1, 1, 0], [1, 0, 0], [1, 1, 1]])
 
-# class TestOrientationRelationship(unittest.TestCase):
-#     def test_vec_trans(self):
-#         # set a lattice correspondence
-#         L = np.array([[1,0,-1],[0,1,0],[1,0,1]]).T
-#         self.assertTrue(la.det(L)>0)
-#         # one index
-#         n_A = [1,0,0]
-#         n_M = cry.direc_trans(L, n_A)
-#         self.assertTrue((n_M == np.array([0.5,0,0.5])).all())
-#         # multiple index
-#         n_A = [[1,0,0],[1,1,0],[1,1,1]]
-#         n_M = cry.direc_trans(L, n_A)
-#         self.assertTrue((n_M == np.array([[ 0.5, 0., 0.5], [ 0.5, 1., 0.5], [ 0., 1., 1. ]])).all())
-#         
+
+from ..crystallography.sublattice import divisors, hnf_from_det, hnf_from_diag
+
+
+class TestSublattice(unittest.TestCase):
+    def test_divisor(self):
+        self.assertEqual(divisors(1), (1,))
+        self.assertEqual(divisors(14), (1, 2, 7, 14))
+        self.assertEqual(divisors(18), (1, 2, 3, 6, 9, 18))
+
+    def test_hnf_from_diag(self):
+        self.assertIn([[2, 0, 0], [0, 2, 0], [0, 0, 1]], hnf_from_diag([2, 2, 1]))
+        hnfs = [
+            [[6, 0, 0], [0, 3, 0], [0, 0, 2]],
+            [[6, 0, 0], [-1, 3, 0], [0, 0, 2]],
+            [[6, 0, 0], [-2, 3, 0], [0, 0, 2]],
+            [[6, 0, 0], [0, 3, 0], [-1, 0, 2]],
+            [[6, 0, 0], [-1, 3, 0], [-1, 0, 2]],
+            [[6, 0, 0], [-2, 3, 0], [-1, 0, 2]],
+            [[6, 0, 0], [0, 3, 0], [0, -1, 2]],
+            [[6, 0, 0], [-1, 3, 0], [0, -1, 2]],
+            [[6, 0, 0], [-2, 3, 0], [0, -1, 2]],
+            [[6, 0, 0], [0, 3, 0], [-1, -1, 2]],
+            [[6, 0, 0], [-1, 3, 0], [-1, -1, 2]],
+            [[6, 0, 0], [-2, 3, 0], [-1, -1, 2]]
+        ]
+        self.assertEqual(len(hnf_from_diag([6, 3, 2])), len(hnfs))
+        for h in hnf_from_diag([6, 3, 2]):
+            self.assertIn(h.tolist(), hnfs)
+
+    def test_hnf_from_det(self):
+        self.assertListEqual(hnf_from_det(0).tolist(), [[[0, 0, 0], [0, 0, 0], [0, 0, 0]]])
+        hnfs = [
+            [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
+            [[1, 0, 0], [0, 1, 0], [-1, 0, 2]],
+            [[1, 0, 0], [0, 1, 0], [0, -1, 2]],
+            [[1, 0, 0], [0, 1, 0], [-1, -1, 2]],
+            [[1, 0, 0], [0, 2, 0], [0, 0, 1]],
+            [[1, 0, 0], [-1, 2, 0], [0, 0, 1]],
+            [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
+        ]
+        self.assertEqual(len(hnf_from_det(2)), len(hnfs))
+        for h in hnf_from_det(2):
+            self.assertIn(h.tolist(), hnfs)
+
+        self.assertRaises(ValueError, hnf_from_det, -2)
+
+from ..crystallography.rotations import rotation, Euler
+
+
+class TestRotations(unittest.TestCase):
+    def test_rotations(self):
+        t = [90, 90, 90]
+        self.assertTrue((abs(Euler(t) - np.array([[0, 0, 1], [0, -1, 0], [1, 0, 0]])) < 1.0E-15).all())
+
+        t = 60
+        z = [0, 0, 1]
+        diff = rotation(t, z) - np.array([[0.5, -np.sqrt(3)*0.5, 0], [np.sqrt(3)*0.5, 0.5, 0], [0, 0, 1]])
+        self.assertTrue(np.max(np.abs(diff)) < 1.0E-12)
+
+        t = 120
+        z = [1, 1, 1]
+        v = [1, 0, 0]
+        self.assertTrue(np.max(np.abs(rotation(t, z).dot(v) - np.array([0, 1, 0]))) < 1.0E-12)
+
 #     def test_Rvec_trans(self):
 #         # set a lattice correspondence
 #         L = np.array([[1,0,-1],[0,1,0],[1,0,1]]).T

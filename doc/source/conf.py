@@ -20,7 +20,6 @@ import os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
 import pystructrans
-import numpy as np
 
 # -- General configuration ------------------------------------------------
 
@@ -268,5 +267,5 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
+intersphinx_mapping = {'python': ('http://docs.python.org/3.4/', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None)}

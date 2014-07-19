@@ -14,9 +14,11 @@ Contents:
    :hidden:
    
    crystallography/index
-   
-:class:`numpy.ndarray`
+   marttrans/index
+
 `Crystallography <crystallography/index.html>`_
+
+`Martensitic transformation <marttrans/index.html>`_
 
 Indices and tables
 ==================

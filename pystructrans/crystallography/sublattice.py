@@ -1,8 +1,9 @@
 from pystructrans.general_imports import *
 import itertools
+from functools import reduce
 from operator import mul
 
-def _divisors(n):
+def divisors(n):
     '''
     Find all divisors of an integer n
     
@@ -51,54 +52,11 @@ def hnf_from_det(n, N=3):
     if n < 0:
         raise ValueError("negative determinant of HNF")
     # get all the divisors of n
-    diags = (d for d in itertools.product(_divisors(n), repeat=N) if reduce(mul, d) == n)
-    def ext(x, y):
-        if x is None:
-            return hnf_from_diag(y)
-        return np.append(x, hnf_from_diag(y), axis=0)
-    return np.array(reduce(ext, diags, None))
-
-import unittest
-
-class TestSublattice(unittest.TestCase):
-    def test_divisor(self):
-        self.assertEqual(_divisors(1), (1,))
-        self.assertEqual(_divisors(14), (1, 2, 7, 14))
-        self.assertEqual(_divisors(18), (1, 2, 3, 6, 9, 18))
-
-    def test_hnf_from_diag(self):
-        self.assertIn([[2, 0, 0], [0, 2, 0], [0, 0, 1]], hnf_from_diag([2, 2, 1]))
-        hnfs = [
-            [[6, 0, 0], [0, 3, 0], [0, 0, 2]],
-            [[6, 0, 0], [-1, 3, 0], [0, 0, 2]],
-            [[6, 0, 0], [-2, 3, 0], [0, 0, 2]],
-            [[6, 0, 0], [0, 3, 0], [-1, 0, 2]],
-            [[6, 0, 0], [-1, 3, 0], [-1, 0, 2]],
-            [[6, 0, 0], [-2, 3, 0], [-1, 0, 2]],
-            [[6, 0, 0], [0, 3, 0], [0, -1, 2]],
-            [[6, 0, 0], [-1, 3, 0], [0, -1, 2]],
-            [[6, 0, 0], [-2, 3, 0], [0, -1, 2]],
-            [[6, 0, 0], [0, 3, 0], [-1, -1, 2]],
-            [[6, 0, 0], [-1, 3, 0], [-1, -1, 2]],
-            [[6, 0, 0], [-2, 3, 0], [-1, -1, 2]]
-        ]
-        self.assertEqual(len(hnf_from_diag([6, 3, 2])), len(hnfs))
-        for h in hnf_from_diag([6, 3, 2]):
-            self.assertIn(h.tolist(), hnfs)
-
-    def test_hnf_from_det(self):
-        self.assertListEqual(hnf_from_det(0).tolist(), [[[0, 0, 0], [0, 0, 0], [0, 0, 0]]])
-        hnfs = [
-            [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
-            [[1, 0, 0], [0, 1, 0], [-1, 0, 2]],
-            [[1, 0, 0], [0, 1, 0], [0, -1, 2]],
-            [[1, 0, 0], [0, 1, 0], [-1, -1, 2]],
-            [[1, 0, 0], [0, 2, 0], [0, 0, 1]],
-            [[1, 0, 0], [-1, 2, 0], [0, 0, 1]],
-            [[2, 0, 0], [0, 1, 0], [0, 0, 1]]
-        ]
-        self.assertEqual(len(hnf_from_det(2)), len(hnfs))
-        for h in hnf_from_det(2):
-            self.assertIn(h.tolist(), hnfs)
-
-        self.assertRaises(ValueError, hnf_from_det, -2)
+    diags = (d for d in itertools.product(divisors(n), repeat=N) if reduce(mul, d) == n)
+    hnfs = None
+    for diag in diags:
+        if hnfs is None:
+            hnfs = hnf_from_diag(diag)
+        else:
+            hnfs = np.append(hnfs, hnf_from_diag(diag), axis=0)
+    return hnfs

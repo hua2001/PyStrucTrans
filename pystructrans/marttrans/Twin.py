@@ -1,11 +1,12 @@
+from ..general_imports import *
 import numpy as np
 from numpy.linalg import inv, det, eig, norm
 from math import sqrt
-from pystructrans.mat_math import unique_rows, eigSort
-from martensite import Martensite
-from pystructrans.crystallography import CUBIC_LAUE_GROUP
-import pystructrans.mat_math as _math
-import Compatibility as cp
+from ..mat_math import unique_rows, eigSort
+from ..crystallography import CUBIC_LAUE_GROUP
+from .. import mat_math as _math
+from .martensite import Martensite
+from . import Compatibility as cp
 
 class TwinSystemError(Exception):
     pass
@@ -209,7 +210,7 @@ class TwinPair():
             
             return np.array(tParam[1:]).reshape(len(tParam)-1, 2,3)
         else:
-            print 'The pair of variants is not twinnable!'
+            print('The pair of variants is not twinnable!')
             
     def QI(self):
         r'''
@@ -342,11 +343,11 @@ def TwinSolver(U, e, type):
     e = np.array(e)
     
     if len(U) - 3 > 1e-9:
-        print 'The input should be a 3x3 symmetric matrix!'
+        print('The input should be a 3x3 symmetric matrix!')
         return
       
     if norm((U.T - U).reshape(9)) > 1e-9:
-        print 'The input should be a symmetric matrix!'
+        print('The input should be a symmetric matrix!')
         return
     if abs(type - 1) < 1e-9:
         n = e
@@ -358,7 +359,7 @@ def TwinSolver(U, e, type):
             n = 2*(e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
             a = U.dot(e)
         else:
-            print 'Please input the type of twin system: 1 for Type I twin; 2 for Type II twin'
+            print('Please input the type of twin system: 1 for Type I twin; 2 for Type II twin')
             return
     rho = norm(n)
     a = np.round(rho*a, 6)

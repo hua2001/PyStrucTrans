@@ -1,5 +1,5 @@
 from pystructrans.general_imports import *
-from lattice import Lattice
+from .lattice import Lattice
 
 class BravaisLattice(Lattice):
     '''

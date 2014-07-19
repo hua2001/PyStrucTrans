@@ -4,9 +4,9 @@ import pystructrans
 setup(name='pystructrans',
       version=pystructrans.__verison__,
       description='A python package for structural phase transformation',
-      url='http://github.com/storborg/funniest',
-      author=['Xian Chen', 'Yintao Song'],
-      author_email=['x.ch.msti@gmail.com', 'yintaosong@gmail.com'],
+      # url='http://github.com/storborg/funniest',
+      author=['Yintao Song', 'Xian Chen'],
+      author_email=['yintaosong@gmail.com', 'x.ch.msti@gmail.com'],
       license='GPL',
       classifiers = [
           'Development Status :: 2 - Pre-Alpha',
@@ -16,6 +16,7 @@ setup(name='pystructrans',
           'License :: Freeware',
           'Natural Language :: English',
           'Programming Language :: Python :: 2.7'
+          'Programming Language :: Python :: 3.4'
       ],
       packages=[
           'pystructrans', 
@@ -26,16 +27,15 @@ setup(name='pystructrans',
       install_requires=[
           'numpy'
       ],
-      entry_points = {
-        'console_scripts': [
-                            'pst = pystructrans.command_line:main',
-                            'lattcorr = pystructrans.command_line:run_lat_cor'
-                            ],
+      scripts=['bin/lattcorr'],
+      entry_points={
+        # 'console_scripts': [
+        #                     'pst = pystructrans.command_line:main',
+        #                     'lattcorr.py = pystructrans.command_line:run_lat_cor',
+        #                     'main = pystructrans.command_line'
+        #                     ],
       },
-      data_files=[('pystructrans/marttrans', 
-                   ['pystructrans/marttrans/shift_1_dim_3.txt',
-                    'pystructrans/marttrans/shift_1_dim_3.hdf5',
-                    'pystructrans/marttrans/shift_1_dim_2.hdf5'])],
+      data_files=[],
       test_suite='nose.collector',
       tests_require=['nose'],
       zip_safe=False)

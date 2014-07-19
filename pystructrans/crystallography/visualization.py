@@ -1,9 +1,6 @@
-import numpy as np
-from bravais_lattice import BravaisLattice
-try:
-    from scipy.linalg import inv, norm
-except:
-    from numpy.linalg import inv, norm
+from pystructrans.general_imports import *
+from .bravais_lattice import BravaisLattice
+from numpy.linalg import inv, norm
 
 class visualError(Exception):
     pass
@@ -17,7 +14,7 @@ def vertex(o, E, n=3):
                               o+E[0]+E[1],o+E[1]+E[2],o+E[0]+E[2],
                               o+E[0]+E[1]+E[2]])
         else:
-            print 'E has to be a 3x3 matrix.'
+            print('E has to be a 3x3 matrix.')
             return None
     elif n==2:
         if dim[0]==2 and dim[1]==2 and len(o)==2:
@@ -25,7 +22,7 @@ def vertex(o, E, n=3):
                              o+E[0], o+E[1],
                              o+E[0]+E[1]])
         else:
-            print 'E has to be a 2x2 matrix.'
+            print('E has to be a 2x2 matrix.')
             return None
     else:
         raise visualError('The dimension n has to be 2 or 3!')
@@ -67,7 +64,7 @@ def box(v_list, E, n=3):
                     if v1>=0 and v2>=0 and v3>=0:
                         inside.append(v)
         else:
-            print "E has to be a 3x3 matrix!"
+            print("E has to be a 3x3 matrix!")
             return None
     elif n==2:
         if dim[0]==2 and dim[1]==2 and len(v_list[0])==2:
@@ -76,7 +73,7 @@ def box(v_list, E, n=3):
                 if norm(v.dot(E))<=1.05*cr:
                     inside.append(v)
         else:
-            print "E has to be a 2x2 matrix!"
+            print("E has to be a 2x2 matrix!")
     else:
         raise visualError("The dimension n has to be 2 or 3!")
     if np.array(inside).shape[0]>0:

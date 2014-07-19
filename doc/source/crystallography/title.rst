@@ -12,16 +12,10 @@ Title
    .. testcode::
 
       A = np.array([1, 2, 3])
-      print A.shape
+      print(A.shape)
    
    .. testoutput::
    
-      (3,)
-   
-   .. doctest::
-   
-      >>> A = np.array([1, 2, 3])
-      >>> A.shape
       (3,)
    
    .. automethod:: pystructrans.crystallography.Lattice.getBase

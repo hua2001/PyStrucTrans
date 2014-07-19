@@ -3,11 +3,10 @@ import os
 import logging
 import copy
 import math
-
 from timeit import default_timer as timer
 
-from lat_opt import lat_opt
-from pystructrans.crystallography import BravaisLattice, HermiteNormalForms
+from .lat_opt import lat_opt
+from ..crystallography import BravaisLattice, HermiteNormalForms
     
 # create logger
 logger = logging.getLogger(__name__)
@@ -58,25 +57,28 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     dist = readkw('dist', 'Cauchy')
     maxiter = readkw('maxiter', 3)
     
-    def lprint(msg, lev):
-        # print with level
-        if disp >= lev: print(msg)
-        if lev == 1:
-            logging.info(msg)
-        elif lev >= 2:
-            logging.debug(msg)
-            
     if 'logfile' in kwargs:
         logfile = kwargs['logfile']
         try:
             os.remove(logfile)
         except OSError:
             pass
+        logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+        logger.propagate = False
         fhdlr = logging.FileHandler(logfile, mode='a')
         fhdlr.setLevel(readkw('loglevel', logging.INFO))
         fhdlr.setFormatter(logging.Formatter('%(message)s'))
-        logger.addHandler(fhdlr)        
-    
+        logger.addHandler(fhdlr)
+
+    def lprint(msg, lev):
+        # print with level
+        if disp >= lev:
+            print(msg)
+        if lev == 1:
+            logger.info(msg)
+        elif lev >= 2:
+            logger.debug(msg)
+
     ''' 
     ====================
     Preparation - finish
@@ -106,9 +108,9 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     LG_M = Lat_M.getSpecialLatticeGroup()
     
     lprint(" - Austenite lattice:", 1)
-    lprint("    {:s}".format(Lat_A), 1)
+    lprint("    {:s}".format(str(Lat_A)), 1)
     lprint(" - Martensite lattice:", 1)
-    lprint("    {:s}".format(Lat_M), 1)
+    lprint("    {:s}".format(str(Lat_M)), 1)
     lprint("", 1)
     
     # Determine the list of Hermite Normal Forms
@@ -132,7 +134,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     
     lprint('The ratio between the volume of unit cells is {:g}.'.format(r), 2)
     lprint('The volume change threshold is {:.2%}.'.format(vol_th), 2)
-    lprint('So, the possible size(s) of austenite sublattice is (are) {:s}.'.format(vf), 2)
+    lprint('So, the possible size(s) of austenite sublattice is (are) {:s}.'.format(str(vf)), 2)
     lprint('There are {:d} Hermite Normal Forms in total.' .format(len(hnfs)), 2)
     lprint('Looking for {:d} best lattice correspondence(s).'.format(nsol), 2)
             
@@ -142,10 +144,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     
     # options for lat_opt
     options = {'nsol': nsol, 'dist': dist, 'disp': disp - 1, 'maxiter': maxiter, 'SOLG2': LG_M}
-    if 'logfile' in kwargs:
-        options['logfile'] = kwargs['logfile']
-    if 'loglevel' in kwargs:
-        options['loglevel'] = kwargs['loglevel']
     
     EXT_SOLS = {}
     def ext_sols(l):
@@ -216,6 +214,10 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 
             lprint("\n{:d}/{:d} job groups finished\n".format(ig+1, len(job_grps)), 2)
         else:
+            if 'logfile' in kwargs:
+                options['logfile'] = kwargs['logfile']
+            if 'loglevel' in kwargs:
+                options['loglevel'] = kwargs['loglevel']
             # sequential exuction
             lprint('HNFs are being solved ...', 1)
             for ih, h in job:
@@ -317,7 +319,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     '''
 
     # close log file
-    if 'logfile' in kwargs: fhdlr.close()
+    if 'logfile' in kwargs:
+        fhdlr.close()
     # timer
     lprint("All done in {:g} secs.".format(timer()-t_start), 1)
     

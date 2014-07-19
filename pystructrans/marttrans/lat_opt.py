@@ -1,17 +1,13 @@
 from pystructrans.general_imports import *
 
 import logging
-import numpy as np
-import numpy.linalg as la
-
-from dist import Eric_dist, strain_dist, Cauchy_dist
-
-from pystructrans.crystallography import Lattice, LLL
-
 from timeit import default_timer as timer
 
+from .dist import Eric_dist, strain_dist, Cauchy_dist
+from ..crystallography import Lattice, LLL
 # create logger
 logger = logging.getLogger(__name__)
+# logger = multiprocessing.get_logger()
 
 def lat_opt_unpack(args):
     args[2]['ihnf'] = args[3]
@@ -44,22 +40,24 @@ def lat_opt(E1, E2, **kwargs):
     nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
     maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else 3
     disp = kwargs['disp'] if 'disp' in kwargs else 1
-    
-    def lprint(msg, lev):
-        # print with level
-        if disp >= lev: print(msg)
-        if lev == 1:
-            logging.info(msg)
-        elif lev >= 2:
-            logging.debug(msg)
-    
     if 'logfile' in kwargs:
+        logging.basicConfig(level=logging.INFO)
+        logger.propagate = False
         logfile = kwargs['logfile']
         fhdlr = logging.FileHandler(logfile, mode='a')
         fhdlr.setLevel(kwargs['loglevel'] if 'loglevel' in kwargs else logging.INFO)
         fhdlr.setFormatter(logging.Formatter('%(message)s'))
         logger.addHandler(fhdlr)
-    
+
+    def lprint(msg, lev):
+        # print with level
+        if disp >= lev:
+            print(msg)
+        if lev == 1:
+            logger.info(msg)
+        elif lev >= 2:
+            logger.debug(msg)
+
     if 'ihnf' in kwargs:
         lprint("Processing the HNF No. {:d}".format(kwargs['ihnf']+1), 1)
         
@@ -109,16 +107,13 @@ def lat_opt(E1, E2, **kwargs):
         "Tree structure of GL(n,Z) group"   
         
         # all 12 transvectives in the form of a 6x2 array of matrices
-        _EYE = np.eye(dim, dtype="int")
-        _T = np.array([
-            _EYE + np.tensordot(_EYE[i], _EYE[j], axes=0) 
-             for i in xrange(dim) 
-             for j in xrange(dim) 
-             if i!=j ] + [
-            _EYE - np.tensordot(_EYE[i], _EYE[j], axes=0) 
-             for i in xrange(dim) 
-             for j in xrange(dim) 
-             if i!=j ], dtype='int')
+        T1 = np.array([np.eye(dim, dtype="int")
+                       + np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
+                       for i in xrange(dim) for j in xrange(dim) if i != j])
+        T2 = np.array([np.eye(dim, dtype="int")
+                       - np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
+                       for i in xrange(dim) for j in xrange(dim) if i != j])
+        _T = np.append(T1, T2, axis=0)
         CACHE = {}
         
         def __init__(self, elem):
@@ -202,7 +197,7 @@ def lat_opt(E1, E2, **kwargs):
     roots = [GLTree(lo)]
     depth = 0
     dopt, lopt = update_solutions([], [], roots[0])
-    lprint("loop starts with the first trial {:s} => {:g}".format(lopt[0], dopt[0]), 2)
+    lprint("loop starts with the first trial {:s} => {:g}".format(str(lopt[0]), dopt[0]), 2)
     updated = True
     while updated and depth < maxiter:
         # update roots, generator first

@@ -1,10 +1,11 @@
-import numpy as np
+from ..general_imports import *
+
 from numpy.linalg import inv, det, eig, norm
 from math import sqrt
-from pystructrans.crystallography import BravaisLattice, CUBIC_LAUE_GROUP
-import pystructrans.mat_math as _math
 
-from martensite import Martensite
+from ..crystallography import BravaisLattice, CUBIC_LAUE_GROUP
+from .. import mat_math as _math
+from .martensite import Martensite
 
 class CompatibilityError(Exception):
     pass
@@ -22,7 +23,7 @@ def isCompatible(A, B):
         else:
             return False
     else:
-        print 'The input should be two arrays.'
+        print('The input should be two arrays.')
         return False
 
 
@@ -48,7 +49,7 @@ def AM_Solver(A):
     c3 = sqrt(eval[2]-1)
     
     if c < 1e-6:
-        print 'solution is b = e, m = - 2 e where |e| = 1.'
+        print('solution is b = e, m = - 2 e where |e| = 1.')
         return
     else:
         if abs(eval[1] - 1) <1e-4:

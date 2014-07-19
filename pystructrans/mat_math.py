@@ -111,7 +111,7 @@ def cofactor(A):
         return np.array(minor).reshape(3,3)
                 
     else:
-        print 'Please input a square matrix.'
+        print('Please input a square matrix.')
         
         
         

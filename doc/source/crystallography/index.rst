@@ -7,6 +7,6 @@ Crystallography
    :maxdepth: 2
    :titlesonly:
    :numbered: 1
-   
-   title
+
+   rotations
 
