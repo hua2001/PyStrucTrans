@@ -1,26 +1,14 @@
-from __future__ import print_function
-
-import numpy as np
-import numpy.linalg as la
-import math
+from pystructrans.general_imports import *
 import os
-import sys
 import logging
 import copy
 import math
-from multiprocessing import cpu_count
 
 from timeit import default_timer as timer
 
 from lat_opt import lat_opt
-from lat_opt import logger as lo_logger
-from pystructrans.mat_math import mat_dot
 from pystructrans.crystallography import BravaisLattice, HermiteNormalForms
     
-class NullDevice():
-    def write(self, s):
-        pass
-
 # create logger
 logger = logging.getLogger(__name__)
 
@@ -209,7 +197,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         ngrp = int(np.ceil(len(W)/float(size)))
         return [W[int(g*size) : min(int((g+1)*size), len(W))] for g in xrange(ngrp)]
     # each group has at most 500 solutions
-    grp_sz = 1000.0/nsol
+    # grp_sz = 1000.0/nsol
+    grp_sz = len(hnfs)
     job_grps = divide_work(range(len(hnfs)), grp_sz)
     sols = []  
     for ig, g in enumerate(job_grps):
@@ -248,7 +237,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     Print result
     ============
     '''
-    # if disp > 0:
     # Print and save the results
     lprint('\nPrint and save the results\n==========================', 1)
     
@@ -288,7 +276,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             msg = msg[:-1] + ']'
             lprint(msg, 1)            
         sol['U'] = copy.copy(U)
-         
+
+        lprint(' - Hermite normal form:', 1)
         for j in xrange(dim):
             if j == 0:
                 msg = '   H = [' 

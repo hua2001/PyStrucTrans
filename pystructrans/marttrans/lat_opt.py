@@ -130,20 +130,15 @@ def lat_opt(E1, E2, **kwargs):
             else:
                 self.elem = elem
                 self.hashcode = elem.tostring()
-                self.elem_dist = self.calc_elem_dist()
+                self.elem_dist = dist(self.elem)
                 self.children = self.generate_children()
                 self.children_dist = None
                 GLTree.CACHE[self.hashcode] = self
                 self.cached = False
-                self.children_dist = None
         
         def generate_children(self):
             "generate children nodes"
             return (self.elem.dot(t) for t in GLTree._T)
-        
-        def calc_elem_dist(self):
-            "distance value of the node element"
-            return dist(np.array(self.elem))
          
         def calc_children_dist(self):
             "distance values of childrens as list"
@@ -157,7 +152,8 @@ def lat_opt(E1, E2, **kwargs):
         def copy(self, that):
             self.elem = that.elem
             self.elem_dist = that.elem_dist
-            self.children = self.generate_children()
+            self.children =that.children
+            # self.children = self.generate_children()
             self.hashcode = that.hashcode
             
         def __str__(self):
