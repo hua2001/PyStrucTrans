@@ -6,6 +6,8 @@ Martensitic transformation
    :titlesonly:
    :numbered: 1
    
+   twin
+   martensite
    lat_cor
    or
 

@@ -1,143 +1,5 @@
 from pystructrans.general_imports import *
-
-CUBIC_LAUE_GROUP = np.array([# identity
-                             [[1,0,0],[0,1,0],[0,0,1]],
-                             # two fold rotations
-                             [[1,0,0],[0,-1,0],[0,0,-1]],   # [100]
-                             [[-1,0,0],[0,1,0],[0,0,-1]],   # [010]
-                             [[-1,0,0],[0,-1,0],[0,0,1]],   # [001]
-                             [[0,1,0],[1,0,0],[0,0,-1]],    # [110]
-                             [[0,-1,0],[-1,0,0],[0,0,-1]],  # [1-10]
-                             [[0,0,1],[0,-1,0],[1,0,0]],    # [101]
-                             [[0,0,-1],[0,-1,0],[-1,0,0]],  # [10-1]
-                             [[-1,0,0],[0,0,1],[0,1,0]],    # [011]
-                             [[-1,0,0],[0,0,-1],[0,-1,0]],  # [01-1]
-                             # four fold rotations about [100]
-                             [[1,0,0],[0,0,-1],[0,1,0]],
-                             [[1,0,0],[0,0,1],[0,-1,0]],
-                             # four fold rotations about [010]
-                             [[0,0,1],[0,1,0],[-1,0,0]],
-                             [[0,0,-1],[0,1,0],[1,0,0]],
-                             # four fold rotations about [001]
-                             [[0,-1,0],[1,0,0],[0,0,1]],
-                             [[0,1,0],[-1,0,0],[0,0,1]],
-                             # three-fold rotations about [111]
-                             [[0,1,0],[0,0,1],[1,0,0]],
-                             [[0,0,1],[1,0,0],[0,1,0]],
-                             # three-fold rotations about [-111]
-                             [[0,0,-1],[-1,0,0],[0,1,0]],
-                             [[0,-1,0],[0,0,1],[-1,0,0]],
-                             # three-fold rotations about [-1-11]
-                             [[0,1,0],[0,0,-1],[-1,0,0]],
-                             [[0,0,-1],[1,0,0],[0,-1,0]],
-                             # three-fold rotations about [1-11]
-                             [[0,0,1],[-1,0,0],[0,-1,0]],
-                             [[0,-1,0],[0,0,-1],[1,0,0]]
-                             ])
-
-_CUBIC_LAUE_GROUP = np.array([
-    # identity
-    [[1,0,0],[0,1,0],[0,0,1]],
-    # two fold rotations
-    [[1,0,0],[0,-1,0],[0,0,-1]],   # [100]
-    [[-1,0,0],[0,1,0],[0,0,-1]],   # [010]
-    [[-1,0,0],[0,-1,0],[0,0,1]],   # [001]
-    [[0,1,0],[1,0,0],[0,0,-1]],    # [110]
-    [[0,-1,0],[-1,0,0],[0,0,-1]],  # [1-10]
-    [[0,0,1],[0,-1,0],[1,0,0]],    # [101]
-    [[0,0,-1],[0,-1,0],[-1,0,0]],  # [10-1]
-    [[-1,0,0],[0,0,1],[0,1,0]],    # [011]
-    [[-1,0,0],[0,0,-1],[0,-1,0]],  # [01-1]
-    # four fold rotations about [100]
-    [[1,0,0],[0,0,-1],[0,1,0]],
-    [[1,0,0],[0,0,1],[0,-1,0]],
-    # four fold rotations about [010]
-    [[0,0,1],[0,1,0],[-1,0,0]],
-    [[0,0,-1],[0,1,0],[1,0,0]],
-    # four fold rotations about [001]
-    [[0,-1,0],[1,0,0],[0,0,1]],
-    [[0,1,0],[-1,0,0],[0,0,1]],
-    # three-fold rotations about [111]
-    [[0,1,0],[0,0,1],[1,0,0]],
-    [[0,0,1],[1,0,0],[0,1,0]],
-    # three-fold rotations about [-111]
-    [[0,0,-1],[-1,0,0],[0,1,0]],
-    [[0,-1,0],[0,0,1],[-1,0,0]],
-    # three-fold rotations about [-1-11]
-    [[0,1,0],[0,0,-1],[-1,0,0]],
-    [[0,0,-1],[1,0,0],[0,-1,0]],
-    # three-fold rotations about [1-11]
-    [[0,0,1],[-1,0,0],[0,-1,0]],
-    [[0,-1,0],[0,0,-1],[1,0,0]]
-])
-
-# this is not really a group, because it contains no identity. Also it does not contain the 2 fold rotation about z-axis.
-HEX_LAUE_GROUP = np.array([
-                [[np.cos(np.pi/3), np.sin(np.pi/3), 0], [-np.sin(np.pi/3), np.cos(np.pi/3), 0],[ 0, 0, 1.]],
-                [[np.cos(-np.pi/3), np.sin(-np.pi/3), 0], [-np.sin(-np.pi/3), np.cos(-np.pi/3), 0],[ 0, 0, 1.]],
-                [[np.cos(2*np.pi/3), np.sin(2*np.pi/3), 0], [-np.sin(2*np.pi/3), np.cos(2*np.pi/3), 0],[ 0, 0, 1.]],
-                [[np.cos(-2*np.pi/3), np.sin(-2*np.pi/3), 0], [-np.sin(-2*np.pi/3), np.cos(-2*np.pi/3), 0],[ 0, 0, 1.]],
-                [[np.cos(np.pi/3), np.sin(np.pi/3), 0], [np.sin(np.pi/3), -np.cos(np.pi/3), 0],[ 0, 0, -1.]],
-                [[np.cos(-np.pi/3), np.sin(-np.pi/3), 0], [np.sin(-np.pi/3), -np.cos(-np.pi/3), 0],[ 0, 0, -1.]],
-                [[np.cos(2*np.pi/3), np.sin(2*np.pi/3), 0], [np.sin(2*np.pi/3), -np.cos(2*np.pi/3), 0],[ 0, 0, -1.]],
-                [[np.cos(-2*np.pi/3), np.sin(-2*np.pi/3), 0], [np.sin(-2*np.pi/3), -np.cos(-2*np.pi/3), 0],[ 0, 0, -1.]]
-                ])
-
-_HEX_LAUE_GROUP = np.array([
-    [[np.cos(np.pi/3), np.sin(np.pi/3), 0], [-np.sin(np.pi/3), np.cos(np.pi/3), 0],[ 0, 0, 1.]],
-    [[np.cos(-np.pi/3), np.sin(-np.pi/3), 0], [-np.sin(-np.pi/3), np.cos(-np.pi/3), 0],[ 0, 0, 1.]],
-    [[np.cos(2*np.pi/3), np.sin(2*np.pi/3), 0], [-np.sin(2*np.pi/3), np.cos(2*np.pi/3), 0],[ 0, 0, 1.]],
-    [[np.cos(-2*np.pi/3), np.sin(-2*np.pi/3), 0], [-np.sin(-2*np.pi/3), np.cos(-2*np.pi/3), 0],[ 0, 0, 1.]],
-    [[np.cos(np.pi/3), np.sin(np.pi/3), 0], [np.sin(np.pi/3), -np.cos(np.pi/3), 0],[ 0, 0, -1.]],
-    [[np.cos(-np.pi/3), np.sin(-np.pi/3), 0], [np.sin(-np.pi/3), -np.cos(-np.pi/3), 0],[ 0, 0, -1.]],
-    [[np.cos(2*np.pi/3), np.sin(2*np.pi/3), 0], [np.sin(2*np.pi/3), -np.cos(2*np.pi/3), 0],[ 0, 0, -1.]],
-    [[np.cos(-2*np.pi/3), np.sin(-2*np.pi/3), 0], [np.sin(-2*np.pi/3), -np.cos(-2*np.pi/3), 0],[ 0, 0, -1.]]
-])
-_FULL_LAUE_GROUP = np.append(_CUBIC_LAUE_GROUP, _HEX_LAUE_GROUP, axis=0)
-
-# square group
-SQUARE_GROUP = np.array([# identity
-                         [[1,0],[0,1]],
-                         # 90 rotations
-                         [[0,-1],[1,0]],
-                         [[0,1],[-1,0]],
-                         # 180 rotation,
-                         [[-1,0],[0,-1]]
-                         ])
-
-SQUARE_GROUP_ext = np.array([# mirror along x
-                             [[1,0],[0,-1]],
-                             # mirror along y 
-                             [[-1,0],[0,1]],
-                             # mirror along (1,1)
-                             [[0,1],[1,0]],
-                             # mirror along (-1,1)
-                             [[0,-1],[-1,0]]
-                             ])
-
-_SQUARE_GROUP = np.array([
-    # identity
-    [[1,0],[0,1]],
-    # 90 rotations
-    [[0,-1],[1,0]],
-    [[0,1],[-1,0]],
-    # 180 rotation,
-    [[-1,0],[0,-1]]
-])
-_SQUARE_GROUP_EXT = np.array([
-    # mirror along x
-    [[1,0],[0,-1]],
-    # mirror along y
-    [[-1,0],[0,1]],
-    # mirror along (1,1)
-    [[0,1],[1,0]],
-    # mirror along (-1,1)
-    [[0,-1],[-1,0]]
-])
-_SQUARE_GROUP_EXT = np.append(_SQUARE_GROUP, _SQUARE_GROUP_EXT, axis=0)
-
-class LatticeError(Exception):
-    pass
+from .matrix_group import MatrixGroup, FULL_LAUE_GROUP, SQUARE_GROUP, SQUARE_GROUP_EXT
 
 class Lattice():
     r'''
@@ -197,9 +59,9 @@ class Lattice():
         if not self.getDimension() in [2, 3]:
             raise AttributeError('Only Laue groups for lattices in 2D and 3D have been implemented.')
         if self.__LaueGroup is None and self.getDimension() == 3:
-            self.__LaueGroup = np.array([Q for Q in _FULL_LAUE_GROUP if self.inPointGroup(Q)])
+            self.__LaueGroup = MatrixGroup(np.array([Q for Q in FULL_LAUE_GROUP if self.inPointGroup(Q)]))
         if self.__LaueGroup is None and self.getDimension() == 2:
-            self.__LaueGroup = np.array([Q for Q in _SQUARE_GROUP if self.inPointGroup(Q)])
+            self.__LaueGroup = MatrixGroup(np.array([Q for Q in SQUARE_GROUP if self.inPointGroup(Q)]))
         return self.__LaueGroup
     
     def getPointGroup(self):
@@ -211,10 +73,10 @@ class Lattice():
         if not self.getDimension() in [2, 3]:
             raise AttributeError('Only point groups for lattices in 2D and 3D have been implemented.')
         if self.__PointGroup is None and self.__N == 3:
-            lg = self.getLaueGroup()
-            self.__PointGroup = np.append(lg, -lg, axis=0)
+            lg = self.getLaueGroup().matrices()
+            self.__PointGroup = MatrixGroup(np.append(lg, -lg, axis=0))
         elif self.__PointGroup is None and self.__N == 2:
-            self.__PointGroup = np.array([Q for Q in _SQUARE_GROUP_EXT if self.inPointGroup(Q)])
+            self.__PointGroup = MatrixGroup(np.array([Q for Q in SQUARE_GROUP_EXT if self.inPointGroup(Q)]))
         return self.__PointGroup
     
     def getSpecialLatticeGroup(self):
@@ -226,7 +88,8 @@ class Lattice():
         if self.__SLatticeGroup is None:
             E = self.__E
             Einv = la.inv(E)
-            return np.array([(Einv.dot(Q.dot(E))).astype('int') for Q in self.getLaueGroup()])
+            mats = np.array([np.rint(Einv.dot(Q.dot(E))) for Q in self.getLaueGroup().matrices()], dtype='int')
+            return MatrixGroup(mats)
     
     def getLatticeGroup(self):
         '''
@@ -237,7 +100,8 @@ class Lattice():
         if self.__SLatticeGroup is None:
             E = self.__E
             Einv = la.inv(E)
-            return np.array([np.rint(Einv.dot(Q.dot(E))) for Q in self.getPointGroup()], dtype='int')
+            mats = np.array([np.rint(Einv.dot(Q.dot(E))) for Q in self.getPointGroup().matrices()], dtype='int')
+            return MatrixGroup(mats)
 
     def __eq__(self, other):
         if not isinstance(other, Lattice):
@@ -250,12 +114,12 @@ class Lattice():
 
         A = np.dot(la.inv(E1), E2)
         A_int = np.round(A)
-        return (np.max(np.abs(A-A_int)) < 1.0E-10)
+        return np.max(np.abs(A-A_int)) < 1.0E-10
 
     def __str__(self):
         des_str = '{:d} dimensional lattice:'.format(self.__N)
         for i in range(self.__N):
-            des_str = des_str + '\n    e_{:d} = {:s}'.format(i+1, self.__E[:,i])
+            des_str = des_str + '\n    e_{:d} = {:s}'.format(i+1, self.__E[:, i])
         return des_str
 
     def inPointGroup(self, Q):

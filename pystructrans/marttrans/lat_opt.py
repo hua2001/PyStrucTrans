@@ -90,8 +90,8 @@ def lat_opt(E1, E2, **kwargs):
         dist = lambda x: Cauchy_dist(x, E1, Er2inv)
     
     # lattice groups
-    LG1 = Lattice(E1).getSpecialLatticeGroup()
-    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(Er2).getSpecialLatticeGroup()
+    LG1 = Lattice(E1).getSpecialLatticeGroup().matrices()
+    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(Er2).getSpecialLatticeGroup().matrices()
     ''' 
     ====================
     Preparation - finish

@@ -8,5 +8,6 @@ Crystallography
    :titlesonly:
    :numbered: 1
 
-   rotations
+   group
+   util
 

@@ -104,8 +104,8 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     C_A = Lat_A.getConventionalTrans()
     C_M = Lat_M.getConventionalTrans()
     
-    LG_A = Lat_A.getSpecialLatticeGroup()
-    LG_M = Lat_M.getSpecialLatticeGroup()
+    LG_A = Lat_A.getSpecialLatticeGroup().matrices()
+    LG_M = Lat_M.getSpecialLatticeGroup().matrices()
     
     lprint(" - Austenite lattice:", 1)
     lprint("    {:s}".format(str(Lat_A)), 1)

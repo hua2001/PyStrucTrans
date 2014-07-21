@@ -1,20 +1,15 @@
-Rotation matrices
-===================
+Utilities
+=========
+A set of convenient utilities are provided in the :py:mod:`pystructrans.crystallography`.
+They are exposed to the parent package :py:mod:`pystructrans`,
+therefore can be used without importing the subpackage.
 
-There are two 3D rotation matrix generating functions:
-:py:func:`pystructrans.crystallography.rotation`
-and
-:py:func:`pystructrans.crystallography.Euler`
-.
+* two 3D rotation matrix generating functions: :py:func:`pystructrans.rotation` and :py:func:`pystructrans.Euler`.
 
 Generic rotation
 ----------------
 
-.. autofunction:: pystructrans.crystallography.rotation
-
-.. testsetup:: *
-
-    from pystructrans.crystallography import rotation, Euler
+.. autofunction:: pystructrans.rotation
 
 Giving an ``angle`` (in the unit of |deg| by default)
 and the rotation ``axis`` (not necessarily normalized),
@@ -25,6 +20,8 @@ we can get a matrix ``R``
     import numpy as np
     import numpy.linalg as la
     np.set_printoptions(suppress=True)
+
+    from pystructrans import rotation
 
     angle = 120
     axis = [1, 1, 1]
@@ -75,11 +72,17 @@ and :math:`z` back to :math:`x`:
 
 Euler angles
 ------------
-.. autofunction:: pystructrans.crystallography.Euler
+.. autofunction:: pystructrans.Euler
 
 Define three ``angles`` and the ``order`` of three intrinsic rotation axis
 
 .. testcode::
+
+    import numpy as np
+    import numpy.linalg as la
+    np.set_printoptions(suppress=True)
+
+    from pystructrans import Euler
 
     angles = [90, 90, 90]
     order = 'XYZ'

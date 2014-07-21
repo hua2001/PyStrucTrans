@@ -37,10 +37,10 @@ class TestLattice(unittest.TestCase):
         L = BravaisLattice(2, 2)
         Q = [[0., 1., 0.], [1., 0., 0.], [0., 0., -1.]]
         self.assertTrue(L.inPointGroup(Q))
-        self.assertEqual(len(L.getLaueGroup()), 24)
-        self.assertEqual(len(L.getPointGroup()), 48)
-        lg = L.getLaueGroup().tolist()
-        for Q in L.getPointGroup():
+        self.assertEqual(L.getLaueGroup().order(), 24)
+        self.assertEqual(L.getPointGroup().order(), 48)
+        lg = L.getLaueGroup().matrices().tolist()
+        for Q in L.getPointGroup().matrices():
             self.assertEqual(L, Lattice(Q.dot(L.getBase())))
             self.assertListEqual(Q.T.dot(Q).tolist(), np.eye(3).tolist())
             if Q.tolist() in lg:
@@ -50,8 +50,8 @@ class TestLattice(unittest.TestCase):
 
         L = BravaisLattice(12, [2, 3, 4, 87])
         self.assertFalse(L.inPointGroup(Q))
-        self.assertEqual(len(L.getLaueGroup()), 2)
-        self.assertEqual(len(L.getPointGroup()), 4)
+        self.assertEqual(len(L.getLaueGroup().matrices()), 2)
+        self.assertEqual(len(L.getPointGroup().matrices()), 4)
 
     def test_lattice_group(self):
         L = Lattice(np.eye(4))
@@ -59,10 +59,10 @@ class TestLattice(unittest.TestCase):
         self.assertRaises(AttributeError, L.getLatticeGroup)
 
         L = BravaisLattice(2, 2)
-        self.assertEqual(len(L.getSpecialLatticeGroup()), 24)
-        self.assertEqual(len(L.getLatticeGroup()), 48)
-        slg = L.getSpecialLatticeGroup().tolist()
-        for M in L.getLatticeGroup():
+        self.assertEqual(L.getSpecialLatticeGroup().order(), 24)
+        self.assertEqual(L.getLatticeGroup().order(), 48)
+        slg = L.getSpecialLatticeGroup().matrices().tolist()
+        for M in L.getLatticeGroup().matrices():
             self.assertEqual(L, Lattice(L.getBase().dot(M)))
             if M.tolist() in slg:
                 self.assertTrue(la.det(M) == 1)
@@ -105,15 +105,86 @@ class TestBravaisLattice(unittest.TestCase):
         self.assertListEqual(L.toConventional(idx).tolist(), [[1, 1, 0], [1, 0, 0], [1, 1, 1]])
 
 
-from ..crystallography.sublattice import divisors, hnf_from_det, hnf_from_diag
+from ..crystallography.matrix_group import MatrixGroup, CUBIC_LAUE_GROUP
+
+
+class TestMatrixGroup(unittest.TestCase):
+    def test_is_group(self):
+        A = []
+        self.assertFalse(MatrixGroup.isgroup(A))
+        A = [[1, 2, 3]]
+        self.assertFalse(MatrixGroup.isgroup(A))
+        A = [[[1, 2, 3], [2, 3, 4]]]
+        self.assertFalse(MatrixGroup.isgroup(A))
+        A = [[[1, 2, 3], [2, 3, 4], [3, 4, 5]]]
+        self.assertFalse(MatrixGroup.isgroup(A))
+        A = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
+        self.assertTrue(MatrixGroup.isgroup(A) is not False)
+        self.assertListEqual(MatrixGroup.isgroup(A).tolist(), [[0]])
+
+    def test_construction(self):
+        A = [[[1, 2, 3], [2, 3, 4]]]
+        self.assertRaises(ValueError, MatrixGroup, A)
+        A = CUBIC_LAUE_GROUP
+        g = MatrixGroup(A)
+        self.assertFalse(g is False)
+        t = np.array([[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                       17, 18, 19, 20, 21, 22, 23],
+                      [1, 0, 3, 2, 15, 14, 12, 13, 9, 8, 11, 10, 6, 7, 5, 4, 20,
+                       22, 21, 23, 16, 18, 17, 19],
+                      [2, 3, 0, 1, 14, 15, 7, 6, 11, 10, 9, 8, 13, 12, 4, 5, 19,
+                       21, 22, 16, 23, 17, 18, 20],
+                      [3, 2, 1, 0, 5, 4, 13, 12, 10, 11, 8, 9, 7, 6, 15, 14, 23,
+                       18, 17, 20, 19, 22, 21, 16],
+                      [4, 14, 15, 5, 0, 3, 19, 23, 22, 18, 21, 17, 16, 20, 1, 2, 12,
+                       11, 9, 6, 13, 10, 8, 7],
+                      [5, 15, 14, 4, 3, 0, 20, 16, 21, 17, 22, 18, 23, 19, 2, 1, 7,
+                       9, 11, 13, 6, 8, 10, 12],
+                      [6, 13, 7, 12, 18, 21, 0, 2, 20, 19, 16, 23, 3, 1, 22, 17, 10,
+                       15, 4, 9, 8, 5, 14, 11],
+                      [7, 12, 6, 13, 22, 17, 2, 0, 23, 16, 19, 20, 1, 3, 18, 21, 9,
+                       5, 14, 10, 11, 15, 4, 8],
+                      [8, 9, 10, 11, 23, 20, 21, 22, 0, 1, 2, 3, 18, 17, 16, 19, 14,
+                       13, 12, 15, 5, 6, 7, 4],
+                      [9, 8, 11, 10, 19, 16, 18, 17, 1, 0, 3, 2, 21, 22, 20, 23, 5,
+                       7, 6, 4, 14, 12, 13, 15],
+                      [10, 11, 8, 9, 16, 19, 22, 21, 3, 2, 1, 0, 17, 18, 23, 20, 15,
+                       6, 7, 14, 4, 13, 12, 5],
+                      [11, 10, 9, 8, 20, 23, 17, 18, 2, 3, 0, 1, 22, 21, 19, 16, 4,
+                       12, 13, 5, 15, 7, 6, 14],
+                      [12, 7, 13, 6, 21, 18, 1, 3, 16, 23, 20, 19, 2, 0, 17, 22, 11,
+                       4, 15, 8, 9, 14, 5, 10],
+                      [13, 6, 12, 7, 17, 22, 3, 1, 19, 20, 23, 16, 0, 2, 21, 18, 8,
+                       14, 5, 11, 10, 4, 15, 9],
+                      [14, 4, 5, 15, 2, 1, 16, 20, 18, 22, 17, 21, 19, 23, 3, 0, 13,
+                       8, 10, 7, 12, 9, 11, 6],
+                      [15, 5, 4, 14, 1, 2, 23, 19, 17, 21, 18, 22, 20, 16, 0, 3, 6,
+                       10, 8, 12, 7, 11, 9, 13],
+                      [16, 23, 20, 19, 10, 9, 14, 5, 12, 7, 13, 6, 15, 4, 11, 8, 17,
+                       0, 2, 22, 18, 1, 3, 21],
+                      [17, 21, 18, 22, 13, 7, 11, 9, 15, 5, 4, 14, 8, 10, 6, 12, 0,
+                       16, 20, 3, 2, 23, 19, 1],
+                      [18, 22, 17, 21, 6, 12, 9, 11, 14, 4, 5, 15, 10, 8, 13, 7, 3,
+                       23, 19, 0, 1, 16, 20, 2],
+                      [19, 20, 23, 16, 9, 10, 4, 15, 13, 6, 12, 7, 5, 14, 8, 11, 21,
+                       2, 0, 18, 22, 3, 1, 17],
+                      [20, 19, 16, 23, 11, 8, 5, 14, 6, 13, 7, 12, 4, 15, 10, 9, 22,
+                       1, 3, 17, 21, 0, 2, 18],
+                      [21, 17, 22, 18, 12, 6, 8, 10, 5, 15, 14, 4, 11, 9, 7, 13, 2,
+                       19, 23, 1, 0, 20, 16, 3],
+                      [22, 18, 21, 17, 7, 13, 10, 8, 4, 14, 15, 5, 9, 11, 12, 6, 1,
+                       20, 16, 2, 3, 19, 23, 0],
+                      [23, 16, 19, 20, 8, 11, 15, 4, 7, 12, 6, 13, 14, 5, 9, 10, 18,
+                       3, 1, 21, 17, 2, 0, 22]])
+        self.assertTrue(np.array_equal(t, g.multable()))
+        self.assertEqual(g.order(), 24)
+
+
+
+from ..crystallography.sublattice import hnf_from_det, hnf_from_diag
 
 
 class TestSublattice(unittest.TestCase):
-    def test_divisor(self):
-        self.assertEqual(divisors(1), (1,))
-        self.assertEqual(divisors(14), (1, 2, 7, 14))
-        self.assertEqual(divisors(18), (1, 2, 3, 6, 9, 18))
-
     def test_hnf_from_diag(self):
         self.assertIn([[2, 0, 0], [0, 2, 0], [0, 0, 1]], hnf_from_diag([2, 2, 1]))
         hnfs = [
@@ -151,10 +222,16 @@ class TestSublattice(unittest.TestCase):
 
         self.assertRaises(ValueError, hnf_from_det, -2)
 
-from ..crystallography.rotations import rotation, Euler
+from ..crystallography import rotation, Euler
+from ..crystallography.util import divisors
 
+class TestUtilities(unittest.TestCase):
 
-class TestRotations(unittest.TestCase):
+    def test_divisor(self):
+        self.assertEqual(divisors(1), (1,))
+        self.assertEqual(divisors(14), (1, 2, 7, 14))
+        self.assertEqual(divisors(18), (1, 2, 3, 6, 9, 18))
+
     def test_rotations(self):
         t = [90, 90, 90]
         self.assertTrue((abs(Euler(t) - np.array([[0, 0, 1], [0, -1, 0], [1, 0, 0]])) < 1.0E-15).all())
@@ -168,16 +245,4 @@ class TestRotations(unittest.TestCase):
         z = [1, 1, 1]
         v = [1, 0, 0]
         self.assertTrue(np.max(np.abs(rotation(t, z).dot(v) - np.array([0, 1, 0]))) < 1.0E-12)
-
-#     def test_Rvec_trans(self):
-#         # set a lattice correspondence
-#         L = np.array([[1,0,-1],[0,1,0],[1,0,1]]).T
-#         # one index
-#         n_M = [0.5,0,0.5]
-#         n_A = cry.plane_trans(L, n_M)
-#         self.assertTrue((n_A == np.array([0,0,1.])).all())
-#         # multiple index
-#         n_M = [[ 0.5, 0., 0.5], [ 0.5, 1., 0.5], [ 0., 1., 1. ]]
-#         n_A = cry.plane_trans(L, n_M)
-#         self.assertTrue((n_A == np.array([[0,0,1.],[0,1.,1.],[-1.,1.,1.]])).all())
         

@@ -2,21 +2,8 @@ from pystructrans.general_imports import *
 import itertools
 from functools import reduce
 from operator import mul
+from .util import divisors
 
-def divisors(n):
-    '''
-    Find all divisors of an integer n
-    
-    :param n: the integer to be factorized
-    :type n: integer
-    :return: vector - the list of all the divisors of n
-    '''
-
-    dvrs = [ i + 1
-        for i in xrange(int(np.floor(n/2)))
-        if n % (i + 1) == 0 ]
-    dvrs.append(n)
-    return tuple(dvrs)
 
 def hnf_from_diag(diag):
     '''

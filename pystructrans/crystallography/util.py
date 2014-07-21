@@ -1,6 +1,22 @@
 from ..general_imports import *
 from math import radians
 
+
+def divisors(n):
+    """
+    Find all divisors of an integer n
+
+    :param n: the integer to be factorized
+    :type n: integer
+    :return: vector - the tuple of all the divisors of n
+    """
+
+    dvrs = [i + 1
+            for i in xrange(int(np.floor(n / 2)))
+            if n % (i + 1) == 0]
+    dvrs.append(n)
+    return tuple(dvrs)
+
 def Euler(angles, order="ZXZ", unit="deg"):
     """
     the rotation matrix of applying `Euler angles`_ in the given order,
@@ -29,8 +45,9 @@ def Euler(angles, order="ZXZ", unit="deg"):
             R = canonical_rotation[a.upper()](angle).dot(R)
     return R
 
+
 def rotation(angle, axis, unit="deg"):
-    '''
+    """
     calculate the rotation matrix about axis z
     (in 3D only)
 
@@ -39,7 +56,7 @@ def rotation(angle, axis, unit="deg"):
     :keyword unit: "deg" or "rad", default is "deg"
 
     :return: 3 x 3 rotation matrix, :class:`numpy.ndarray`
-    '''
+    """
 
     a = axis if isinstance(axis, np.ndarray) else np.array(axis)
     z = a/la.norm(a)
@@ -57,3 +74,4 @@ def rotation(angle, axis, unit="deg"):
     R1 = np.cos(t)*(np.outer(z1, z1) + np.outer(z2, z2))
     R2 = np.sin(t)*(np.outer(z2, z1) - np.outer(z1, z2))
     return R1 + R2 + np.outer(z, z)
+

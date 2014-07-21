@@ -1,11 +1,8 @@
-from pystructrans.general_imports import *
+from ..general_imports import *
 import unittest
-from pystructrans.marttrans.lat_opt import lat_opt
-from pystructrans import lat_cor
-import logging
-from numpy import array
-
-
+from ..marttrans.lat_opt import lat_opt
+from ..marttrans.lat_cor import lat_cor
+from ..marttrans import Martensite, solvetwin
 from ..marttrans import orientation_relationship as OR
 
 
@@ -33,11 +30,34 @@ class TestOrientationRelationship(unittest.TestCase):
         p_M = OR.plane_trans(L, p_A)
         self.assertListEqual(p_M, [[1, 0, 1], [1, 1, 1], [0, 1, 2]])
 
+class TestTwin(unittest.TestCase):
+    def test_solve_twin(self):
+
+
+class TestMartensite(unittest.TestCase):
+    def test_set_U(self):
+        M = Martensite()
+        U = [[1, 0, 0], [0, 2, 0], [0, 0, 3]]
+        M = M.setU(U)
+        self.assertListEqual(M.getU().tolist(), U)
+        self.assertRaises(ValueError, M.setLaue, 0)
+        self.assertRaises(ValueError, M.setLaue, U)
+
+        Us = M.getvariants()
+        self.assertEqual(len(Us), 6)
+        idx_list = M.getLaueidx()
+        lg = M.getLaue().matrices()
+        for i, idx in enumerate(idx_list):
+            for j in idx:
+                Q = lg[j]
+                V = Us[i]
+                self.assertListEqual(Q.dot(U).dot(Q.T).tolist(), V.tolist())
+
 # class TestMartTrans(unittest.TestCase):
 #
 #     def test_lat_opt(self):
-#         E1 = np.array([[1, -1, 2],[1, 1, 0],[0, 0, 2]], dtype="float")
-#         E2 = np.array([[1.414, 0, 0],[0, 1.414, 0],[0, 0, 2]])
+#         E1 = np.array([[1, -1, 2], [1, 1, 0], [0, 0, 2]], dtype="float")
+#         E2 = np.array([[1.414, 0, 0], [0, 1.414, 0], [0, 0, 2]])
 #         res = lat_opt(E1, E2, disp=0)
 #         self.assertListEqual(res['lopt'][0].tolist(), [[1, 0, -1], [0, 1, 1], [0, 0, 1]])
 #         self.assertEqual(1.8251822436107899e-07, res['dopt'][0])

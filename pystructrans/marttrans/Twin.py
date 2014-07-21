@@ -322,16 +322,6 @@ class TwinPair():
             return None
                 
             
-                
-            
-                
-                
-    
-                    
-        
-        
-                
-            
 def isSameAN(t1, t2):
     M1 = np.outer(t1[0:3], t1[3:6])
     M2 = np.outer(t2[0:3], t2[3:6])   

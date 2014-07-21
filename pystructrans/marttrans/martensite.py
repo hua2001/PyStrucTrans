@@ -1,157 +1,287 @@
-import numpy as np
-from numpy.linalg import inv, det, eig, norm
-from math import sqrt
-from pystructrans.crystallography import BravaisLattice, CUBIC_LAUE_GROUP
-from pystructrans.mat_math import unique_rows
-import itertools
-
-class MartensiteError(Exception):
-    pass
+from ..general_imports import *
+from .. import CUBIC_LAUE_GROUP, MatrixGroup, BravaisLattice, Lattice
 
 class Martensite():
-    r'''
-    To generate all variants and the associated
-    Laue group indecies for a given 3x3 U matrix.
-    
-    Martensite class can be constructed by the Laue group
-    of the initial phase and the transformation stretch tensor U matrix.
-    
-    Methods
-    '''
+    r"""
+    The class of martensitic phase transformations.
+
+    * the first argument (:py:class:`numpy.ndarray`) is the transformation stretch tensor `U`
+    * the second argument (:py:class:`pystructrans.MatrixGroup`) is the Laue group of the parent phase (usually chosen to be the high symmetry one),
+      the default value is the full `cubic Laue group`
+
+    Both arguments are optional, `i.e.` one can instantiate an empty Martensite object.
+
+    """
     
     def __init__(self, *args):
-        '''
-        Constructor
-        '''
-        if len(args) > 0:
-            self._U = args[0]
-        if len(args) > 1:
-            self._Laue = args[1]
-        else:
-            self._Laue = CUBIC_LAUE_GROUP
-        self._uList = None
-        self._laueIdx = None
-        
-    def getU(self):
-        return self._U
-    
-    def setU(self, *args):
-        
-        if len(args) == 1:
-            if isinstance(args[0], np.ndarray):
-                self._U = args[0]
-            else:
-                self._U = np.diag([args[0],args[0],args[0]])
-        elif len(args) == 2:
-            self._U = np.diag([args[0], args[0], args[1]])
-        elif len(args) == 3:
-            self._U = np.array([[args[0],args[1],0],[args[1],args[0],0],[0,0,args[2]]])
-        elif len(args) == 4:
-            self._U = np.array([[args[0], args[1], 0],[args[1], args[2], 0],[0, 0, args[3]]])
-        else:
-            raise MartensiteError('You can input a 3x3 U matrix or a vector [a_i] where i = 1, 2, 3, 4 to construct a variant.')
-                                    
-            
-    def getLaue(self):
-        return self._Laue
-    def setLaue(self, arg):
-        latParam = [2,2,2,[2,3],[2,120],[1.41, 2], [1.41, 2],[1.41, 1.42, 2], [1.41, 1.42, 2],[1.41, 1.42, 2], [1.41, 1.42, 2], [1.41, 1.42, 2, 89], [1.41, 1.42, 2, 89], [1.41, 1.42, 2, 89, 88, 92]]
-        
-        if isinstance(arg, int) and 0 < arg <= 14:            
-            Lat_init = BravaisLattice(arg, latParam[arg-1])
-            self._Laue = Lat_init.getLaueGroup()
-        else:
-            raise MartensiteError("Please input Bravais lattice ID that is an integer between 1 and 14. ")
-    
-    def calcVariants(self):
-        U1 = np.array(self._U)
-        ulist = U1.reshape(1,9)
-#         print ulist
-        laue_idx = [np.array([0])]
-        i_exist = [0];
-        for i, lg in enumerate(self._Laue):
-            utemp = (np.dot(lg, U1.dot(lg.T))).reshape(1, 9)
-            flag = True
-            
-            for j in xrange(len(ulist)):
-                du = ulist[j] - utemp
-                if norm(du) < 1e-6:
-                    flag = False
-                    if not i in i_exist:
-                        i_exist.append(i);
-                        laue_idx[j] = np.append(laue_idx[j], i);            
-            
-            if flag:
-                ulist = np.append(ulist, np.array(utemp), axis = 0)
-                i_exist.append(i);
-                laue_idx.append(np.array([i]))
-                
-        laue_idx = np.array(laue_idx)
-        
-        self._uList = ulist.reshape(len(ulist),3,3);
-        self._laueIdx = laue_idx;
-            
-    def getVariants(self):
-        if self._uList == None:
-            self.calcVariants()
-            
-        return self._uList
-    
-    def getVariant(self,n):
-        if self._uList == None:
-            self.calcVariants()
-        return self._uList[n-1]
+        self.__U = args[0] if len(args) > 0 else None
+        self.__Laue = args[1] if len(args) > 1 else MatrixGroup(CUBIC_LAUE_GROUP)
+        self.__Ulist = None
+        self.__Laueidx = None
 
-    def getLaueIdx(self, *args):
-        if self._laueIdx == None:
-            self.calcVariants()
-        if len(args) == 0:
-            return self._laueIdx
+    def setU(self, *args):
+        r"""
+        Set the transformation stretch tensor of the transformation,
+        and return a `new` Martensite object.
+        It can be defined through one of the following ways
+
+        * :param U: 3 x 3 :py:class:`numpy.ndarray`
+
+            Directly define the transformation stretch tensor
+
+        * :param |alpha|: :py:class:`int` or :py:class:`float`
+
+            Define a transformation stretch tensor in the form of `diag(|alpha|, |alpha|, |alpha|)`
+
+        * :param |alpha|: :py:class:`int` or :py:class:`float`
+          :param |beta|: :py:class:`int` or :py:class:`float`
+
+            Define a transformation stretch tensor in the form of `diag(|alpha|, |alpha|, |beta|)`
+
+        * :param |alpha|: :py:class:`int` or :py:class:`float`
+          :param |beta|: :py:class:`int` or :py:class:`float`
+          :param |gamma|: :py:class:`int` or :py:class:`float`
+
+            Define a transformation stretch tensor in the form
+
+            .. math::
+
+                \begin{pmatrix}
+                \alpha & \beta & 0 \\
+                \beta & \alpha & 0 \\
+                0 & 0 & \gamma
+                \end{pmatrix}
+
+        * :param |alpha|: :py:class:`int` or :py:class:`float`
+          :param |beta|: :py:class:`int` or :py:class:`float`
+          :param |gamma|: :py:class:`int` or :py:class:`float`
+          :param |delta|: :py:class:`int` or :py:class:`float`
+
+            Define a transformation stretch tensor in the form
+
+            .. math::
+
+                \begin{pmatrix}
+                \alpha & \beta & 0 \\
+                \beta & \gamma & 0 \\
+                0 & 0 & \delta
+                \end{pmatrix}
+
+
+        :return: a new Martensite object with the current `Laue` and newly assigned `U`
+        :rtype: :py:class:`pystructrans.Martensite`
+        :raises ValueError:
+
+            if the input does not match any of above, or
+            the resulting tensor is not `positive definite` and `symmetric`
+
+        .. |alpha| unicode:: 0x03B1 .. alpha
+        .. |beta| unicode:: 0x03B2 .. beta
+        .. |gamma| unicode:: 0x03B3 .. gamma
+        .. |delta| unicode:: 0x03B4 .. delta
+        """
+        try:
+            U = None
+            if isinstance(args[0], np.ndarray) or isinstance(args[0], list):
+                U0 = np.array(args[0])
+                if U0.shape == (3, 3):
+                   U = U0
+                else:
+                    raise ValueError
+            elif len(args) == 1:
+                U = np.diag([args[0], args[0], args[0]])
+            elif len(args) == 2:
+                U = np.diag([args[0], args[0], args[1]])
+            elif len(args) == 3:
+                U = np.array([[args[0], args[1], 0], [args[1], args[0], 0], [0, 0, args[2]]])
+            elif len(args) == 4:
+                U = np.array([[args[0], args[1], 0], [args[1], args[2], 0], [0, 0, args[3]]])
+        except:
+            raise ValueError("unrecognizable input")
+
+        if not np.array_equal(U, U.T):
+            raise ValueError("not symmetric")
+
+        if not la.det(U) > 0:
+            raise ValueError("not positive definite")
+
+        return Martensite(U, self.getLaue())
+
+    def getU(self):
+        """
+        :return: a `copy` of the transformation stretch matrix
+        :rtype: :py:class:`numpy.ndarray`
+        """
+        if self.__U is None:
+            raise AttributeError("U has not been initialized")
+        U = np.empty_like(self.__U)
+        U[:] = self.__U
+        return U
+
+    def getLaue(self):
+        """
+        :return: the Laue group of the high symmetry phase
+        :rtype: :py:class:`pystructrans.MatrixGroup`
+        """
+        return self.__Laue
+
+    def setLaue(self, arg):
+        """
+        There are two ways to set the Laue group for the transformation.
+
+        * :param arg: an integer between 1 and 14
+            type of the Bravais lattice of the high symmetry phase
+
+        * :param group: :py:class:`pystructrans.MatrixGroup`
+            directly assign the Laue group
+
+        :return: a new Martensite object with the current `U` and newly assigned `Laue`
+        :rtype: :py:class:`pystructrans.Martensite`
+        :raises ValueError:
+
+            unrecognizable input
+
+        """
+        latParam = [2, 2, 2,
+                    [2, 3],
+                    [2, 120],
+                    [1.41, 2], [1.41, 2],
+                    [1.41, 1.42, 2], [1.41, 1.42, 2], [1.41, 1.42, 2], [1.41, 1.42, 2],
+                    [1.41, 1.42, 2, 89], [1.41, 1.42, 2, 89],
+                    [1.41, 1.42, 2, 89, 88, 92]]
+
+        if isinstance(arg, MatrixGroup):
+            return Martensite(self.__U, arg)
+        elif isinstance(arg, int) and 0 < arg <= 14:
+            lattice = BravaisLattice(arg, latParam[arg-1])
+            return Martensite(self.__U, lattice.getLaueGroup())
         else:
-            return self._laueIdx[args[0]-1]
-        
-    def getLaue_M(self):
-        idx = self._laueIdx[0]
-        return np.array([self._Laue[i] for i in idx])
-    
-    def getCor_list(self, E, L):
-        r'''
-        E should be the primitive lattice base
-        '''
-        if isinstance(E, np.ndarray) and isinstance(E, np.ndarray):
-            if E.shape == (3,3) and E.shape == (3,3):
-                laue_idx = self.getLaueIdx()
-                lg_a = self.getLaue()
-                lcor = []
-                for i in xrange(len(laue_idx)):
-                    ltemp = []
-                    for j in xrange(len(laue_idx[0])):
-                        ltemp.append((np.dot(inv(E), lg_a[laue_idx[i][j]].dot(E))).dot(L))
-                    lcor.append(ltemp)
-                return np.array(lcor)
-            else:
-                raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
-        else:
-            raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
-    def getLc_list(self, C, Lc):
-        r'''
-        C should be the conventional lattice base
-        '''
-        if isinstance(C, np.ndarray) and isinstance(C, np.ndarray):
-            if C.shape == (3,3) and C.shape == (3,3):
-                laue_idx = self.getLaueIdx()
-                lg_a = self.getLaue()
-                lcor = []
-                for i in xrange(len(laue_idx)):
-                    ltemp = []
-                    for j in xrange(len(laue_idx[0])):
-                        ltemp.append((np.dot(inv(C), lg_a[laue_idx[i][j]].dot(C))).dot(Lc))
-                    lcor.append(ltemp)
-                return np.array(lcor)
-            else:
-                raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
-        else:
-            raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+            raise ValueError("unrecognizable input")
+
+    def getvariants(self):
+        """
+
+        :return: all the variants
+        :rtype: [N x 3 x 3] :py:class:`numpy.ndarray`
+        :raises AttributeError:
+
+            if the transformation is not reversible
+
+        """
+        if self.__Ulist is None:
+            self.calcvariants()
+        return self.__Ulist
+
+    def getvariant(self, n):
+        """
+
+        :param n: index of the variant, an integer between 1 and # of variants
+        :return: the `n`-th variant
+        :rtype: :py:class:`numpy.ndarray`
+        """
+        if self.__Ulist is None:
+            self.calcvariants()
+        return self.__Ulist[n - 1]
+
+    def isreversible(self):
+        """
+
+        :return: whether the transformation is reversible
+        :rtype: boolean
+        :raises AttributeError:
+
+                if `U` has not been assigned
+        """
+        if self.__U is None:
+            raise AttributeError("U has not been initialized")
+        lg = Lattice(self.getU()).getLaueGroup()
+        lg0 = self.getLaue()
+        return lg.order() < lg0.order() and lg0.hassubgroup(lg)
+
+    def getLaueidx(self):
+        if self.__Laueidx is None:
+            self.calcvariants()
+        return self.__Laueidx
+
+    def calcvariants(self):
+        """
+        (lazy) calculate all the variants of the transformation.
+        store the matrices associated to each variant
+        and the indices of elements in the Laue group that maps
+        the original `U` to them.
+        """
+        if self.__Ulist is None:
+            if not self.isreversible():
+                raise AttributeError("irreversible martensitic transformations have no variants")
+
+            U1 = self.getU()
+            ulist = [U1]
+            idx = [[]]
+            for i, Q in enumerate(self.__Laue.matrices()):
+                V = Q.dot(U1).dot(Q.T)
+                newU = True
+                for j, U in enumerate(ulist):
+                    if np.max(np.abs(U - V)) < SMALL:
+                        newU = False
+                        idx[j].append(i)
+
+                if newU:
+                    ulist.append(V)
+                    idx.append([i])
+
+            self.__Ulist = np.array(ulist)
+            self.__Laueidx = np.array(idx)
+
+#     def getLaueIdx(self, *args):
+#         if self._laueIdx == None:
+#             self.calcVariants()
+#         if len(args) == 0:
+#             return self._laueIdx
+#         else:
+#             return self._laueIdx[args[0]-1]
+#
+#     def getLaue_M(self):
+#         idx = self._laueIdx[0]
+#         return np.array([self._Laue[i] for i in idx])
+#
+#     def getCor_list(self, E, L):
+#         r'''
+#         E should be the primitive lattice base
+#         '''
+#         if isinstance(E, np.ndarray) and isinstance(E, np.ndarray):
+#             if E.shape == (3,3) and E.shape == (3,3):
+#                 laue_idx = self.getLaueIdx()
+#                 lg_a = self.getLaue()
+#                 lcor = []
+#                 for i in xrange(len(laue_idx)):
+#                     ltemp = []
+#                     for j in xrange(len(laue_idx[0])):
+#                         ltemp.append((np.dot(inv(E), lg_a[laue_idx[i][j]].dot(E))).dot(L))
+#                     lcor.append(ltemp)
+#                 return np.array(lcor)
+#             else:
+#                 raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+#         else:
+#             raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+#     def getLc_list(self, C, Lc):
+#         r'''
+#         C should be the conventional lattice base
+#         '''
+#         if isinstance(C, np.ndarray) and isinstance(C, np.ndarray):
+#             if C.shape == (3,3) and C.shape == (3,3):
+#                 laue_idx = self.getLaueIdx()
+#                 lg_a = self.getLaue()
+#                 lcor = []
+#                 for i in xrange(len(laue_idx)):
+#                     ltemp = []
+#                     for j in xrange(len(laue_idx[0])):
+#                         ltemp.append((np.dot(inv(C), lg_a[laue_idx[i][j]].dot(C))).dot(Lc))
+#                     lcor.append(ltemp)
+#                 return np.array(lcor)
+#             else:
+#                 raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
+#         else:
+#             raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
         
         
         
