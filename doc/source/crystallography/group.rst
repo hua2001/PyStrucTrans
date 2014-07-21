@@ -84,7 +84,7 @@ Let's try a larger example
 .. doctest::
 
     >>> from pystructrans.crystallography.matrix_group import CUBIC_LAUE_GROUP
-    >>> for m in CUBIC_LAUE_GROUP:
+    >>> for m in CUBIC_LAUE_GROUP.matrices():
     ...   print(m.tolist())
     [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     [[1, 0, 0], [0, -1, 0], [0, 0, -1]]
@@ -110,12 +110,11 @@ Let's try a larger example
     [[0, 0, -1], [1, 0, 0], [0, -1, 0]]
     [[0, 0, 1], [-1, 0, 0], [0, -1, 0]]
     [[0, -1, 0], [0, 0, -1], [1, 0, 0]]
-    >>> cg = MatrixGroup(CUBIC_LAUE_GROUP)
-    >>> cg.order()
+    >>> CUBIC_LAUE_GROUP.order()
     24
-    >>> cg.isabelian()
+    >>> CUBIC_LAUE_GROUP.isabelian()
     False
-    >>> print(cg.multable())
+    >>> print(CUBIC_LAUE_GROUP.multable())
     [[ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23]
      [ 1  0  3  2 15 14 12 13  9  8 11 10  6  7  5  4 20 22 21 23 16 18 17 19]
      [ 2  3  0  1 14 15  7  6 11 10  9  8 13 12  4  5 19 21 22 16 23 17 18 20]
@@ -144,5 +143,5 @@ Let's try a larger example
 We can check the group-subgroup relations between MatrixGroups
 .. doctest::
 
-    >>> [cg.hassubgroup(g), g.hassubgroup(cg), cg.hassubgroup(cg)]
-    [True, False, True]
+    >>> [CUBIC_LAUE_GROUP.hassubgroup(g), g.hassubgroup(CUBIC_LAUE_GROUP), CUBIC_LAUE_GROUP.hassubgroup(CUBIC_LAUE_GROUP), g.hassubgroup(g)]
+    [True, False, True, True]

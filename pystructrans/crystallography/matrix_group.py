@@ -1,60 +1,7 @@
 from ..general_imports import *
 import logging
-from .util import divisors
-
-CUBIC_LAUE_GROUP = np.array([
-    # identity
-    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-    # two fold rotations
-    [[1, 0, 0], [0, -1, 0], [0, 0, -1]],  # [100]
-    [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],  # [010]
-    [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],  # [001]
-    [[0, 1, 0], [1, 0, 0], [0, 0, -1]],  # [110]
-    [[0, -1, 0], [-1, 0, 0], [0, 0, -1]],  # [1-10]
-    [[0, 0, 1], [0, -1, 0], [1, 0, 0]],  # [101]
-    [[0, 0, -1], [0, -1, 0], [-1, 0, 0]],  # [10-1]
-    [[-1, 0, 0], [0, 0, 1], [0, 1, 0]],  # [011]
-    [[-1, 0, 0], [0, 0, -1], [0, -1, 0]],  # [01-1]
-    # four fold rotations about [100]
-    [[1, 0, 0], [0, 0, -1], [0, 1, 0]],
-    [[1, 0, 0], [0, 0, 1], [0, -1, 0]],
-    # four fold rotations about [010]
-    [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],
-    [[0, 0, -1], [0, 1, 0], [1, 0, 0]],
-    # four fold rotations about [001]
-    [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
-    [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
-    # three-fold rotations about [111]
-    [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
-    [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
-    # three-fold rotations about [-111]
-    [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],
-    [[0, -1, 0], [0, 0, 1], [-1, 0, 0]],
-    # three-fold rotations about [-1-11]
-    [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],
-    [[0, 0, -1], [1, 0, 0], [0, -1, 0]],
-    # three-fold rotations about [1-11]
-    [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
-    [[0, -1, 0], [0, 0, -1], [1, 0, 0]]
-])
-
-# this is not really a group,
-# because it contains no identity.
-# Also it does not contain the 2 fold rotation about z-axis.
-HEX_LAUE_GROUP = np.array([
-    [[np.cos(np.pi / 3), np.sin(np.pi / 3), 0], [-np.sin(np.pi / 3), np.cos(np.pi / 3), 0], [0, 0, 1.]],
-    [[np.cos(-np.pi / 3), np.sin(-np.pi / 3), 0], [-np.sin(-np.pi / 3), np.cos(-np.pi / 3), 0], [0, 0, 1.]],
-    [[np.cos(2 * np.pi / 3), np.sin(2 * np.pi / 3), 0], [-np.sin(2 * np.pi / 3), np.cos(2 * np.pi / 3), 0], [0, 0, 1.]],
-    [[np.cos(-2 * np.pi / 3), np.sin(-2 * np.pi / 3), 0], [-np.sin(-2 * np.pi / 3), np.cos(-2 * np.pi / 3), 0],
-     [0, 0, 1.]],
-    [[np.cos(np.pi / 3), np.sin(np.pi / 3), 0], [np.sin(np.pi / 3), -np.cos(np.pi / 3), 0], [0, 0, -1.]],
-    [[np.cos(-np.pi / 3), np.sin(-np.pi / 3), 0], [np.sin(-np.pi / 3), -np.cos(-np.pi / 3), 0], [0, 0, -1.]],
-    [[np.cos(2 * np.pi / 3), np.sin(2 * np.pi / 3), 0], [np.sin(2 * np.pi / 3), -np.cos(2 * np.pi / 3), 0],
-     [0, 0, -1.]],
-    [[np.cos(-2 * np.pi / 3), np.sin(-2 * np.pi / 3), 0], [np.sin(-2 * np.pi / 3), -np.cos(-2 * np.pi / 3), 0],
-     [0, 0, -1.]]
-])
-FULL_LAUE_GROUP = np.append(CUBIC_LAUE_GROUP, HEX_LAUE_GROUP, axis=0)
+from ..util import divisors
+from ..util import rotation
 
 # square group
 SQUARE_GROUP = np.array([
@@ -163,11 +110,11 @@ class MatrixGroup():
         :rtype: boolean or 2D :py:class:`numpy.ndarray`
         """
         try:
-            matrices = np.array(matrices)
+            mats = np.round(np.array(matrices), 6)
         except Exception:
             logging.debug("not array")
             return False
-        shape = matrices.shape
+        shape = mats.shape
         if len(shape) != 3 or shape[1] != shape[2]:
             logging.debug("wrong shape")
             return False
@@ -176,9 +123,7 @@ class MatrixGroup():
         hashmap = {}
         # existance of identity
         id_exist = False
-        for i, m in enumerate(matrices):
-            m[m == -0] = 0
-            m[m == -0.0] = 0.0
+        for i, m in enumerate(mats):
             hashmap[m.tostring()] = i
             if np.max(np.abs(m - np.eye(dim))) < 1.0e-10:
                 id_exist = True
@@ -188,25 +133,88 @@ class MatrixGroup():
                 logging.debug(m)
             return False
 
-        N = len(matrices)
+        N = len(mats)
         if len(hashmap) != N:
             # exist duplication
             logging.debug("duplicate")
             return False
 
+        def ingroup(Q):
+            for k, PP in enumerate(matrices):
+                if np.max(np.abs(PP - Q)) < 1.0E-5:
+                    return k
+            return -1
+
         mtable = np.empty((N, N), dtype='int')
         for i in xrange(N):
             for j in xrange(N):
-                m = matrices[i].dot(matrices[j])
-                m[m == -0] = 0
-                m[m == -0.0] = 0.0
+                m = np.round(mats[i].dot(mats[j]), 6)
+                # idx = ingroup(m)
+                # if idx > -1:
+                #     mtable[i, j] = idx
                 if m.tostring() in hashmap:
                     mtable[i, j] = hashmap[m.tostring()]
                 else:
                     logging.debug("false multable")
-                    logging.debug("mi = {:s}".format(str(matrices[i])))
-                    logging.debug("mj = {:s}".format(str(matrices[j])))
+                    logging.debug("mi = {:s}".format(str(mats[i])))
+                    logging.debug("mj = {:s}".format(str(mats[j])))
                     logging.debug("m = {:s}".format(str(m)))
                     return False
 
         return mtable
+
+cubic_Laue_group_mats = np.array([
+    # identity
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    # two fold rotations
+    [[1, 0, 0], [0, -1, 0], [0, 0, -1]],  # [100]
+    [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],  # [010]
+    [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],  # [001]
+    [[0, 1, 0], [1, 0, 0], [0, 0, -1]],  # [110]
+    [[0, -1, 0], [-1, 0, 0], [0, 0, -1]],  # [1-10]
+    [[0, 0, 1], [0, -1, 0], [1, 0, 0]],  # [101]
+    [[0, 0, -1], [0, -1, 0], [-1, 0, 0]],  # [10-1]
+    [[-1, 0, 0], [0, 0, 1], [0, 1, 0]],  # [011]
+    [[-1, 0, 0], [0, 0, -1], [0, -1, 0]],  # [01-1]
+    # four fold rotations about [100]
+    [[1, 0, 0], [0, 0, -1], [0, 1, 0]],
+    [[1, 0, 0], [0, 0, 1], [0, -1, 0]],
+    # four fold rotations about [010]
+    [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],
+    [[0, 0, -1], [0, 1, 0], [1, 0, 0]],
+    # four fold rotations about [001]
+    [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+    [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
+    # three-fold rotations about [111]
+    [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+    [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+    # three-fold rotations about [-111]
+    [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],
+    [[0, -1, 0], [0, 0, 1], [-1, 0, 0]],
+    # three-fold rotations about [-1-11]
+    [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],
+    [[0, 0, -1], [1, 0, 0], [0, -1, 0]],
+    # three-fold rotations about [1-11]
+    [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
+    [[0, -1, 0], [0, 0, -1], [1, 0, 0]]
+])
+CUBIC_LAUE_GROUP = MatrixGroup(cubic_Laue_group_mats)
+
+# this is not really a group,
+# because it contains no identity.
+# Also it does not contain the 2 fold rotation about z-axis.
+__C1 = np.cos(np.pi / 3)
+__S1 = np.sin(np.pi / 3)
+hex_Laue_group_mats = np.array([
+    # identity
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    # two fold rotations
+    [[1, 0, 0], [0, -1, 0], [0, 0, -1]],  # [100]
+    [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],  # [010]
+    [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],  # [001]
+    rotation(60, [0, 0, 1]),
+    rotation(120, [0, 0, 1]),
+    rotation(-60, [0, 0, 1]),
+    rotation(-120, [0, 0, 1])
+])
+# HEX_LAUE_GROUP = MatrixGroup(hex_Laue_group_mats)

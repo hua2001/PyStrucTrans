@@ -9,4 +9,4 @@ import numpy as np
 import numpy.linalg as la
 import logging
 
-SMALL = 1.0E-15
+SMALL = 1.0E-10

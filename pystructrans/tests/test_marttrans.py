@@ -5,7 +5,6 @@ from ..marttrans.lat_cor import lat_cor
 from ..marttrans import Martensite, solvetwin
 from ..marttrans import orientation_relationship as OR
 
-
 class TestOrientationRelationship(unittest.TestCase):
     def test_vec_trans(self):
         # set a lattice correspondence
@@ -30,8 +29,8 @@ class TestOrientationRelationship(unittest.TestCase):
         p_M = OR.plane_trans(L, p_A)
         self.assertListEqual(p_M, [[1, 0, 1], [1, 1, 1], [0, 1, 2]])
 
-class TestTwin(unittest.TestCase):
-    def test_solve_twin(self):
+# class TestTwin(unittest.TestCase):
+#     def test_solve_twin(self):
 
 
 class TestMartensite(unittest.TestCase):

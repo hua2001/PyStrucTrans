@@ -5,4 +5,4 @@ from .martensite import Martensite
 # from .Twin import TwinSystem, TwinSolver
 from .Compatibility import AM_Solver, isCompatible
 from .orientation_relationship import direc_trans, plane_trans
-from .twin import solvetwin
+from .twin import TwinSystem

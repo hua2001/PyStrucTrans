@@ -125,9 +125,7 @@ class TestMatrixGroup(unittest.TestCase):
     def test_construction(self):
         A = [[[1, 2, 3], [2, 3, 4]]]
         self.assertRaises(ValueError, MatrixGroup, A)
-        A = CUBIC_LAUE_GROUP
-        g = MatrixGroup(A)
-        self.assertFalse(g is False)
+        g = CUBIC_LAUE_GROUP
         t = np.array([[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
                        17, 18, 19, 20, 21, 22, 23],
                       [1, 0, 3, 2, 15, 14, 12, 13, 9, 8, 11, 10, 6, 7, 5, 4, 20,
@@ -176,6 +174,7 @@ class TestMatrixGroup(unittest.TestCase):
                        20, 16, 2, 3, 19, 23, 0],
                       [23, 16, 19, 20, 8, 11, 15, 4, 7, 12, 6, 13, 14, 5, 9, 10, 18,
                        3, 1, 21, 17, 2, 0, 22]])
+        logging.debug(g.multable())
         self.assertTrue(np.array_equal(t, g.multable()))
         self.assertEqual(g.order(), 24)
 
@@ -221,28 +220,3 @@ class TestSublattice(unittest.TestCase):
             self.assertIn(h.tolist(), hnfs)
 
         self.assertRaises(ValueError, hnf_from_det, -2)
-
-from ..crystallography import rotation, Euler
-from ..crystallography.util import divisors
-
-class TestUtilities(unittest.TestCase):
-
-    def test_divisor(self):
-        self.assertEqual(divisors(1), (1,))
-        self.assertEqual(divisors(14), (1, 2, 7, 14))
-        self.assertEqual(divisors(18), (1, 2, 3, 6, 9, 18))
-
-    def test_rotations(self):
-        t = [90, 90, 90]
-        self.assertTrue((abs(Euler(t) - np.array([[0, 0, 1], [0, -1, 0], [1, 0, 0]])) < 1.0E-15).all())
-
-        t = 60
-        z = [0, 0, 1]
-        diff = rotation(t, z) - np.array([[0.5, -np.sqrt(3)*0.5, 0], [np.sqrt(3)*0.5, 0.5, 0], [0, 0, 1]])
-        self.assertTrue(np.max(np.abs(diff)) < 1.0E-12)
-
-        t = 120
-        z = [1, 1, 1]
-        v = [1, 0, 0]
-        self.assertTrue(np.max(np.abs(rotation(t, z).dot(v) - np.array([0, 1, 0]))) < 1.0E-12)
-        

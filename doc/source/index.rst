@@ -15,10 +15,13 @@ Contents:
    
    crystallography/index
    marttrans/index
+   util/index
 
 `Crystallography <crystallography/index.html>`_
 
 `Martensitic transformation <marttrans/index.html>`_
+
+`Utilities <util/index.html>`_
 
 Indices and tables
 ==================

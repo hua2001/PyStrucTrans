@@ -2,7 +2,7 @@ from pystructrans.general_imports import *
 import itertools
 from functools import reduce
 from operator import mul
-from .util import divisors
+from ..util import divisors
 
 
 def hnf_from_diag(diag):

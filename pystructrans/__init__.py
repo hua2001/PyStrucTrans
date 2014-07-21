@@ -7,4 +7,5 @@ __verison__ = "1.0.0a"
 
 from .crystallography import *
 from .marttrans import *
+from .util import Euler, rotation
 # from runtests import test

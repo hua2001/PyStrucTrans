@@ -1,6 +1,30 @@
-from ..general_imports import *
+from .general_imports import *
 from math import radians
 
+def _3_by_3(U):
+    """
+    U is a [3 x 3] matrix
+    """
+    return isinstance(U, np.ndarray) and U.shape is not (3, 3)
+
+def _pos_def_sym(U):
+    """
+    check if U is [3 x 3] positive definite and symmetric
+    """
+    return _3_by_3(U) and la.det(U) > 0 and np.array_equal(U, U.T)
+
+def _sort_eig(A):
+    """
+    sorted eigenvalues and eigenvectors
+    :param A:
+    :return:
+    """
+    e = la.eig(A)
+    e = [np.append(e[0][i], e[1][:, i]).real for i in xrange(3)]
+    e = np.array(sorted(e, key=lambda x: x[0]))
+    eval = e[:, 0]
+    evec = np.array([[1., 0, 0], [0, 1., 0], [0, 0, 1.]]).dot(e[:, 1:4])
+    return eval, evec
 
 def divisors(n):
     """
@@ -19,15 +43,7 @@ def divisors(n):
 
 def Euler(angles, order="ZXZ", unit="deg"):
     """
-    the rotation matrix of applying `Euler angles`_ in the given order,
-    using the convention of `intrinsic rotations`_
-
-    :param angles: three Euler angles, :class:`list`, :class:`tuple`, or :class:`numpy.ndarray`
-    :keyword order: axis sequence, default is "ZXZ", :class:`str` of length 3
-    :keyword unit: **"deg"** or **"rad"**, default is **"deg"**
-
-    .. _Euler angles: http://en.wikipedia.org/wiki/Euler_angles
-    .. _intrinsic rotations: http://en.wikipedia.org/wiki/Euler_angles#Intrinsic_rotations
+    the rotation matrix of applying Euler angles in the given order.
     """
     if len(angles) != 3 or len(order) != 3:
         raise ValueError("number of rotations is not three")
@@ -48,14 +64,7 @@ def Euler(angles, order="ZXZ", unit="deg"):
 
 def rotation(angle, axis, unit="deg"):
     """
-    calculate the rotation matrix about axis z
-    (in 3D only)
-
-    :param angle: angle
-    :param axis: axis as a 3D vector, :class:`list`, :class:`tuple` or :class:`numpy.ndarray`
-    :keyword unit: "deg" or "rad", default is "deg"
-
-    :return: 3 x 3 rotation matrix, :class:`numpy.ndarray`
+    calculate the rotation matrix about axis z (in 3D only)
     """
 
     a = axis if isinstance(axis, np.ndarray) else np.array(axis)
@@ -74,4 +83,3 @@ def rotation(angle, axis, unit="deg"):
     R1 = np.cos(t)*(np.outer(z1, z1) + np.outer(z2, z2))
     R2 = np.sin(t)*(np.outer(z2, z1) - np.outer(z1, z2))
     return R1 + R2 + np.outer(z, z)
-
