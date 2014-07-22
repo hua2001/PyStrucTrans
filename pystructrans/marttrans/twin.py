@@ -1,8 +1,9 @@
 from ..general_imports import *
 import math
 
-from .. import util
-from .martensite import Martensite, MatrixGroup, CUBIC_LAUE_GROUP
+from .. import __util__ as util
+from .martensite import Martensite
+from ..crystallography import MatrixGroup, CUBIC_LAUE_GROUP
 
 
 class TwinSystem():
@@ -13,7 +14,7 @@ class TwinSystem():
         """use two parameters Ulist and Laue, or an Martensite object"""
         if len(args) == 1:
             if isinstance(args[0], Martensite):
-                self.__Ulist = args[0].getVariants()
+                self.__Ulist = args[0].getvariants()
             else:
                 try:
                     self.__Ulist = np.array(args[0])
@@ -28,7 +29,88 @@ class TwinSystem():
             if isinstance(args[1], MatrixGroup):
                 self.__Laue = args[1]
         self.__N = len(self.__Ulist)    # Number of variants
+        self.__twintable = None
+        self.__twinpairs = None
 
+    def getUlist(self):
+        """
+
+        :return: the list of U's
+        :rtype: :py:class:`numpy.ndarray`
+        """
+        Ulist = np.empty_like(self.__Ulist)
+        Ulist[:] = self.__Ulist
+        return Ulist
+
+    def getLaue(self):
+        """
+
+        :return: the Laue group
+        :rtype: :py:class:`pystructrans.MatrixGroup`
+        """
+        return self.__Laue
+
+    def gettwintable(self):
+        """
+        get all twinnable variant pairs, in terms of indices in ``Ulist``
+        """
+        if self.__twintable is None:
+            self.__twintable = []
+            self.__twinpairs = []
+            for i in xrange(self.__N - 1):
+                for j in xrange(i + 1, self.__N):
+                    tp = TwinPair(self.__Ulist[i], self.__Ulist[j])
+                    if tp.istwinnable():
+                        self.__twintable.append((i, j))
+                        self.__twinpairs.append(tp)
+        return self.__twintable
+
+    def gettwinpairs(self):
+        """
+        get all twinnable variant pairs, in terms of TwinPair objects
+        """
+        if self.__twinpairs is None:
+            self.gettwintable()
+        return self.__twinpairs
+
+    def getconventional(self):
+        """
+
+        :return: the idecies of twintable/twinpairs whose corresponding TwinPair is conventional
+        :rtype: :py:class:`list`
+        """
+        if self.__twinpairs is None:
+            self.gettwintable()
+        return [i for i in xrange(len(self.__twinpairs))
+                if self.__twinpairs[i].isconventional(self.getLaue())]
+
+    def getcompound(self):
+        """
+
+        :return: the idecies of twintable/twinpairs whose corresponding TwinPair is compound
+        :rtype: :py:class:`list`
+        """
+        if self.__twinpairs is None:
+            self.gettwintable()
+        return [i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].iscompound()]
+
+    def gettypeI(self):
+        """
+
+        :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
+        :rtype: :py:class:`list`
+        """
+        if self.__twinpairs is None:
+            self.gettwintable()
+        return [i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].istypeI()]
+
+    def gettypeII(self):
+        """
+
+        :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
+        :rtype: :py:class:`list`
+        """
+        return self.gettypeI()
 
 class TwinPair():
     """
@@ -37,7 +119,7 @@ class TwinPair():
     """
     def __init__(self, Ui, Uj, skipcheck=False):
 
-        if not unsafe and (not util._pos_def_sym(Ui) or not util._pos_def_sym(Uj)):
+        if not skipcheck and (not util.pos_def_sym(Ui) or not util.pos_def_sym(Uj)):
             raise ValueError("Ui or Uj is not a 3 x 3 positive definite symmetric matrix")
 
         self.__Ui = Ui
@@ -45,7 +127,7 @@ class TwinPair():
 
         Uiinv = la.inv(Ui)
         self.__C = np.dot(Uiinv.dot(Uj), Uj.dot(Uiinv))
-        self.__e, self.__v = util._sort_eig(self.__C)
+        self.__e, self.__v = util.sort_eig(self.__C)
 
         self.__twinnable = self.istwinnable()
         self.__conventional = None
@@ -58,7 +140,8 @@ class TwinPair():
 
     def getUi(self):
         """
-        return U_i
+
+        :return: return U_i
         """
         Ui = np.empty_like(self.__Ui)
         Ui[:] = self.__Ui
@@ -66,7 +149,8 @@ class TwinPair():
 
     def getUj(self):
         """
-        return U_j
+
+        :return: return U_j
         """
         Uj = np.empty_like(self.__Uj)
         Uj[:] = self.__Uj
@@ -74,7 +158,8 @@ class TwinPair():
 
     def istwinnable(self):
         """
-        check is the twin pair is in fact twinnable
+
+        :return: if the twin pair is in fact twinnable
         """
         if np.max(np.abs(self.__Ui - self.__Uj)) < SMALL:
             return False
@@ -82,12 +167,13 @@ class TwinPair():
 
     def isconventional(self, *lauegroup):
         """
-        check if the twin pair is conventionally twinned
+
+        :return:  if the twin pair is conventionally twinned
         """
         if self.__conventional is None:
             if not self.__twinnable:
                 return False
-            twofold = CUBIC_LAUE_GROUP.matrices()[1:10] if len(lauegroup) == 0 else lauegroup.matrices()
+            twofold = CUBIC_LAUE_GROUP.matrices()[1:10] if len(lauegroup) == 0 else lauegroup[0].matrices()
             conventional = False
             for Q in twofold:
                 if np.max(np.abs(Q.dot(self.__Ui).dot(Q.T) - self.__Uj)) < SMALL:
@@ -98,7 +184,8 @@ class TwinPair():
 
     def getax(self):
         """
-        get axes of possible 180 degree rotations relating two variants
+
+        :return: axes of possible 180 degree rotations relating two variants
         """
         if self.__ax is None:
             if not self.istwinnable():
@@ -121,67 +208,75 @@ class TwinPair():
 
     def iscompound(self):
         """
-        if the twin pair is a compound twin
+
+        :return: if the twin pair is a compound twin
         """
         return len(self.getax()) > 1
 
     def istypeI(self):
         """
-        if the twin pair is a Type I/II twin
+
+        :return: if the twin pair is a Type I/II twin
         """
         return not self.iscompound()
 
     def istypeII(self):
         """
-        if the twin pair is a Type I/II twin
+
+        :return: if the twin pair is a Type I/II twin
         """
         return not self.iscompound()
 
     def XI(self):
         """
-        (lazy) calculate cofactor parameter for Type I twin
+
+        :return:  cofactor parameter for Type I twin
         """
         if self.iscompound():
             raise AttributeError("parameter X_I is not defined for compound twins")
         if self.__XI is None:
-            t_ax = self.getAx()[0]
-            self.__XI  = la.norm(la.inv(self.__Ui).dot(t_ax))
+            t_ax = self.getax()[0]
+            self.__XI = la.norm(la.inv(self.__Ui).dot(t_ax))
         return self.__XI
 
     def XII(self):
         """
-        (lazy) calculate cofactor parameter for Type II twin
+
+        :return:  cofactor parameter for Type II twin
         """
         if self.iscompound():
             raise AttributeError("parameter X_I is not defined for compound twins")
         if self.__XII is None:
-            t_ax = self.getAx()[0]
-            self.__XII  = la.norm(self.__Ui.dot(t_ax))
+            t_ax = self.getax()[0]
+            self.__XII = la.norm(self.__Ui.dot(t_ax))
         return self.__XII
 
     def gettwinparam(self):
         """
-        twin parameters of the twin pair if it is twinnable
+
+        :return: twin parameters of the twin pair if it is twinnable
         """
         if not self.istwinnable():
             raise AttributeError("only twinnable twin pairs have twin parameters")
 
         if self.__twinparam is None:
-            t_ax = self.getAx()[0]
+            t_ax = self.getax()[0]
             self.__twinparam = _solvetwin(self.__Ui, t_ax)
 
         return self.__twinparam
 
     def iscompatible(self):
         """
-        if the twin can be compatible with the reference (identity matrix)
+
+        :return: if the twin can be compatible with the reference (identity matrix)
         """
         return (np.array(self.volfrac()) is not None).any()
 
 
     def volfrac(self, twintype="C"):
         """
-        twinning volume fraction to satisfy compatibility condition
+
+        :return: twinning volume fraction to satisfy compatibility condition
         """
         if twintype not in ["I", "II", "C"]:
             raise ValueError("unknown twin type")
@@ -204,7 +299,8 @@ class TwinPair():
 
     def habitplane(self, twintype="C"):
         """
-        habit planes, two for each Type I, II, four for compound
+
+        :return: habit planes, two for each Type I, II, four for compound
         """
         if twintype not in ["I", "II", "C"]:
             raise ValueError("unknown twin type {:s}", str(twintype))
@@ -217,8 +313,8 @@ class TwinPair():
         hps = []
 
         for i, f in enumerate(fs):
-            a = ans[i, 1]
-            n = ans[i, 2]
+            a = ans[i][1]
+            n = ans[i][2]
             Uf = [self.__Ui + f[0] * np.outer(a, n),
                   self.__Ui + f[1] * np.outer(a, n)]
             hps.append(_solve_am(Uf[0]))
@@ -250,21 +346,21 @@ def _solvetwin(U, e):
     """
 
     e = np.array(e)
-    Uinv = la.inv(U)
+    Uinv = np.array(la.inv(U))
 
     n1 = e
-    denominator = np.dot(Uinv.dot(e), Uinv.dot(e))
+    denominator = np.dot(np.dot(Uinv, e), np.dot(Uinv, e))
     a1 = 2 * (Uinv.dot(e)/denominator - U.dot(e))
     rho = la.norm(n1)
-    n1 = np.round(n1/rho , 10)
-    a1 = np.rount(rho * a1, 10)
+    n1 = np.round(n1/rho, 10)
+    a1 = np.round(rho * a1, 10)
     Q1 = (U + np.outer(a1, n1)).dot(Uinv)
 
     n2 = 2 * (e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
     a2 = U.dot(e)
     rho = la.norm(n2)
-    n2 = np.round(n2/rho , 10)
-    a2 = np.rount(rho * a2, 10)
+    n2 = np.round(n2/rho, 10)
+    a2 = np.round(rho * a2, 10)
     Q2 = (U + np.outer(a2, n2)).dot(Uinv)
     return (Q1, a1, n1), (Q2, a2, n2)
 
@@ -290,10 +386,10 @@ def _solve_am(A):
     """
     solve austenite/twinned martensite equation
     """
-    if not util._pos_def_sym(A):
+    if not util.pos_def_sym(A):
         raise ValueError('The input should be a positive symmetric matrix!')
 
-    eval, evec = util._sort_eig(A)
+    eval, evec = util.sort_eig(A)
     c = math.sqrt(eval[2] - eval[0])
     c1 = math.sqrt(1 - eval[0])
     c3 = math.sqrt(eval[2] - 1)

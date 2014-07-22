@@ -1,7 +1,6 @@
 from ..general_imports import *
 import logging
-from ..util import divisors
-from ..util import rotation
+from ..__util__ import divisors, rotation
 
 # square group
 SQUARE_GROUP = np.array([
@@ -124,7 +123,7 @@ class MatrixGroup():
         # existance of identity
         id_exist = False
         for i, m in enumerate(mats):
-            hashmap[m.tostring()] = i
+            hashmap[tuple(m.flatten())] = i
             if np.max(np.abs(m - np.eye(dim))) < 1.0e-10:
                 id_exist = True
         if not id_exist:
@@ -139,12 +138,6 @@ class MatrixGroup():
             logging.debug("duplicate")
             return False
 
-        def ingroup(Q):
-            for k, PP in enumerate(matrices):
-                if np.max(np.abs(PP - Q)) < 1.0E-5:
-                    return k
-            return -1
-
         mtable = np.empty((N, N), dtype='int')
         for i in xrange(N):
             for j in xrange(N):
@@ -152,8 +145,9 @@ class MatrixGroup():
                 # idx = ingroup(m)
                 # if idx > -1:
                 #     mtable[i, j] = idx
-                if m.tostring() in hashmap:
-                    mtable[i, j] = hashmap[m.tostring()]
+                flatm = tuple(m.flatten())
+                if flatm in hashmap:
+                    mtable[i, j] = hashmap[flatm]
                 else:
                     logging.debug("false multable")
                     logging.debug("mi = {:s}".format(str(mats[i])))

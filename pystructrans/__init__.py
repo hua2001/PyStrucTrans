@@ -5,7 +5,7 @@ from __future__ import absolute_import
 
 __verison__ = "1.0.0a"
 
-from .crystallography import *
+from .crystallography import Lattice, BravaisLattice
 from .marttrans import *
-from .util import Euler, rotation
+from .__util__ import Euler, rotation
 # from runtests import test

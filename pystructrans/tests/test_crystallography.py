@@ -3,13 +3,12 @@ import unittest
 
 from pystructrans import Lattice, BravaisLattice
 
-
 class TestLattice(unittest.TestCase):
     def test_construction(self):
         E = np.eye(4)
         L = Lattice(E)
-        self.assertEqual(L.getDimension(), 4)
-        self.assertListEqual(L.getBase()[:, 0].tolist(), [1, 0, 0, 0])
+        self.assertEqual(L.getdimension(), 4)
+        self.assertListEqual(L.getbase()[:, 0].tolist(), [1, 0, 0, 0])
         E = "adfda"
         self.assertRaises(ValueError, Lattice, E)
         E = [[1, 0, 0], [0, 0, 0], [0, 0, 1]]
@@ -31,17 +30,17 @@ class TestLattice(unittest.TestCase):
 
     def test_point_group(self):
         L = Lattice(np.eye(4))
-        self.assertRaises(AttributeError, L.getLaueGroup)
-        self.assertRaises(AttributeError, L.getPointGroup)
+        self.assertRaises(AttributeError, L.getLauegroup)
+        self.assertRaises(AttributeError, L.getpointgroup)
 
         L = BravaisLattice(2, 2)
         Q = [[0., 1., 0.], [1., 0., 0.], [0., 0., -1.]]
-        self.assertTrue(L.inPointGroup(Q))
-        self.assertEqual(L.getLaueGroup().order(), 24)
-        self.assertEqual(L.getPointGroup().order(), 48)
-        lg = L.getLaueGroup().matrices().tolist()
-        for Q in L.getPointGroup().matrices():
-            self.assertEqual(L, Lattice(Q.dot(L.getBase())))
+        self.assertTrue(L.inpointgroup(Q))
+        self.assertEqual(L.getLauegroup().order(), 24)
+        self.assertEqual(L.getpointgroup().order(), 48)
+        lg = L.getLauegroup().matrices().tolist()
+        for Q in L.getpointgroup().matrices():
+            self.assertEqual(L, Lattice(Q.dot(L.getbase())))
             self.assertListEqual(Q.T.dot(Q).tolist(), np.eye(3).tolist())
             if Q.tolist() in lg:
                 self.assertTrue(la.det(Q) == 1)
@@ -49,38 +48,37 @@ class TestLattice(unittest.TestCase):
                 self.assertTrue(la.det(Q) == -1)
 
         L = BravaisLattice(12, [2, 3, 4, 87])
-        self.assertFalse(L.inPointGroup(Q))
-        self.assertEqual(len(L.getLaueGroup().matrices()), 2)
-        self.assertEqual(len(L.getPointGroup().matrices()), 4)
+        self.assertFalse(L.inpointgroup(Q))
+        self.assertEqual(len(L.getLauegroup().matrices()), 2)
+        self.assertEqual(len(L.getpointgroup().matrices()), 4)
 
     def test_lattice_group(self):
         L = Lattice(np.eye(4))
-        self.assertRaises(AttributeError, L.getSpecialLatticeGroup)
-        self.assertRaises(AttributeError, L.getLatticeGroup)
+        self.assertRaises(AttributeError, L.getspeciallatticegroup)
+        self.assertRaises(AttributeError, L.getlatticegroup)
 
         L = BravaisLattice(2, 2)
-        self.assertEqual(L.getSpecialLatticeGroup().order(), 24)
-        self.assertEqual(L.getLatticeGroup().order(), 48)
-        slg = L.getSpecialLatticeGroup().matrices().tolist()
-        for M in L.getLatticeGroup().matrices():
-            self.assertEqual(L, Lattice(L.getBase().dot(M)))
+        self.assertEqual(L.getspeciallatticegroup().order(), 24)
+        self.assertEqual(L.getlatticegroup().order(), 48)
+        slg = L.getspeciallatticegroup().matrices().tolist()
+        for M in L.getlatticegroup().matrices():
+            self.assertEqual(L, Lattice(L.getbase().dot(M)))
             if M.tolist() in slg:
                 self.assertTrue(la.det(M) == 1)
             else:
                 self.assertTrue(la.det(M) == -1)
 
-
 class TestBravaisLattice(unittest.TestCase):
     def test_construction(self):
         L = BravaisLattice(2, 2)
         self.assertEqual(L.getLatID(), 2)
-        self.assertEqual(L.getDimension(), 3)
+        self.assertEqual(L.getdimension(), 3)
         msg = "3D Bravais Lattice - Cubic F (face centered cubic):    a = 2"
         self.assertEqual(str(L), msg)
 
         L = BravaisLattice(2, [3, 2], 2)
         self.assertEqual(L.getLatID(), 2)
-        self.assertEqual(L.getDimension(), 2)
+        self.assertEqual(L.getdimension(), 2)
         msg = "2D Bravais Lattice - Rectangular P:    a = 3,    b = 2"
         self.assertEqual(str(L), msg)
 
@@ -88,7 +86,7 @@ class TestBravaisLattice(unittest.TestCase):
         L = BravaisLattice(2, 2)
         T = L.getConventionalTrans()
         self.assertListEqual(T.tolist(), [[1, 1, -1], [-1, 1, 1], [1, -1, 1]])
-        E = L.getBase()
+        E = L.getbase()
         self.assertListEqual(E.dot(T).tolist(), [[2, 0, 0], [0, 2, 0], [0, 0, 2]])
 
         self.assertRaises(ValueError, L.toConventional, 1)
@@ -180,7 +178,7 @@ class TestMatrixGroup(unittest.TestCase):
 
 
 
-from ..crystallography.sublattice import hnf_from_det, hnf_from_diag
+from ..crystallography.sublattice import hnf_from_det, hnf_from_diag, hnfd
 
 
 class TestSublattice(unittest.TestCase):
@@ -220,3 +218,18 @@ class TestSublattice(unittest.TestCase):
             self.assertIn(h.tolist(), hnfs)
 
         self.assertRaises(ValueError, hnf_from_det, -2)
+        self.assertListEqual(hnf_from_det(1, 1).tolist(), [[[1]]])
+
+    def test_hnfd(self):
+        dim = np.random.randint(1, 5)
+        det = np.random.randint(1, 6)
+        hnfs = hnf_from_det(det, N=dim)
+        for H in hnfs:
+            A = np.random.randint(-5, 5, size=(dim, dim))
+            while abs(la.det(A)) != 1:
+                A = np.random.randint(-5, 5, size=(dim, dim))
+            M = H.dot(A)
+            H2, L = hnfd(M)
+            self.assertTrue(np.array_equal(H2.dot(L), M))
+            self.assertTrue(np.array_equal(L, A))
+            self.assertTrue(np.array_equal(H, H2))

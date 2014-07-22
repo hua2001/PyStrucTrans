@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyStrucTrans'
-copyright = u'2014, Yintao Song'
+copyright = u'2014, Yintao Song and Xian Chen'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -3,6 +3,9 @@ Martensite
 
 The class :py:class:`pystructrans.Martensite` implements the concept of martensitic phase transformation.
 
+Martensite object
+-----------------
+
 .. autoclass:: pystructrans.Martensite
     :members: getU, getLaue, isreversible, getvariant, getvariants
 
@@ -128,7 +131,7 @@ must be a `proper` subgroup of that of the high symmetry one
 
     >>> from pystructrans import Lattice
     >>> U = M.getU()
-    >>> lg_low = Lattice(U).getLaueGroup()
+    >>> lg_low = Lattice(U).getLauegroup()
     >>> lg_high = M.getLaue()
     >>> lg_high.hassubgroup(lg_low)
     True
@@ -162,7 +165,7 @@ If the group-subgroup relation does not hold for the transformation, trying to d
 .. doctest::
 
     >>> M2 = Martensite().setU(1)
-    >>> Lattice(M2.getU()).getLaueGroup().order()
+    >>> Lattice(M2.getU()).getLauegroup().order()
     24
     >>> M2.isreversible()
     False

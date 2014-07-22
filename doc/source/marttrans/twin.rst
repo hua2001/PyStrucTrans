@@ -2,48 +2,14 @@ Twin
 ====
 
 Martensite variants form twins.
-The module :py:mod:`pystructrans.marttrans.twin` contains classes and functions
-to deal with those twins.
-Its main contents are
+The module :py:mod:`pystructrans.marttrans.twin` contains two main classes
 
-* twin related functions :py:func:`pystructrans.solvetwin`
 * class :py:class:`pystructrans.TwinSystem`
-* class :py:class:`pystructrans.TwinPair`
+* class :py:class:`pystructrans.marttrans.twin.TwinPair`
 
-Functions
----------
-
-.. .. autofunction:: pystructrans.solvetwin
-        :param U: positive symmetric matrix, convertible to [3 x 3] :py:class:`numpy.ndarray`
-        :param e: axis of a 180 degree rotation, convertible to [3 x 1] :py:class:`numpy.ndarray`
-        :keyword boolean unsafe: skip input check for a better performance, default is ``False``.
-            This might leads to unexpected crash, use with caution.
-        :return: a tuple of four :py:class:`numpy.ndarray`,
-                 (:math:`\mathbf a_\text{I}`, :math:`\mathbf n_\text{I}`, :math:`\mathbf a_\text{II}`, :math:`\mathbf n_\text{II}`)
-        :raises ValueError:
-            * U cannot be converted to :py:class:`numpy.ndarray`
-            * U is not 3 x 3
-            * U is not positive definite
-            * U is not symmetric
-
-TwinSystem
-----------
-The class :py:class:`pystructrans.TwinSystem` supports various operations on
-a group of transformation stretch tensors, which are the variants of a martensitic phase transformation.
-
-.. autoclass:: pystructrans.TwinSystem
-
-    To construct, a list of positive definite symmetric matrices
-    and a Laue group are required. Or, use a :py:class:`pystructrans.Martensite` object.
-
-    :param args: If two arguments are given, they must be (``Ulist``, ``Laue``).
-                 If only one is given, it could be ``Ulist`` or ``Martensite``.
-                 In the case of the former, ``Laue`` is the cubic Laue group.
-    :raise ValueError: Illegal construction parameters
-
-TwinPair
---------
-The class :py:class:`pystructrans.TwinPair`
+TwinPair object
+---------------
+The class :py:class:`pystructrans.marttrans.twin.TwinPair`
 
 .. autoclass:: pystructrans.marttrans.twin.TwinPair
     :members: getUi, getUj, iscompound, istypeI, istypeII, iscompatible

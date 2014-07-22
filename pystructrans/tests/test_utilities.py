@@ -1,18 +1,18 @@
 from ..general_imports import *
 import unittest
-from .. import util
-from ..util import Euler, rotation
+from .. import __util__ as util
+from ..__util__ import Euler, rotation
 
 class TestUtilities(unittest.TestCase):
     def test_pos_def_sym(self):
         U = 1
-        self.assertFalse(util._pos_def_sym(U))
+        self.assertFalse(util.pos_def_sym(U))
         U = [[1, 0, 0], [0, 2, 0], [0 ,0, 3]]
-        self.assertFalse(util._pos_def_sym(U))
+        self.assertFalse(util.pos_def_sym(U))
         U = np.array([[1, 0, 0], [0, 2, 0], [0 ,0, 3]])
-        self.assertTrue(util._pos_def_sym(U))
+        self.assertTrue(util.pos_def_sym(U))
         U = np.array([[1, 0, 0], [0, -2, 0], [0 ,0, 3]])
-        self.assertFalse(util._pos_def_sym(U))
+        self.assertFalse(util.pos_def_sym(U))
 
     def test_divisor(self):
         self.assertEqual(util.divisors(1), (1,))

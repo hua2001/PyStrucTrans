@@ -4,8 +4,8 @@ import logging
 import copy
 import math
 from timeit import default_timer as timer
-
-from .lat_opt import lat_opt
+from time import sleep
+from .lat_opt_dev import lat_opt
 from .. import BravaisLattice
 from ..crystallography import HermiteNormalForms, HNFDecomposition, LLL
     
@@ -50,7 +50,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     # read kwargs
     def readkw(field, default):
         return kwargs[field] if field in kwargs else default
-    
+
     nsol = readkw('nsol', 1)
     vol_th = readkw('vol_th', 0.1)
     disp = readkw('disp', 1)
@@ -91,8 +91,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     Core process
     ============
     '''
-    
-    
+
     lprint("Input data\n==========", 1)
     
     # construct
@@ -125,7 +124,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
               math.ceil((1-vol_th)*r), # lower bound
               math.floor((1+vol_th)*r)+1,  # upper bound
               dtype='int')
-    if len(vf)==0:
+    if len(vf) == 0:
         vf = (np.round(r),)     
 
     hnfs = None
@@ -140,7 +139,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     lprint('So, the possible size(s) of austenite sublattice is (are) {:s}.'.format(str(vf)), 2)
     lprint('There are {:d} Hermite Normal Forms in total.' .format(len(hnfs)), 2)
 
-    # symmetry related HNFs
     lprint('Stripping down symmetry related Hermite Normal Forms ...', 1)
     #  generate reduced hnfs
     rhnfs = {}
@@ -154,8 +152,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 break
         if isnew:
             rhnfs[h.tostring()] = h
-    hnfs = [rhnfs[key][:] for key in rhnfs]
-    del rhnfs
+    hnfs = [rhnfs[key] for key in rhnfs]
     lprint('Found {:d} symmetry-independent HNFs in total.'.format(len(hnfs)), 1)
 
     lprint('Looking for {:d} best lattice correspondence(s).'.format(nsol), 2)
@@ -163,18 +160,18 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     # Search for the best unit cell for each Hermite Normal Form
     lprint('Search over {:d} sublattices'.format(len(hnfs)), 1)
     lprint('===========================', 1)
-    
+
     # options for lat_opt
     options = {
         'nsol': nsol,
         'dist': dist,
         'disp': disp - 1,
         'maxiter': maxiter,
-        'SOLG2': LG_M
+        'SOLG2': LG_M,
+        'file': kwargs['file']
     }
-    
-    EXT_SOLS = {}
 
+    EXT_SOLS = {}
     def ext_sols(l):
         """add l to extended solution dictionary"""
         ls = (q1.dot(l).dot(q2) for q1 in LG_A for q2 in LG_M)
@@ -205,6 +202,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 else:
                     break
             for _ in xrange(t):
+                sols[-1] = None
                 sols.pop(-1)
 
     def merge_sols(sols, new):
@@ -223,8 +221,10 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     def divide_work(W, size): # divide W into sub-groups of at most size
         ngrp = int(np.ceil(len(W)/float(size)))
         return [W[int(g*size) : min(int((g+1)*size), len(W))] for g in xrange(ngrp)]
+
     # each group has at most 500 solutions
-    grp_sz = 100 if 'lat_opt_par' in kwargs else len(hnfs)
+    grp_sz = 8 if 'lat_opt_par' in kwargs else len(hnfs)
+    # grp_sz = len(hnfs)
     job_grps = divide_work(range(len(hnfs)), grp_sz)
     sols = []  
     for ig, g in enumerate(job_grps):
@@ -234,13 +234,13 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             lprint('HNFs are being solved in parallel ...', 1)
             
             lat_opt_par = kwargs['lat_opt_par']
-            args = ((np.dot(E_A, h), E_M, options, ih) for ih, h in job)
+            args = ((np.dot(E_A, h), E_Mr, options, ih) for ih, h in job)
+
             async_results = [lat_opt_par([arg]) for arg in args]
             for ir, ares in enumerate(async_results):
                 res = ares.get()
                 lprint("Merging the solutions from HNF No. {:d} ...".format(job[ir][0]), 2)
                 merge_sols(sols, [{'d': d, 'l': l, 'h': job[ir][1]} for l, d in zip(res['lopt'], res['dopt'])])
-                del async_results[ir]
 
             lprint("\n{:d}/{:d} job groups finished\n".format(ig+1, len(job_grps)), 2)
         else:
@@ -253,7 +253,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
             for ih, h in job:
                 # lprint('Processing the HNF No. {:d}'.format(ih+1), 2)
                 options['ihnf'] = ih
-                res = lat_opt(np.dot(E_A, h), E_M, **options)
+                res = lat_opt(np.dot(E_A, h), E_Mr, **options)
                 merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res['lopt'], res['dopt'])])
             lprint('Done.', 1)   
         
@@ -270,10 +270,16 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     Print result
     ============
     '''
+    # if 'lat_par_opt' in kwargs:
+    #     pool.clos()
+    #     pool.join()
+
     # Print and save the results
     lprint('\nPrint and save the results\n==========================', 1)
     
     for i, sol in enumerate(sols):
+        sol['l'] = sol['l'].dot(chi)
+
         lprint('\nSolution {:d} out of {:d}:'.format(i+1, nsol), 1)
         lprint('----------------------', 1)
         H = sol['h']

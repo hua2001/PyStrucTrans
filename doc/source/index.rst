@@ -3,25 +3,25 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. py:module:: pystructrans
+
 PyStrucTrans documentation
 ==========================
 
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
+   :numbered:
    :titlesonly:
-   :hidden:
    
+   main/lattice
+   main/bravais_lattice
+   main/martensite
+   main/twinsystem
    crystallography/index
    marttrans/index
    util/index
-
-`Crystallography <crystallography/index.html>`_
-
-`Martensitic transformation <marttrans/index.html>`_
-
-`Utilities <util/index.html>`_
 
 Indices and tables
 ==================

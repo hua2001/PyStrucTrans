@@ -3,15 +3,11 @@ from .lattice import Lattice
 
 class BravaisLattice(Lattice):
     '''
-    This is the class of Bravais lattices according to conventional classification. 
-     
-    Attributes:
-     
-    .. py:attribute:: __latID (integer) - ID of the bravais lattices.
-    .. py:attribute:: __latParam (1D numpy array) - the list of lattice parameters.
-    .. py:attribute:: __C (2D numpy array) - conversion between primitive and conventional unit cells
-     
-    Methods:
+    This is the class of Bravais lattices according to conventional classification.
+
+    :param latID: id of the Bravais lattice type
+    :param latParam: lattice parameters
+    :param N: dimension of the Bravais lattice, 2 or 3.
     '''  
  
     def __init__(self, latID, latParam, N=3):
@@ -226,7 +222,7 @@ class BravaisLattice(Lattice):
         
         :return: (*string*) lattice description
         '''
-        if self.getDimension() == 3:
+        if self.getdimension() == 3:
             des_str = '3D Bravais Lattice - '
             des_list = ['Cubic P', 
                         'Cubic F (face centered cubic)',
@@ -338,7 +334,7 @@ class BravaisLattice(Lattice):
                 idx = np.array([idx])
             elif idx.ndim > 2:
                 raise ValueError("invalid input")
-            if idx.shape[1] is not self.getDimension():
+            if idx.shape[1] is not self.getdimension():
                 raise ValueError("dimensions of lattice and indices not match")
         except:
             raise ValueError("invalid input of index (indices)")
@@ -364,7 +360,7 @@ class BravaisLattice(Lattice):
                 idx = np.array([idx])
             elif idx.ndim > 2:
                 raise ValueError("invalid input")
-            if idx.shape[1] is not self.getDimension():
+            if idx.shape[1] is not self.getdimension():
                 raise ValueError("dimensions of lattice and indices not match")
         except:
             raise ValueError("invalid input of index (indices)")

@@ -1,8 +1,9 @@
 from ..general_imports import *
 import unittest
+# from ..marttrans.twin import _solvetwin
 from ..marttrans.lat_opt import lat_opt
 from ..marttrans.lat_cor import lat_cor
-from ..marttrans import Martensite, solvetwin
+from ..marttrans import Martensite
 from ..marttrans import orientation_relationship as OR
 
 class TestOrientationRelationship(unittest.TestCase):
@@ -52,6 +53,9 @@ class TestMartensite(unittest.TestCase):
                 V = Us[i]
                 self.assertListEqual(Q.dot(U).dot(Q.T).tolist(), V.tolist())
 
+# from numpy import array
+#
+#
 # class TestMartTrans(unittest.TestCase):
 #
 #     def test_lat_opt(self):

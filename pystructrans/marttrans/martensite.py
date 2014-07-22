@@ -1,5 +1,6 @@
 from ..general_imports import *
-from .. import CUBIC_LAUE_GROUP, MatrixGroup, BravaisLattice, Lattice
+from ..crystallography import CUBIC_LAUE_GROUP, MatrixGroup, BravaisLattice, Lattice
+
 
 class Martensite():
     r"""
@@ -85,7 +86,7 @@ class Martensite():
             return Martensite(self.__U, arg)
         elif isinstance(arg, int) and 0 < arg <= 14:
             lattice = BravaisLattice(arg, latParam[arg-1])
-            return Martensite(self.__U, lattice.getLaueGroup())
+            return Martensite(self.__U, lattice.getLauegroup())
         else:
             raise ValueError("unrecognizable input")
 
@@ -116,6 +117,8 @@ class Martensite():
 
     def isreversible(self):
         """
+        It is reversible if the symmetry group of ``U``
+        is a **proper subgroup** of the object's ``Laue`` group
 
         :return: whether the transformation is reversible
         :rtype: boolean
@@ -125,7 +128,7 @@ class Martensite():
         """
         if self.__U is None:
             raise AttributeError("U has not been initialized")
-        lg = Lattice(self.getU()).getLaueGroup()
+        lg = Lattice(self.getU()).getLauegroup()
         lg0 = self.getLaue()
         return lg.order() < lg0.order() and lg0.hassubgroup(lg)
 

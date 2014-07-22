@@ -1,34 +1,27 @@
 Matrix representation of groups
 ===============================
 
-The :py:class:`pystructrans.MatrixGroup` (or :py:class:`pystructrans.crystallography.MatrixGroup`)
+The :py:class:`pystructrans.crystallography.MatrixGroup`
 class supports operations on a group using matrix representation.
 
-.. autoclass:: pystructrans.MatrixGroup
+MatrixGroup object
+------------------
 
-    It supports the following instance methods:
-
-    .. automethod:: pystructrans.MatrixGroup.matrices
-    .. automethod:: pystructrans.MatrixGroup.multable
-    .. automethod:: pystructrans.MatrixGroup.order
-    .. automethod:: pystructrans.MatrixGroup.isabelian
-    .. automethod:: pystructrans.MatrixGroup.hassubgroup
+.. autoclass:: pystructrans.crystallography.MatrixGroup
+    :members: matrices, multable, order, isabelian, hassubgroup
 
 Class methods
------------------------
+-------------
 
-.. automethod:: pystructrans.MatrixGroup.isgroup
+.. automethod:: pystructrans.crystallography.MatrixGroup.isgroup
 
 Examples
 --------
 
-The class :py:class:`MatrixGroup` can be directly imported from
-:py:mod:`pystructrans`.
-
 .. doctest::
 
     >>> import numpy as np
-    >>> from pystructrans import MatrixGroup
+    >>> from pystructrans.crystallography import MatrixGroup
 
 Define a list of matrices and check if it forms a group.
 
@@ -79,11 +72,15 @@ Constructing a MatrixGroup with a propitiate input will generate the multiplicat
     >>> g.isabelian()
     True
 
-Let's try a larger example
+Cubic Laue group
+----------------
+
+:py:data:`pystructrans.crystallography.CUBIC_LAUE_GROUP` is
+a build-in MatrixGroup for cubic symmetry and one for hexagonal
 
 .. doctest::
 
-    >>> from pystructrans.crystallography.matrix_group import CUBIC_LAUE_GROUP
+    >>> from pystructrans.crystallography import CUBIC_LAUE_GROUP
     >>> for m in CUBIC_LAUE_GROUP.matrices():
     ...   print(m.tolist())
     [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
@@ -140,8 +137,19 @@ Let's try a larger example
      [22 18 21 17  7 13 10  8  4 14 15  5  9 11 12  6  1 20 16  2  3 19 23  0]
      [23 16 19 20  8 11 15  4  7 12  6 13 14  5  9 10 18  3  1 21 17  2  0 22]]
 
-We can check the group-subgroup relations between MatrixGroups
+Cubic point group can be obtained by combining cubic Laue group and inversion.
+
 .. doctest::
 
-    >>> [CUBIC_LAUE_GROUP.hassubgroup(g), g.hassubgroup(CUBIC_LAUE_GROUP), CUBIC_LAUE_GROUP.hassubgroup(CUBIC_LAUE_GROUP), g.hassubgroup(g)]
-    [True, False, True, True]
+    >>> clgmats = CUBIC_LAUE_GROUP.matrices()
+    >>> cpgmats = np.append(clgmats, -clgmats, axis=0)
+    >>> MatrixGroup.isgroup(cpgmats) is not False
+    True
+    >>> CUBIC_POINT_GROUP = MatrixGroup(cpgmats)
+    >>> CUBIC_POINT_GROUP.order()
+    48
+    >>> CUBIC_POINT_GROUP.hassubgroup(CUBIC_LAUE_GROUP)
+    True
+
+Hexagonal Laue group
+--------------------

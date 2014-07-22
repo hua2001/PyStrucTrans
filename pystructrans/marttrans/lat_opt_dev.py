@@ -1,10 +1,12 @@
 from pystructrans.general_imports import *
 from timeit import default_timer as timer
+import json
 
 from .dist import Eric_dist, strain_dist, Cauchy_dist
 from ..crystallography import Lattice, LLL
 # create logger
 logger = logging.getLogger(__name__)
+# logger = multiprocessing.get_logger()
 
 def lat_opt_unpack(args):
     args[2]['ihnf'] = args[3]
@@ -32,6 +34,8 @@ def lat_opt(E1, E2, **kwargs):
     '''
     def print_ary(A):
         return "{:s}".format(A.tolist())
+
+    file = open(kwargs['file'], "a") if 'file' in kwargs else open("notitle.txt", "a")
 
     # read kwargs
     nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
@@ -65,10 +69,14 @@ def lat_opt(E1, E2, **kwargs):
     t_start = timer()
 
     # LLL-reduction
+    # Er2 = LLL(E2)
+    Er2 = E2
     Er1 = LLL(E1)
+    Er2inv = la.inv(Er2)
 
     # starting point
     lo = np.array(np.rint(np.dot(la.inv(E1), Er1)), dtype='int')
+    # chi = np.array(np.rint(Er2inv.dot(E2)), dtype='int')
 
     # determine distance function
     distance = kwargs['dist'] if 'dist' in kwargs else 'Cauchy'
@@ -77,15 +85,15 @@ def lat_opt(E1, E2, **kwargs):
 
     # distance functions
     if distance == 'Ericksen':
-        dist = lambda x: Eric_dist(x, E1, E2)
+        dist = lambda x: Eric_dist(x, E1, Er2)
     if distance == 'strain':
-        dist = lambda x: strain_dist(x, E1, la.inv(E2))
+        dist = lambda x: strain_dist(x, E1, Er2inv)
     if distance == 'Cauchy':
-        dist = lambda x: Cauchy_dist(x, E1, la.inv(E2))
+        dist = lambda x: Cauchy_dist(x, E1, Er2inv)
 
     # lattice groups
     LG1 = Lattice(E1).getspeciallatticegroup().matrices()
-    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(E2).getspeciallatticegroup().matrices()
+    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(Er2).getspeciallatticegroup().matrices()
     '''
     ====================
     Preparation - finish
@@ -108,6 +116,7 @@ def lat_opt(E1, E2, **kwargs):
                        - np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
                        for i in xrange(dim) for j in xrange(dim) if i != j])
         _T = np.append(T1, T2, axis=0)
+
         onetotwo = [(i, j) for i in xrange(dim) for j in xrange(dim) if i != j]
 
         def __init__(self, elem, parent=None, grandpa=None):
@@ -119,6 +128,7 @@ def lat_opt(E1, E2, **kwargs):
             self.grandpa = grandpa
             self.elem_dist = dist(self.elem)
             self.children = self.generate_children()
+            self.children_dist = None
 
         def generate_children(self):
             """
@@ -215,6 +225,12 @@ def lat_opt(E1, E2, **kwargs):
     lprint("loop starts with the first trial {:s} => {:g}".format(str(lopt[0]), dopt[0]), 2)
     updated = True
 
+    # for debug store variants of all appeared elem
+    # EXT_ELEMS = {}
+    # ls = [q1.dot(lo).dot(q2) for q1 in LG1 for q2 in SOLG2]
+    # for c in ls:
+    #     EXT_ELEMS[c.tostring()] = True
+
     while updated and depth < maxiter:
     # while depth < maxiter:
         # update roots, generator first
@@ -225,6 +241,9 @@ def lat_opt(E1, E2, **kwargs):
         depth += 1
         # going down on the tree by iteration
         new_roots = []
+
+        # dmin1 = dmin2 = 1E10
+
         for root in roots:
             for gen, elem in root.children:
                 hashcode = elem.tostring()
@@ -232,6 +251,15 @@ def lat_opt(E1, E2, **kwargs):
                     EXPLORED[hashcode] = True
                     t = GLTree(elem, parent=gen, grandpa=root.parent)
                     new_roots.append(t)
+
+                    # if elem.tostring() not in EXT_ELEMS:
+                    #     oldmap = EXT_SOLS.copy()
+                    #     ls = [q1.dot(elem).dot(q2) for q1 in LG1 for q2 in SOLG2]
+                    #     for c in ls:
+                    #         EXT_ELEMS[c.tostring()] = True
+                    #     dmin1 = min(t.elem_dist, dmin1)
+                    #
+                    # dmin2 = min(t.elem_dist, dmin2)
 
                     # try to update the solution if the node element is closer than the last solution
                     if len(dopt) < nsol or t.elem_dist <= dopt[-1]:
@@ -243,6 +271,13 @@ def lat_opt(E1, E2, **kwargs):
         # debug messages
         update_msg = "found update" if updated else "no update"
         lprint("number of roots at depth {:d} is {:d}, construction time: {:g}, {:s}.".format(depth, len(roots), timer()-t0, update_msg), 2)
+        # msg = "{:d} {:7d} {:7d} {:5g} {:5g}\n".format(depth, 12**depth, len(roots), dmin1, dmin2)
+        # print(msg)
+        # file.write(msg)
+
+    msg = "{:2d} {:2d}\n".format(kwargs['ihnf'], depth)
+    # print(msg)
+    file.write(msg)
 
     if depth == maxiter and updated:
         lprint("WARNING: maximum depth {:d} reached before solutions guaranteed".format(maxiter), 2)
@@ -253,9 +288,12 @@ def lat_opt(E1, E2, **kwargs):
     =======================
     '''
 
+    file.close()
+
     # finish timer
     t_elapsed = timer() - t_start
 
     # change back to the original E2
+    # lopt = [l.dot(chi) for l in lopt]
     lprint("{:d} / {:d} solution(s) found by {:d} iterations and in {:g} sec.".format(len(dopt), nsol, depth, t_elapsed), 2)
     return {'lopt': lopt, 'dopt': dopt}
