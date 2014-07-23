@@ -5,7 +5,7 @@ import copy
 import math
 from timeit import default_timer as timer
 from time import sleep
-from .lat_opt_dev import lat_opt
+from .lat_opt import lat_opt
 from .. import BravaisLattice
 from ..crystallography import HermiteNormalForms, HNFDecomposition, LLL
 from multiprocessing import cpu_count
@@ -193,9 +193,12 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         'nsol': nsol,
         'dist': dist,
         'disp': disp - 1,
-        'maxiter': maxiter,
         'SOLG2': LG_M
     }
+    if 'maxiter' in kwargs:
+        options['maxiter'] = kwargs['maxiter']
+    if 'miniter' in kwargs:
+        options['miniter'] = kwargs['miniter']
 
     EXT_SOLS = {}
     def ext_sols(l):

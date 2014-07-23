@@ -78,7 +78,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     disp = readkw('disp', 1)
     dim = readkw('dim', 3)
     dist = readkw('dist', 'Cauchy')
-    maxiter = readkw('maxiter', 3)
     
     if 'logfile' in kwargs:
         logfile = kwargs['logfile']
@@ -193,31 +192,23 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         'nsol': nsol,
         'dist': dist,
         'disp': disp - 1,
-        'maxiter': maxiter,
         'SOLG2': LG_M,
         'file': kwargs['file']
     }
-
-    EXT_SOLS = {}
-    def ext_sols(l):
-        """add l to extended solution dictionary"""
-        ls = (q1.dot(l).dot(q2) for q1 in LG_A for q2 in LG_M)
-        for c in ls:
-            EXT_SOLS[c.tostring()] = True
+    if 'maxiter' in kwargs:
+        options['maxiter'] = kwargs['maxiter']
+    if 'miniter' in kwargs:
+        options['miniter'] = kwargs['miniter']
 
     def add_sol(sols, s):
         """add new solution s to the list of solutions"""
-        ltot = np.dot(s['h'], s['l'])
-        if not ltot.tostring() in EXT_SOLS:
-        # if True:
-            pos = len(sols)
-            for k in xrange(len(sols)):
-                if sols[k]['d'] >= s['d']:
-                    pos = k
-                    break
-            sols.insert(pos, s)
-            ext_sols(ltot)
-            truncate_sols(sols, nsol)
+        pos = len(sols)
+        for k in xrange(len(sols)):
+            if sols[k]['d'] >= s['d']:
+                pos = k
+                break
+        sols.insert(pos, s)
+        truncate_sols(sols, nsol)
 
     def truncate_sols(sols, nsol):
         """truncate sols to number of solutions"""

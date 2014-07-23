@@ -1,6 +1,6 @@
 from pystructrans.general_imports import *
 from timeit import default_timer as timer
-import json
+import math
 
 from .dist import Eric_dist, strain_dist, Cauchy_dist
 from ..crystallography import Lattice, LLL
@@ -37,7 +37,8 @@ def lat_opt(E1, E2, **kwargs):
 
     # read kwargs
     nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
-    maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else 3
+    maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else math.ceil(math.log(nsol, 4))
+    miniter = kwargs['miniter'] if 'miniter' in kwargs else 2
     disp = kwargs['disp'] if 'disp' in kwargs else 1
     if 'logfile' in kwargs:
         logging.basicConfig(level=logging.INFO)
@@ -56,7 +57,6 @@ def lat_opt(E1, E2, **kwargs):
             logger.info(msg)
         elif lev >= 2:
             logger.debug(msg)
-
     if 'ihnf' in kwargs:
         lprint("Processing the HNF No. {:d}".format(kwargs['ihnf']+1), 1)
 
@@ -71,7 +71,6 @@ def lat_opt(E1, E2, **kwargs):
 
     # starting point
     lo = np.array(np.rint(np.dot(la.inv(E1), Er1)), dtype='int')
-    # chi = np.array(np.rint(Er2inv.dot(E2)), dtype='int')
 
     # determine distance function
     distance = kwargs['dist'] if 'dist' in kwargs else 'Cauchy'
@@ -88,7 +87,7 @@ def lat_opt(E1, E2, **kwargs):
 
     # lattice groups
     LG1 = Lattice(E1).getspeciallatticegroup().matrices()
-    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(Er2).getspeciallatticegroup().matrices()
+    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(E2).getspeciallatticegroup().matrices()
     '''
     ====================
     Preparation - finish
@@ -193,26 +192,32 @@ def lat_opt(E1, E2, **kwargs):
         for c in ls:
             EXT_SOLS[c.tostring()] = True
 
-    # update strategy
-    def update_solutions(ds, ls, tree):
+    def update_solutions(dopt, lopt, tree):
+        ds = dopt.copy()
+        ls = lopt.copy()
         # otherwise, update existing solutions
-        if len(ds) >= nsol and tree.elem.tostring() not in EXT_SOLS:
+        if len(ds) > 0 and tree.elem.tostring() not in EXT_SOLS:
             for i, d in enumerate(ds):
                 if tree.elem_dist <= d:
                     ds.insert(i, tree.elem_dist)
                     ls.insert(i, tree.elem)
                     ext_sols(tree.elem)
                     # delete last one as long as it is not the same as the supposed tail
-                    while len(ds) > nsol and abs(ds[-1]-ds[nsol-1]) > 1.0E-12:
-                        ds = ds[:-1]
-                        ls = ls[:-1]
-                    return ds[:], ls[:]
-        # directly append if not full
-        elif len(ds) < nsol:
+                    while len(ds) > nsol and abs(ds[-1] - ds[nsol-1]) > 1.0E-12:
+                        ds.pop(-1)
+                        ls.pop(-1)
+                    return ds, ls
+            if len(ds) < nsol:
+                ds.append(tree.elem_dist)
+                ls.append(tree.elem)
+                ext_sols(tree.elem)
+                return ds, ls
+        # directly append if it is the first one
+        else:
             ds.append(tree.elem_dist)
             ls.append(tree.elem)
             ext_sols(tree.elem)
-            return ds[:], ls[:]
+            return ds, ls
         return None, None
 
     '''
@@ -220,81 +225,80 @@ def lat_opt(E1, E2, **kwargs):
     Core procedure
     ==============
     '''
+    # initialization
+    EXPLORED = {}
+    dopt = []
+    lopt = []
 
     # find local minimum
     lprint("Finding the first local minimum ... ")
     minloc = lo
     minnode = GLTree(minloc)
     nextmin = minnode.steepest_des()
-    miniter = 0
+    minlociter = 0
     while nextmin is not None:
         # print(minnode.elem_dist)
         # print(nextmin.elem_dist)
         minnode = nextmin
         nextmin = minnode.steepest_des()
-        miniter += 1
-    lprint("Found local min at {:g} after {:d} iterations".format(minnode.elem_dist, miniter))
+        minlociter += 1
+    lprint("Found local min at {:g} after {:d} iterations".format(minnode.elem_dist, minlociter))
 
-    # searching for other solutions
-    EXPLORED = {}
-    # node = GLTree(lo)
-    node = minnode
-    EXPLORED[node.elem.tostring()] = True
-    roots = [node]
+    # look for new minnode
+    minnode_changed = True
     depth = 0
-    dopt, lopt = update_solutions([], [], roots[0])
-    lprint("loop starts with the first trial {:s} => {:g}".format(str(lopt[0]), dopt[0]), 2)
-    updated = True
+    while minnode_changed:
+        minnode_changed = False
+        # tree search from minnode
+        EXPLORED[minnode.elem.tostring()] = True
+        roots = [minnode]
+        ds, ls = update_solutions(dopt, lopt, roots[0])
+        if ds is not None:
+            dopt, lopt = ds, ls
+        lprint("loop starts with the first trial {:s} => {:g}".format(str(minnode.elem), minnode.elem_dist), 2)
+        updated = True
 
-    # for debug store variants of all appeared elem
-    # EXT_ELEMS = {}
-    # ls = [q1.dot(lo).dot(q2) for q1 in LG1 for q2 in SOLG2]
-    # for c in ls:
-    #     EXT_ELEMS[c.tostring()] = True
+        while depth < miniter or (updated and depth < maxiter):
+        # while depth < maxiter:
+            # update roots, generator first
+            t0 = timer()
+            # clear update flag
+            updated = False
+            # change depth tracker
+            depth += 1
+            # going down on the tree by iteration
+            new_roots = []
 
-    while updated and depth < maxiter:
-    # while depth < maxiter:
-        # update roots, generator first
-        t0 = timer()
-        # clear update flag
-        updated = False
-        # change depth tracker
-        depth += 1
-        # going down on the tree by iteration
-        new_roots = []
+            # dmin1 = dmin2 = 1E10
 
-        # dmin1 = dmin2 = 1E10
+            for root in roots:
+                for gen, elem in root.children:
+                    hashcode = elem.tostring()
+                    if not hashcode in EXPLORED:
+                        EXPLORED[hashcode] = True
+                        t = GLTree(elem, parent=gen, grandpa=root.parent)
+                        new_roots.append(t)
 
-        for root in roots:
-            for gen, elem in root.children:
-                hashcode = elem.tostring()
-                if not hashcode in EXPLORED:
-                    EXPLORED[hashcode] = True
-                    t = GLTree(elem, parent=gen, grandpa=root.parent)
-                    new_roots.append(t)
+                        # try to update the solution if the node element is closer than the last solution
+                        if len(dopt) < nsol or t.elem_dist <= dopt[-1]:
+                            ds, ls = update_solutions(dopt, lopt, t)
+                            if ds is not None:
+                                dopt, lopt = ds, ls
+                                updated = True
+                                if t.elem_dist < minnode.elem_dist and t.is_min():
+                                    minnode = t
+                                    minnode_changed = True
+                                    break
 
-                    # if t.is_min():
-                    #     print("found another local min at {:g}".format(t.elem_dist))
+            roots = new_roots
+            # debug messages
+            update_msg = "found update" if updated else "no update"
+            lprint("number of roots at depth {:d} is {:d}, construction time: {:g}, {:s}.".format(depth, len(roots), timer()-t0, update_msg), 2)
 
-                    # if elem.tostring() not in EXT_ELEMS:
-                    #     oldmap = EXT_SOLS.copy()
-                    #     ls = [q1.dot(elem).dot(q2) for q1 in LG1 for q2 in SOLG2]
-                    #     for c in ls:
-                    #         EXT_ELEMS[c.tostring()] = True
-                    #     dmin1 = min(t.elem_dist, dmin1)
-                    #
-                    # dmin2 = min(t.elem_dist, dmin2)
-
-                    # try to update the solution if the node element is closer than the last solution
-                    if len(dopt) < nsol or t.elem_dist <= dopt[-1]:
-                        ds, ls = update_solutions(dopt, lopt, t)
-                        if ds is not None:
-                            dopt, lopt = ds, ls
-                            updated = True
-        roots = new_roots
-        # debug messages
-        update_msg = "found update" if updated else "no update"
-        lprint("number of roots at depth {:d} is {:d}, construction time: {:g}, {:s}.".format(depth, len(roots), timer()-t0, update_msg), 2)
+            if minnode_changed and depth >= miniter:
+                EXPLORED = {}
+                depth = 0
+                break
 
     del EXT_SOLS
     del EXPLORED
