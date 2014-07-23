@@ -22,7 +22,7 @@ def strain_dist(x, E1, E2inv):
 
 def Cauchy_dist(x, E1, E2inv):
     dim = len(E1)
-    L = x.reshape(dim,dim)
+    L = x.reshape(dim, dim)
     # Cinv = E1 L E2inv E2invT LT E1T
     Finv = np.dot(np.dot(E1, L), E2inv)
     Cinv = np.dot(Finv, Finv.T)

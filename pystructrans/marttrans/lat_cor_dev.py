@@ -8,9 +8,30 @@ from time import sleep
 from .lat_opt_dev import lat_opt
 from .. import BravaisLattice
 from ..crystallography import HermiteNormalForms, HNFDecomposition, LLL
-    
+from multiprocessing import cpu_count
+
 # create logger
 logger = logging.getLogger(__name__)
+
+def reduce_hnfs(args):
+    """
+    remove symmetry-related HNFs by the lattice group lg
+    """
+    hnfs = args[0]
+    lg = args[1]
+    lprint = args[2] if len(args) > 2 else print
+    lprint("Reducing {:d} HNFs ...".format(len(hnfs)))
+    rhnfs = {}
+    for i, h in enumerate(hnfs):
+        orbit = (HNFDecomposition(M.dot(h), onlyH=True) for M in lg)
+        isnew = True
+        for o in orbit:
+            if o.tostring() in rhnfs:
+                isnew = False
+                break
+        if isnew:
+            rhnfs[h.tostring()] = h
+    return [rhnfs[key] for key in rhnfs]
 
 def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     '''
@@ -34,6 +55,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         then define the mapping function
              def lat_opt_par(args, chuncksize):
                 return pool.map(lat_opt_unpack, args, chuncksize)
+     - poolsize: maximum number of parallel processes. default is the number of cpus
         finally call lat_cor in __main__
      - logfile: save log into the given file
      - loglevel: log level of the log file
@@ -71,7 +93,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
         fhdlr.setFormatter(logging.Formatter('%(message)s'))
         logger.addHandler(fhdlr)
 
-    def lprint(msg, lev):
+    def lprint(msg, lev=2):
         # print with level
         if disp >= lev:
             print(msg)
@@ -140,19 +162,24 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     lprint('There are {:d} Hermite Normal Forms in total.' .format(len(hnfs)), 2)
 
     lprint('Stripping down symmetry related Hermite Normal Forms ...', 1)
-    #  generate reduced hnfs
-    rhnfs = {}
-    for i, h in enumerate(hnfs):
-        lprint("Checking HNF No. {:d}, found {:d} so far.".format(i, len(rhnfs)), 2)
-        orbit = (HNFDecomposition(M.dot(h), onlyH=True) for M in LG_A)
-        isnew = True
-        for o in orbit:
-            if o.tostring() in rhnfs:
-                isnew = False
-                break
-        if isnew:
-            rhnfs[h.tostring()] = h
-    hnfs = [rhnfs[key] for key in rhnfs]
+    if 'reduce_hnfs_par' in kwargs:
+        poolsize = cpu_count()
+        if len(hnfs) > poolsize * 20:
+            def divide_work(W, size): # divide W into sub-groups of at most size
+                ngrp = int(np.ceil(len(W)/float(size)))
+                return [W[int(g*size):min(int((g+1)*size), len(W))] for g in xrange(ngrp)]
+            reduce_hnfs_par = kwargs['reduce_hnfs_par']
+
+            lprint("Dividing {:d} into {:d} groups for parallel processing ...".format(len(hnfs), poolsize))
+            subhnfs = divide_work(hnfs, int(math.ceil(len(hnfs)/poolsize)))
+            # parallel reduce
+            par_reduce = reduce_hnfs_par(zip(subhnfs, [LG_A]*len(subhnfs)))
+            from itertools import chain
+            hnfs = list(chain.from_iterable(par_reduce))
+            lprint("Merging results from parallel reducing in the master process ...")
+        hnfs = reduce_hnfs([hnfs, LG_A, lprint])
+    else:
+        hnfs = reduce_hnfs([hnfs, LG_A, lprint])
     lprint('Found {:d} symmetry-independent HNFs in total.'.format(len(hnfs)), 1)
 
     lprint('Looking for {:d} best lattice correspondence(s).'.format(nsol), 2)
@@ -217,45 +244,48 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
                 else:
                     return
 
-    # chunck hnfs into groups if there are too many
-    def divide_work(W, size): # divide W into sub-groups of at most size
-        ngrp = int(np.ceil(len(W)/float(size)))
-        return [W[int(g*size) : min(int((g+1)*size), len(W))] for g in xrange(ngrp)]
+    sols = []
+    if 'lat_opt_par' in kwargs:
+        # parallel execution
+        lprint('HNFs are being solved in parallel ...', 1)
+        poolsize = cpu_count() if 'poolsize' not in kwargs else kwargs['poolsize']
+        lat_opt_par = kwargs['lat_opt_par']
+        args = ((np.dot(E_A, h), E_Mr, options, ih) for ih, h in enumerate(hnfs))
 
-    # each group has at most 500 solutions
-    grp_sz = 8 if 'lat_opt_par' in kwargs else len(hnfs)
-    # grp_sz = len(hnfs)
-    job_grps = divide_work(range(len(hnfs)), grp_sz)
-    sols = []  
-    for ig, g in enumerate(job_grps):
-        job = [(i, hnfs[i]) for i in g]
-        if 'lat_opt_par' in kwargs:
-            # parallel execution
-            lprint('HNFs are being solved in parallel ...', 1)
-            
-            lat_opt_par = kwargs['lat_opt_par']
-            args = ((np.dot(E_A, h), E_Mr, options, ih) for ih, h in job)
+        # initialize async task list
+        async_results = []
+        nextarg = next(args, None)
+        while nextarg is not None and len(async_results) < poolsize:
+            async_results.append(lat_opt_par([nextarg]))
+            nextarg = next(args, None)
 
-            async_results = [lat_opt_par([arg]) for arg in args]
-            for ir, ares in enumerate(async_results):
+
+        while len(async_results) > 0:
+            ares = async_results.pop(0)
+            if ares.ready():
                 res = ares.get()
-                lprint("Merging the solutions from HNF No. {:d} ...".format(job[ir][0]), 2)
-                merge_sols(sols, [{'d': d, 'l': l, 'h': job[ir][1]} for l, d in zip(res['lopt'], res['dopt'])])
-
-            lprint("\n{:d}/{:d} job groups finished\n".format(ig+1, len(job_grps)), 2)
-        else:
-            if 'logfile' in kwargs:
-                options['logfile'] = kwargs['logfile']
-            if 'loglevel' in kwargs:
-                options['loglevel'] = kwargs['loglevel']
-            # sequential execution
-            lprint('HNFs are being solved ...', 1)
-            for ih, h in job:
-                # lprint('Processing the HNF No. {:d}'.format(ih+1), 2)
-                options['ihnf'] = ih
-                res = lat_opt(np.dot(E_A, h), E_Mr, **options)
-                merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res['lopt'], res['dopt'])])
-            lprint('Done.', 1)   
+                lprint("Merging the solutions from HNF No. {:d} ...".format(res[0] + 1), 2)
+                merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[res[0]]} for l, d in zip(res[1]['lopt'], res[1]['dopt'])])
+                # append new calculation to the end of task list
+                if nextarg is not None:
+                    async_results.append(lat_opt_par([nextarg]))
+                    nextarg = next(args, None)
+            else:
+                # put it back to the end of the tast list
+                async_results.append(ares)
+            # sleep(0.0)
+    else:
+        if 'logfile' in kwargs:
+            options['logfile'] = kwargs['logfile']
+        if 'loglevel' in kwargs:
+            options['loglevel'] = kwargs['loglevel']
+        # sequential execution
+        lprint('HNFs are being solved ...', 1)
+        for ih, h in enumerate(hnfs):
+            options['ihnf'] = ih
+            res = lat_opt(np.dot(E_A, h), E_Mr, **options)
+            merge_sols(sols, [{'d': d, 'l': l, 'h': hnfs[ih]} for l, d in zip(res['lopt'], res['dopt'])])
+        lprint('Done.', 1)
         
     lprint("\nFinally {:d} / {:d} solutions are found.".format(len(sols), nsol), 3) 
     
