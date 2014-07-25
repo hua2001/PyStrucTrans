@@ -1,5 +1,5 @@
 from pystructrans.general_imports import *
-from .matrix_group import MatrixGroup, CUBIC_LAUE_GROUP, SQUARE_GROUP, SQUARE_GROUP_EXT
+from .matrix_group import MatrixGroup, CUBIC_LAUE_GROUP, HEX_LAUE_GROUP, SQUARE_GROUP, SQUARE_GROUP_EXT
 
 class Lattice():
     '''
@@ -73,6 +73,9 @@ class Lattice():
             raise AttributeError('Only Laue groups for lattices in 2D and 3D have been implemented.')
         if self.__LaueGroup is None and self.getdimension() == 3:
             self.__LaueGroup = MatrixGroup(np.array([Q for Q in CUBIC_LAUE_GROUP.matrices() if self.inpointgroup(Q)]))
+            hexgroup = MatrixGroup(np.array([Q for Q in HEX_LAUE_GROUP.matrices() if self.inpointgroup(Q)]))
+            if hexgroup.order() > self.__LaueGroup.order():
+                self.__LaueGroup = hexgroup
         if self.__LaueGroup is None and self.getdimension() == 2:
             self.__LaueGroup = MatrixGroup(np.array([Q for Q in SQUARE_GROUP if self.inpointgroup(Q)]))
         return self.__LaueGroup
@@ -131,7 +134,7 @@ class Lattice():
 
         A = np.dot(la.inv(E1), E2)
         A_int = np.round(A)
-        return np.max(np.abs(A-A_int)) < 1.0E-10
+        return nanmax(np.abs(A-A_int)) < 1.0E-10
 
     def __str__(self):
         des_str = '{:d} dimensional lattice:'.format(self.__N)

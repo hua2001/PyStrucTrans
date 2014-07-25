@@ -9,4 +9,9 @@ import numpy as np
 import numpy.linalg as la
 import logging
 
+try:
+    from bottleneck import nanmin, nanmax
+except:
+    from numpy import nanmin, nanmax
+
 SMALL = 1.0E-12

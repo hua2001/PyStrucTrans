@@ -291,10 +291,6 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     Print result
     ============
     '''
-    # if 'lat_par_opt' in kwargs:
-    #     pool.clos()
-    #     pool.join()
-
     # Print and save the results
     lprint('\nPrint and save the results\n==========================', 1)
     

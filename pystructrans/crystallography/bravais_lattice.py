@@ -315,7 +315,7 @@ class BravaisLattice(Lattice):
         
         :return: (*2D numpy array*) conventional base matrix
         '''
-        return np.dot(self.getBase(), self.getConventionalTrans())
+        return np.dot(self.getbase(), self.getConventionalTrans())
 
     def toPrimitive(self, idx):
         """

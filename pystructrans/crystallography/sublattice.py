@@ -2,7 +2,7 @@ from pystructrans.general_imports import *
 import itertools
 from functools import reduce
 from operator import mul
-from ..util import divisors
+from ..__util__ import divisors
 import math
 
 
@@ -52,32 +52,29 @@ def hnf_from_det(n, N=3):
 
 def __swap_cols(M, m, n):
     """swap column m and n of matrix M"""
-    T = np.eye(M.shape[1], dtype='int')
-    T[m, n] = T[n, m] = 1
-    T[m, m] = T[n, n] = 0
-    return M.dot(T)
+    N = M.copy()
+    N[:, m] = M[:, n]
+    N[:, n] = M[:, m]
+    return N
 
 def __add_col(M, c1, c2, t):
     """
     add t * column c2 to column c1
     """
-    T = np.eye(M.shape[1], dtype='int')
-    T[c2, c1] = t
-    return M.dot(T)
+    M[:, c1] += t * M[:, c2]
+    return M
 
 def __nonneg_row(Min, r):
     """make row r of matrix M non-negative"""
-    T = np.eye(Min.shape[1], dtype='int')
     M = Min.copy()
     for j, e in enumerate(M[r]):
         if e < 0:
-            T[j, j] = -1
-            M = M.dot(T)
-            T[j, j] = 1
+            M[:, j] *= -1
     return M
 
 def __gcd_cols(Min, c1, c2):
     M = Min.copy()
+
     if M[0, c1] < M[0, c2]:
         M = __swap_cols(M, c1, c2)
 
@@ -85,6 +82,7 @@ def __gcd_cols(Min, c1, c2):
         t = int(math.floor(M[0, c1]/M[0, c2]))
         M = __add_col(M, c1, c2, -t)
         M = __swap_cols(M, c1, c2)
+
     return M
 
 def hnfd(M, onlyH=False):

@@ -155,7 +155,7 @@ class Martensite():
                 V = Q.dot(U1).dot(Q.T)
                 newU = True
                 for j, U in enumerate(ulist):
-                    if np.max(np.abs(U - V)) < SMALL:
+                    if nanmax(np.abs(U - V)) < SMALL:
                         newU = False
                         idx[j].append(i)
 
