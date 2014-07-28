@@ -341,7 +341,7 @@ def lat_opt(E1, E2, **kwargs):
         # BFS
         new_start = bfs(minnode)
 
-    del EXT_SOLS
+#     del EXT_SOLS
 
     # if depth == maxiter and updated:
     #     lprint("WARNING: maximum depth {:d} reached before solutions guaranteed".format(maxiter), 2)
