@@ -2,7 +2,7 @@ from pystructrans.general_imports import *
 import itertools
 from functools import reduce
 from operator import mul
-from ..__util__ import divisors
+from ..util import divisors
 import math
 
 

@@ -2,6 +2,7 @@
 
 !pystructrans/
 !doc/
+!bin/
 !.gitignore
 !COPYING
 !.README.rst

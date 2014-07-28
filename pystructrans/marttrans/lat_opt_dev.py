@@ -326,8 +326,6 @@ def lat_opt(E1, E2, **kwargs):
         # BFS
         new_start = bfs(minnode)
 
-    del EXT_SOLS
-
     # ihnf, nlocmin, final depth
     msg = "{:2d} {:2d} {:2d}\n".format(kwargs['ihnf'], nlocmin, depth)
     # print(msg)

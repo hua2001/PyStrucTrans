@@ -22,6 +22,7 @@ setup(name='pystructrans',
           'pystructrans', 
           'pystructrans.crystallography',
           'pystructrans.marttrans',
+          'pystructrans.util',
           'pystructrans.tests'
       ],
       install_requires=[

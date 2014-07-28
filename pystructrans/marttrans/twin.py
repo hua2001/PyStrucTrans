@@ -1,7 +1,7 @@
 from ..general_imports import *
 import math
 
-from .. import __util__ as util
+from .. import util
 from .martensite import Martensite
 from ..crystallography import MatrixGroup, CUBIC_LAUE_GROUP
 
@@ -32,17 +32,17 @@ class TwinSystem():
         self.__twintable = None
         self.__twinpairs = None
 
-    def getUlist(self):
+    def Ulist(self):
         """
 
         :return: the list of U's
         :rtype: :py:class:`numpy.ndarray`
         """
-        Ulist = np.empty_like(self.__Ulist)
-        Ulist[:] = self.__Ulist
-        return Ulist
+        U = np.empty_like(self.__Ulist)
+        U[:] = self.__Ulist
+        return U
 
-    def getLaue(self):
+    def Laue(self):
         """
 
         :return: the Laue group
@@ -50,7 +50,7 @@ class TwinSystem():
         """
         return self.__Laue
 
-    def gettwintable(self):
+    def twintable(self):
         """
         get all twinnable variant pairs, in terms of indices in ``Ulist``
         """
@@ -65,52 +65,52 @@ class TwinSystem():
                         self.__twinpairs.append(tp)
         return self.__twintable
 
-    def gettwinpairs(self):
+    def twinpairs(self):
         """
         get all twinnable variant pairs, in terms of TwinPair objects
         """
         if self.__twinpairs is None:
-            self.gettwintable()
+            self.twintable()
         return self.__twinpairs
 
-    def getconventional(self):
+    def conventionaltwins(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is conventional
         :rtype: :py:class:`list`
         """
         if self.__twinpairs is None:
-            self.gettwintable()
+            self.twintable()
         return [i for i in xrange(len(self.__twinpairs))
-                if self.__twinpairs[i].isconventional(self.getLaue())]
+                if self.__twinpairs[i].isconventional(self.Laue())]
 
-    def getcompound(self):
+    def compoundtwins(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is compound
         :rtype: :py:class:`list`
         """
         if self.__twinpairs is None:
-            self.gettwintable()
+            self.twintable()
         return [i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].iscompound()]
 
-    def gettypeI(self):
+    def typeItwins(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
         if self.__twinpairs is None:
-            self.gettwintable()
+            self.twintable()
         return [i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].istypeI()]
 
-    def gettypeII(self):
+    def typeIItwins(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
-        return self.gettypeI()
+        return self.typeItwins()
 
 class TwinPair():
     """
@@ -119,7 +119,7 @@ class TwinPair():
     """
     def __init__(self, Ui, Uj, skipcheck=False):
 
-        if not skipcheck and (not util.pos_def_sym(Ui) or not util.pos_def_sym(Uj)):
+        if not skipcheck and (not util.utils.pos_def_sym(Ui) or not util.utils.pos_def_sym(Uj)):
             raise ValueError("Ui or Uj is not a 3 x 3 positive definite symmetric matrix")
 
         self.__Ui = Ui
@@ -127,7 +127,7 @@ class TwinPair():
 
         Uiinv = la.inv(Ui)
         self.__C = np.dot(Uiinv.dot(Uj), Uj.dot(Uiinv))
-        self.__e, self.__v = util.sort_eig(self.__C)
+        self.__e, self.__v = util.utils.sort_eig(self.__C)
 
         self.__twinnable = self.istwinnable()
         self.__conventional = None
@@ -138,23 +138,23 @@ class TwinPair():
         self.__fI = None
         self.__fII = None
 
-    def getUi(self):
+    def Ui(self):
         """
 
         :return: return U_i
         """
-        Ui = np.empty_like(self.__Ui)
-        Ui[:] = self.__Ui
-        return Ui
+        U = np.empty_like(self.__Ui)
+        U[:] = self.__Ui
+        return U
 
-    def getUj(self):
+    def Uj(self):
         """
 
         :return: return U_j
         """
-        Uj = np.empty_like(self.__Uj)
-        Uj[:] = self.__Uj
-        return Uj
+        U = np.empty_like(self.__Uj)
+        U[:] = self.__Uj
+        return U
 
     def istwinnable(self):
         """
@@ -251,7 +251,7 @@ class TwinPair():
             self.__XII = la.norm(self.__Ui.dot(t_ax))
         return self.__XII
 
-    def gettwinparam(self):
+    def twinparam(self):
         """
 
         :return: twin parameters of the twin pair if it is twinnable
@@ -270,10 +270,10 @@ class TwinPair():
 
         :return: if the twin can be compatible with the reference (identity matrix)
         """
-        return (np.array(self.volfrac()) is not None).any()
+        return (np.array(self.volumefrac()) is not None).any()
 
 
-    def volfrac(self, twintype="C"):
+    def volumefrac(self, twintype="C"):
         """
 
         :return: twinning volume fraction to satisfy compatibility condition
@@ -284,20 +284,20 @@ class TwinPair():
         if twintype in ["I", "C"]:
             if self.__fI is None:
                 # only solve for type I
-                a, n = self.gettwinparam()[1:3]
+                a, n = self.twinparam()[0][1:]
                 self.__fI = _solve_f(self.__Ui, a, n)
             if twintype is "I":
                 return self.__fI, 1 - self.__fI
         else:
             if self.__fII is None:
                 # only solve for type II
-                a, n = self.gettwinparam()[4:6]
+                a, n = self.twinparam()[1][1:]
                 self.__fII = _solve_f(self.__Ui, a, n)
             if twintype is "II":
                 return self.__fII, 1 - self.__fII
         return (self.__fI, 1 - self.__fI), (self.__fII, 1 - self.__fII)
 
-    def habitplane(self, twintype="C"):
+    def habitplanes(self, twintype="C"):
         """
 
         :return: habit planes, two for each Type I, II, four for compound
@@ -308,19 +308,18 @@ class TwinPair():
         if not self.iscompatible():
             raise AttributeError("twin pair is incompatible")
 
-        ans = self.gettwinparam()
-        fs = self.volfrac(twintype)
+        tp = self.twinparam()
+        fs = self.volumefrac(twintype)
         hps = []
 
         for i, f in enumerate(fs):
-            a = ans[i][1]
-            n = ans[i][2]
+            a = tp[i][1]
+            n = tp[i][2]
             Uf = [self.__Ui + f[0] * np.outer(a, n),
                   self.__Ui + f[1] * np.outer(a, n)]
-            hps.append(_solve_am(Uf[0]))
-            hps.append(_solve_am(Uf[1]))
+            hps.append((_solve_am(Uf[0]), _solve_am(Uf[1])))
 
-        # (R, b, m), (R, b, m), (R, b, m), (R, b, m)
+        # ((R, b, m), (R, b, m)), ((R, b, m), (R, b, m))
         return hps
 
 

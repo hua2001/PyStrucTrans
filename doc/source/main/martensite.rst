@@ -124,12 +124,24 @@ It will have the cubic Laue group
     >>> M.getLaue().order()
     24
 
+    In order to have the concept of
+    24
+
 In order to have the concept of `variants`, the Laue group of the low symmetry phase
 must be a `proper` subgroup of that of the high symmetry one
 
 .. doctest::
 
     >>> from pystructrans import Lattice
+    >>> U = M.getU()
+    >>> lg_low = Lattice(U).getLauegroup()
+    >>> lg_high = M.getLaue()
+    >>> lg_high.hassubgroup(lg_low)
+    True
+
+    Now, we are sure that this transformation is reversible and therefore has variants.
+
+
     >>> U = M.getU()
     >>> lg_low = Lattice(U).getLauegroup()
     >>> lg_high = M.getLaue()

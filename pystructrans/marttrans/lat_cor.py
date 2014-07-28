@@ -1,4 +1,4 @@
-from pystructrans.general_imports import *
+from ..general_imports import *
 import os
 import logging
 import copy
@@ -19,7 +19,7 @@ def reduce_hnfs(args):
     """
     hnfs = args[0]
     lg = args[1]
-    lprint = args[2] if len(args) > 2 else print
+    lprint = args[2] # if len(args) > 2 else print
     lprint("Reducing {:d} HNFs ...".format(len(hnfs)))
     rhnfs = {}
     for i, h in enumerate(hnfs):
@@ -200,17 +200,17 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     if 'miniter' in kwargs:
         options['miniter'] = kwargs['miniter']
 
-    EXT_SOLS = {}
+    EXT_SOLS2 = {}
     def ext_sols(l):
         """add l to extended solution dictionary"""
         ls = (q1.dot(l).dot(q2) for q1 in LG_A for q2 in LG_M)
         for c in ls:
-            EXT_SOLS[c.tostring()] = True
+            EXT_SOLS2[c.tostring()] = True
 
     def add_sol(sols, s):
         """add new solution s to the list of solutions"""
         ltot = np.dot(s['h'], s['l'])
-        if not ltot.tostring() in EXT_SOLS:
+        if not ltot.tostring() in EXT_SOLS2:
         # if True:
             pos = len(sols)
             for k in xrange(len(sols)):
