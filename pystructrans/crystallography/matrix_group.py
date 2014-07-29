@@ -1,7 +1,6 @@
 from ..general_imports import *
 from itertools import chain
-from ..__util__ import divisors, rotation
-from ..util import BST, HashArray
+from ..util import BST, HashArray, divisors, rotation
 
 # square group
 SQUARE_GROUP = np.array([

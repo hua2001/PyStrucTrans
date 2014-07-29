@@ -1,7 +1,7 @@
 from ..general_imports import *
 import unittest
-from .. import __util__ as util
-from ..__util__ import Euler, rotation
+from .. import util
+from .. import Euler, rotation
 
 class TestUtilities(unittest.TestCase):
     def test_pos_def_sym(self):

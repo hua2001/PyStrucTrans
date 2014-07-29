@@ -1,7 +1,7 @@
 from ..general_imports import *
 import math
 
-from .. import __util__ as util
+from .. import util
 from .martensite import Martensite
 from ..crystallography import MatrixGroup, CUBIC_LAUE_GROUP
 
@@ -284,20 +284,20 @@ class TwinPair():
         if twintype in ["I", "C"]:
             if self.__fI is None:
                 # only solve for type I
-                a, n = self.gettwinparam()[1:3]
+                a, n = self.gettwinparam()[0][1:]
                 self.__fI = _solve_f(self.__Ui, a, n)
             if twintype is "I":
                 return self.__fI, 1 - self.__fI
         else:
             if self.__fII is None:
                 # only solve for type II
-                a, n = self.gettwinparam()[4:6]
+                a, n = self.gettwinparam()[1][1:]
                 self.__fII = _solve_f(self.__Ui, a, n)
             if twintype is "II":
                 return self.__fII, 1 - self.__fII
         return (self.__fI, 1 - self.__fI), (self.__fII, 1 - self.__fII)
 
-    def habitplane(self, twintype="C"):
+    def habitplanes(self, twintype="C"):
         """
 
         :return: habit planes, two for each Type I, II, four for compound
@@ -308,19 +308,18 @@ class TwinPair():
         if not self.iscompatible():
             raise AttributeError("twin pair is incompatible")
 
-        ans = self.gettwinparam()
+        tp = self.gettwinparam()
         fs = self.volfrac(twintype)
         hps = []
 
         for i, f in enumerate(fs):
-            a = ans[i][1]
-            n = ans[i][2]
+            a = tp[i][1]
+            n = tp[i][2]
             Uf = [self.__Ui + f[0] * np.outer(a, n),
                   self.__Ui + f[1] * np.outer(a, n)]
-            hps.append(_solve_am(Uf[0]))
-            hps.append(_solve_am(Uf[1]))
+            hps.append((_solve_am(Uf[0]), _solve_am(Uf[1])))
 
-        # (R, b, m), (R, b, m), (R, b, m), (R, b, m)
+        # ((R, b, m), (R, b, m)), ((R, b, m), (R, b, m))
         return hps
 
 

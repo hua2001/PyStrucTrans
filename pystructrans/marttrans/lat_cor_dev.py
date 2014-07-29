@@ -19,8 +19,11 @@ def reduce_hnfs(args):
     """
     hnfs = args[0]
     lg = args[1]
-    lprint = args[2] if len(args) > 2 else print
-    lprint("Reducing {:d} HNFs ...".format(len(hnfs)))
+    if len(args) > 2:
+        lprint = args[2]
+        lprint("Reducing {:d} HNFs ...".format(len(hnfs)))
+    else:
+        print("Reducing {:d} HNFs ...".format(len(hnfs)))
     rhnfs = {}
     for i, h in enumerate(hnfs):
         orbit = (HNFDecomposition(M.dot(h), onlyH=True) for M in lg)

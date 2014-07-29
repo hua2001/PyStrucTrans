@@ -40,20 +40,19 @@ The class :py:class:`pystructrans.marttrans.twin.TwinPair`
 
         For a compound twin, these two sets of solutions degenerate
 
-        :return: a tuple of four :py:class:`numpy.ndarray`,
-                 ((:math:`\mathbf Q_\text{I}`, :math:`\mathbf a_\text{I}`, :math:`\mathbf n_\text{I}`),
+        :return: ((:math:`\mathbf Q_\text{I}`, :math:`\mathbf a_\text{I}`, :math:`\mathbf n_\text{I}`),
                  (:math:`\mathbf Q_\text{II}`, :math:`\mathbf a_\text{II}`, :math:`\mathbf n_\text{II}`))
 
         :raises AttributeError: if not twinnable
 
-    .. automethod:: pystructrans.marttrans.twin.TwinPair.habitplane
+    .. automethod:: pystructrans.marttrans.twin.TwinPair.habitplanes
 
         :param str twintype: "I", "II" or "C". If provided only associated volume fractions will be returned.
         :return: If ``twintype`` is "C", return
-                 ((:math:`\mathbf R_\text{I1}`, :math:`\mathbf b_\text{I1}`, :math:`\mathbf m_\text{I1}`),
-                 (:math:`\mathbf R_\text{I2}`, :math:`\mathbf b_\text{I2}`, :math:`\mathbf m_\text{I2}`),
-                 (:math:`\mathbf R_\text{II1}`, :math:`\mathbf b_\text{II1}`, :math:`\mathbf m_\text{II1}`)
-                 (:math:`\mathbf R_\text{II2}`, :math:`\mathbf b_\text{II2}`, :math:`\mathbf m_\text{II2}`))
+                 (((:math:`\mathbf R_\text{I1}`, :math:`\mathbf b_\text{I1}`, :math:`\mathbf m_\text{I1}`),
+                 (:math:`\mathbf R_\text{I2}`, :math:`\mathbf b_\text{I2}`, :math:`\mathbf m_\text{I2}`)),
+                 ((:math:`\mathbf R_\text{II1}`, :math:`\mathbf b_\text{II1}`, :math:`\mathbf m_\text{II1}`)
+                 (:math:`\mathbf R_\text{II2}`, :math:`\mathbf b_\text{II2}`, :math:`\mathbf m_\text{II2}`)))
                  otherwise return only the first two or the last two.
         :raises AttributeError: if not compatible
         :raises ValueError: unknown ``twintype``

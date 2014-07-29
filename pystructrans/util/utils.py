@@ -1,4 +1,4 @@
-from .general_imports import *
+from ..general_imports import *
 from math import radians
 
 def is_3_by_3(U):
