@@ -38,9 +38,9 @@ class TwinSystem():
         :return: the list of U's
         :rtype: :py:class:`numpy.ndarray`
         """
-        Ulist = np.empty_like(self.__Ulist)
-        Ulist[:] = self.__Ulist
-        return Ulist
+        U = np.empty_like(self.__Ulist)
+        U[:] = self.__Ulist
+        return U
 
     def Laue(self):
         """
@@ -110,7 +110,7 @@ class TwinSystem():
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
-        return self.gettypeI()
+        return self.typeItwins()
 
 class TwinPair():
     """
@@ -143,18 +143,18 @@ class TwinPair():
 
         :return: return U_i
         """
-        Ui = np.empty_like(self.__Ui)
-        Ui[:] = self.__Ui
-        return Ui
+        U = np.empty_like(self.__Ui)
+        U[:] = self.__Ui
+        return U
 
     def Uj(self):
         """
 
         :return: return U_j
         """
-        Uj = np.empty_like(self.__Uj)
-        Uj[:] = self.__Uj
-        return Uj
+        U = np.empty_like(self.__Uj)
+        U[:] = self.__Uj
+        return U
 
     def istwinnable(self):
         """
@@ -270,10 +270,10 @@ class TwinPair():
 
         :return: if the twin can be compatible with the reference (identity matrix)
         """
-        return (np.array(self.volumefractions()) is not None).any()
+        return (np.array(self.volumefrac()) is not None).any()
 
 
-    def volumefractions(self, twintype="C"):
+    def volumefrac(self, twintype="C"):
         """
 
         :return: twinning volume fraction to satisfy compatibility condition
@@ -309,7 +309,7 @@ class TwinPair():
             raise AttributeError("twin pair is incompatible")
 
         tp = self.twinparam()
-        fs = self.volumefractions(twintype)
+        fs = self.volumefrac(twintype)
         hps = []
 
         for i, f in enumerate(fs):

@@ -46,7 +46,7 @@ class TestMartensite(unittest.TestCase):
         Us = M.getvariants()
         self.assertEqual(len(Us), 6)
         idx_list = M.getLaueidx()
-        lg = M.getLaue().matrices()
+        lg = M.Laue().matrices()
         for i, idx in enumerate(idx_list):
             for j in idx:
                 Q = lg[j]

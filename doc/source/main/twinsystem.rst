@@ -7,7 +7,7 @@ The class :py:class:`pystructrans.TwinSystem` supports various operations on
 a group of transformation stretch tensors, which are the variants of a martensitic phase transformation.
 
 .. autoclass:: pystructrans.TwinSystem
-    :members: getUlist, getLaue
+    :members: Ulist, Laue
 
     To construct, a list of positive definite symmetric matrices
     and a Laue group are required. Or, use a :py:class:`pystructrans.Martensite` object.
@@ -17,7 +17,7 @@ a group of transformation stretch tensors, which are the variants of a martensit
                  In the case of the former, ``Laue`` is the cubic Laue group.
     :raise ValueError: Illegal construction parameters
 
-    .. automethod:: pystructrans.TwinSystem.gettwintable
+    .. automethod:: pystructrans.TwinSystem.twintable
 
         .. testsetup:: *
 
@@ -26,46 +26,50 @@ a group of transformation stretch tensors, which are the variants of a martensit
         .. doctest::
 
             >>> ts = TwinSystem(Martensite().setU(0.9, 1.1))
-            >>> ts.gettwintable()
+                        >>> ts.twintable()
+                        [(0, 1), (0, 2), (1, 2)]
+
+
+            >>> ts.twintable()
             [(0, 1), (0, 2), (1, 2)]
 
-    .. automethod:: pystructrans.TwinSystem.gettwinpairs
+    .. automethod:: pystructrans.TwinSystem.twinpairs
 
         The returned list of TwinPair objects one-to-one correspond
         to the return of :py:meth:`pystructrans.TwinSystem.gettwintable`
 
         .. doctest::
 
-            >>> tps = ts.gettwinpairs()
+            >>> tps = ts.twinpairs()
             >>> tp = tps[0]
 
             >>> import numpy as np
-            >>> np.array_equal(tp.getUi(), ts.getUlist()[0])
+            >>> np.array_equal(tp.Ui(), ts.Ulist()[0])
             True
-            >>> np.array_equal(tp.getUj(), ts.getUlist()[1])
+            >>> np.array_equal(tp.Uj(), ts.Ulist()[1])
             True
 
-    .. automethod:: pystructrans.TwinSystem.getconventional
+    .. automethod:: pystructrans.TwinSystem.conventionaltwins
 
         Returned indices corresponding to the return of
-        :py:meth:`pystructrans.TwinSystem.gettwintable` or
-        :py:meth:`pystructrans.TwinSystem.gettwinpairs`
+        :py:meth:`pystructrans.TwinSystem.twintable` or
+        :py:meth:`pystructrans.TwinSystem.twinpairs`
 
         .. doctest::
 
-            >>> ts.getconventional()
+            >>> ts.conventionaltwins()
             [0, 1, 2]
-            >>> [tp.isconventional(ts.getLaue()) for tp in tps]
+            >>> [tp.isconventional(ts.Laue()) for tp in tps]
             [True, True, True]
 
-    .. automethod:: pystructrans.TwinSystem.getcompound
+    .. automethod:: pystructrans.TwinSystem.compoundtwins
 
-        See the explanation of :py:meth:`pystructrans.TwinSystem.getconventional`
+        See the explanation of :py:meth:`pystructrans.TwinSystem.conventionaltwins`
 
-    .. automethod:: pystructrans.TwinSystem.gettypeI
+    .. automethod:: pystructrans.TwinSystem.typeItwins
 
-        See the explanation of :py:meth:`pystructrans.TwinSystem.getconventional`
+        See the explanation of :py:meth:`pystructrans.TwinSystem.conventionaltwins`
 
-    .. automethod:: pystructrans.TwinSystem.gettypeII
+    .. automethod:: pystructrans.TwinSystem.typeIItwins
 
-        See the explanation of :py:meth:`pystructrans.TwinSystem.getconventional`
+        See the explanation of :py:meth:`pystructrans.TwinSystem.conventionaltwins`

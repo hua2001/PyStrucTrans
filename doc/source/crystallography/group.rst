@@ -15,25 +15,6 @@ Class methods
 
 .. automethod:: pystructrans.crystallography.MatrixGroup.isgroup
 
-.. automethod:: pystructrans.crystallography.MatrixGroup.generategroup
-
-    .. warning:: If one of the generators cannot become the identity matrix by a finite number of self-multiplication,
-                 the program will run forever.
-
-    .. testsetup:: *
-
-        from pystructrans.crystallography import MatrixGroup
-
-    .. doctest::
-
-        >>> import numpy as np
-        >>> from math import cos, sin, pi
-        >>> E = np.eye(3)
-        >>> V = np.array([[cos(pi/3), -sin(pi/3), 0], [sin(pi/3), cos(pi/3), 0], [0, 0, 1]])
-        >>> g = MatrixGroup.generategroup([V])
-        >>> print(g)
-
-
 Examples
 --------
 

@@ -12,7 +12,7 @@ TwinPair object
 The class :py:class:`pystructrans.marttrans.twin.TwinPair`
 
 .. autoclass:: pystructrans.marttrans.twin.TwinPair
-    :members: getUi, getUj, iscompound, istypeI, istypeII, iscompatible
+    :members: Ui, Uj, iscompound, istypeI, istypeII, iscompatible
 
     :param Ui: one martensite variant
     :param Uj: another martensite variant
@@ -29,7 +29,7 @@ The class :py:class:`pystructrans.marttrans.twin.TwinPair`
 
         :rtype: boolean
 
-    .. automethod:: pystructrans.marttrans.twin.TwinPair.gettwinparam
+    .. automethod:: pystructrans.marttrans.twin.TwinPair.twinparam
 
         Twin parameters are the :math:`\mathbf a` and :math:`\mathbf n`
         in the two solutions to the the twinning equation:
@@ -65,7 +65,7 @@ The class :py:class:`pystructrans.marttrans.twin.TwinPair`
         :param lauegroup: the Laue group. If not given, use full cubic Laue group
         :rtype: boolean
 
-    .. automethod:: pystructrans.marttrans.twin.TwinPair.volfrac
+    .. automethod:: pystructrans.marttrans.twin.TwinPair.volumefrac
 
         :param str twintype: "I", "II" or "C". If provided only associated volume fractions will be returned.
         :return: If ``twintype`` is "C", return ((`f` :sub:`I`, 1 - `f` :sub:`I`), (`f` :sub:`II`, 1 - `f` :sub:`II`)),
