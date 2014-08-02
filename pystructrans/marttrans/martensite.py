@@ -30,9 +30,9 @@ class Martensite():
             if isinstance(args[0], np.ndarray) or isinstance(args[0], list):
                 U0 = np.array(args[0])
                 if U0.shape == (3, 3):
-                   U = U0
+                    U = U0
                 else:
-                    raise ValueError
+                    raise TypeError()
             elif len(args) == 1:
                 U = np.diag([args[0], args[0], args[0]])
             elif len(args) == 2:
