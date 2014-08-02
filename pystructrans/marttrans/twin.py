@@ -310,6 +310,7 @@ class TwinPair():
 
         tp = self.twinparam()
         fs = self.volumefrac(twintype)
+
         hps = []
 
         for i, f in enumerate(fs):
