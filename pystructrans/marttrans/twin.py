@@ -182,7 +182,7 @@ class TwinPair():
             self.__conventional = conventional
         return self.__conventional
 
-    def getax(self):
+    def ax(self):
         """
 
         :return: axes of possible 180 degree rotations relating two variants
@@ -211,7 +211,7 @@ class TwinPair():
 
         :return: if the twin pair is a compound twin
         """
-        return len(self.getax()) > 1
+        return len(self.ax()) > 1
 
     def istypeI(self):
         """
@@ -235,7 +235,7 @@ class TwinPair():
         if self.iscompound():
             raise AttributeError("parameter X_I is not defined for compound twins")
         if self.__XI is None:
-            t_ax = self.getax()[0]
+            t_ax = self.ax()[0]
             self.__XI = la.norm(la.inv(self.__Ui).dot(t_ax))
         return self.__XI
 
@@ -247,7 +247,7 @@ class TwinPair():
         if self.iscompound():
             raise AttributeError("parameter X_I is not defined for compound twins")
         if self.__XII is None:
-            t_ax = self.getax()[0]
+            t_ax = self.ax()[0]
             self.__XII = la.norm(self.__Ui.dot(t_ax))
         return self.__XII
 
@@ -260,7 +260,7 @@ class TwinPair():
             raise AttributeError("only twinnable twin pairs have twin parameters")
 
         if self.__twinparam is None:
-            t_ax = self.getax()[0]
+            t_ax = self.ax()[0]
             self.__twinparam = _solvetwin(self.__Ui, t_ax)
 
         return self.__twinparam
@@ -310,7 +310,6 @@ class TwinPair():
 
         tp = self.twinparam()
         fs = self.volumefrac(twintype)
-
         hps = []
 
         for i, f in enumerate(fs):
@@ -386,10 +385,10 @@ def _solve_am(A):
     """
     solve austenite/twinned martensite equation
     """
-    if not util.pos_def_sym(A):
+    if not util.utils.pos_def_sym(A):
         raise ValueError('The input should be a positive symmetric matrix!')
 
-    eval, evec = util.sort_eig(A)
+    eval, evec = util.utils.sort_eig(A)
     c = math.sqrt(eval[2] - eval[0])
     c1 = math.sqrt(1 - eval[0])
     c3 = math.sqrt(eval[2] - 1)

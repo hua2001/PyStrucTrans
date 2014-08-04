@@ -6,13 +6,13 @@ from .. import Euler, rotation
 class TestUtilities(unittest.TestCase):
     def test_pos_def_sym(self):
         U = 1
-        self.assertFalse(util.pos_def_sym(U))
+        self.assertFalse(util.utils.pos_def_sym(U))
         U = [[1, 0, 0], [0, 2, 0], [0 ,0, 3]]
-        self.assertFalse(util.pos_def_sym(U))
+        self.assertFalse(util.utils.pos_def_sym(U))
         U = np.array([[1, 0, 0], [0, 2, 0], [0 ,0, 3]])
-        self.assertTrue(util.pos_def_sym(U))
+        self.assertTrue(util.utils.pos_def_sym(U))
         U = np.array([[1, 0, 0], [0, -2, 0], [0 ,0, 3]])
-        self.assertFalse(util.pos_def_sym(U))
+        self.assertFalse(util.utils.pos_def_sym(U))
 
     def test_divisor(self):
         self.assertEqual(util.divisors(1), (1,))
