@@ -270,7 +270,7 @@ class TwinPair():
 
         :return: if the twin can be compatible with the reference (identity matrix)
         """
-        return (np.array(self.volumefrac()) is not None).any()
+        return np.array(np.array(self.volumefrac()) is not None).all()
 
 
     def volumefrac(self, twintype="C"):
@@ -287,15 +287,15 @@ class TwinPair():
                 a, n = self.twinparam()[0][1:]
                 self.__fI = _solve_f(self.__Ui, a, n)
             if twintype is "I":
-                return self.__fI, 1 - self.__fI
+                return self.__fI
         else:
             if self.__fII is None:
                 # only solve for type II
                 a, n = self.twinparam()[1][1:]
                 self.__fII = _solve_f(self.__Ui, a, n)
             if twintype is "II":
-                return self.__fII, 1 - self.__fII
-        return (self.__fI, 1 - self.__fI), (self.__fII, 1 - self.__fII)
+                return self.__fII
+        return self.__fI, self.__fII
 
     def habitplanes(self, twintype="C"):
         """
@@ -310,16 +310,19 @@ class TwinPair():
 
         tp = self.twinparam()
         fs = self.volumefrac(twintype)
+        if not isinstance(fs, tuple):
+            fs = (fs, )
         hps = []
 
         for i, f in enumerate(fs):
             a = tp[i][1]
             n = tp[i][2]
-            Uf = [self.__Ui + f[0] * np.outer(a, n),
-                  self.__Ui + f[1] * np.outer(a, n)]
-            hps.append((_solve_am(Uf[0]), _solve_am(Uf[1])))
+            Uf = [self.__Ui + f * np.outer(a, n),
+                  self.__Ui + (1 - f) * np.outer(a, n)]
+            hps.extend(_solve_am(Uf[0].T.dot(Uf[0])))
+            hps.extend(_solve_am(Uf[1].T.dot(Uf[1])))
 
-        # ((R, b, m), (R, b, m)), ((R, b, m), (R, b, m))
+        # [(R, b, m), (R, b, m), (R, b, m), (R, b, m)]
         return hps
 
 
@@ -369,36 +372,44 @@ def _solve_f(U, a, n):
     the volume fraction for U, a, n
     """
     A = U.dot(U) - np.eye(3)
-    cofU = la.inv(A).T * la.det(A)
+    cofU = _brute_cof(A)
     minus_alpha = 2 * np.dot(U.dot(a), cofU.dot(n))
-    beta = la.det(U.dot(U)-np.eye(3)) + minus_alpha / 4
+    beta = la.det(U.dot(U)-np.eye(3)) + minus_alpha / 4.0
 
-    if abs(minus_alpha) < 1.0e-6:
+    if abs(minus_alpha) < SMALL:
         return 0
     elif beta/minus_alpha > 0:
-        f = 0.5 + math.sqrt(beta/minus_alpha)
-        return f
+        f = 0.5 + math.sqrt(beta / minus_alpha)
+        if abs(1 - f) < 1E-6:
+            return 1
+        elif abs(f) < 1E-6:
+            return 0
+        elif f > 0 and f < 1:
+            return f
+        else:
+            return None
     else:
         return None
 
-def _solve_am(A):
+def _solve_am(C):
     """
     solve austenite/twinned martensite equation
     """
-    if not util.utils.pos_def_sym(A):
-        raise ValueError('The input should be a positive symmetric matrix!')
+    if not util.utils.pos_def_sym(C):
+        raise TypeError('The input should be a positive symmetric matrix! {:s}'.format(str(C)))
 
-    eval, evec = util.utils.sort_eig(A)
+    eval, evec = util.utils.sort_eig(C)
     c = math.sqrt(eval[2] - eval[0])
-    c1 = math.sqrt(1 - eval[0])
-    c3 = math.sqrt(eval[2] - 1)
+    c1 = math.sqrt(abs(1 - eval[0]))
+    c3 = math.sqrt(abs(eval[2] - 1))
     kappa = 1
 
     if c < SMALL:
         # TODO: solution is b = e, m = - 2 e where |e| = 1.
         return
     else:
-        if abs(eval[1] - 1) < SMALL:
+        # if abs(eval[1] - 1) < 0.001:
+        if True:
             m1 = ((math.sqrt(eval[2]) - math.sqrt(eval[0])) / c) * (-c1 * evec[0] + kappa * c3 * evec[2])
             m2 = ((math.sqrt(eval[2]) - math.sqrt(eval[0])) / c) * (-c1 * evec[0] - kappa * c3 * evec[2])
             rho1 = la.norm(m1)
@@ -407,7 +418,21 @@ def _solve_am(A):
             m2 /= rho2
             b1 = rho1 * ((math.sqrt(eval[2]) * c1 / c) * evec[0] + kappa*(math.sqrt(eval[0]) * c3 / c) * evec[2])
             b2 = rho2 * ((math.sqrt(eval[2]) * c1 / c) * evec[0] - kappa*(math.sqrt(eval[0]) * c3 / c) * evec[2])
-            Ainv = la.inv(A)
-            R1 = (np.eye(3) + np.outer(b1, m1)).dot(Ainv)
-            R2 = (np.eye(3) + np.outer(b1, m1)).dot(Ainv)
+            Cinv = la.inv(C)
+            R1 = (np.eye(3) + np.outer(b1, m1)).dot(Cinv)
+            R2 = (np.eye(3) + np.outer(b1, m1)).dot(Cinv)
             return (R1, b1, m1), (R2, b2, m2)
+
+def _brute_cof(A):
+    """compute cofactor of M brutely"""
+    m,n = A.shape
+    minor = []
+    if m == n:
+        for i in xrange(m):
+            for j in xrange(n):
+                a = np.delete(A, i, axis=0)
+                a = np.delete(a, j, axis=1)
+                minor = np.append(minor, (-1)**(i+j)*la.det(a))
+        return np.array(minor).reshape(3, 3)
+    else:
+        raise TypeError('Please input a square matrix.')

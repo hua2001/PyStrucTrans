@@ -87,7 +87,7 @@ def unique_rows(a):
     
 def tuple(start, end):
     x = np.arange(start, end)
-    a = [x,x,x]
+    a = [x, x, x]
     Z = np.array(list(itertools.product(*a)))
     return Z 
 
