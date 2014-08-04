@@ -59,7 +59,7 @@ class TwinSystem():
             self.__twinpairs = []
             for i in xrange(self.__N - 1):
                 for j in xrange(i + 1, self.__N):
-                    tp = TwinPair(self.__Ulist[i], self.__Ulist[j])
+                    tp = TwinPair(self.__Ulist[i], self.__Ulist[j], skipcheck=True)
                     if tp.istwinnable():
                         self.__twintable.append((i, j))
                         self.__twinpairs.append(tp)

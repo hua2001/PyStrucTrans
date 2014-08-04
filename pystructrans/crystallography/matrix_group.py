@@ -203,6 +203,8 @@ class MatrixGroup():
                 idx = ingroup(m)
                 if idx > -1:
                     mtable[i, j] = idx
+#                 if tuple(m.flatten()) in hashmap:
+#                     mtable[i, j] = hashmap[tuple(m.flatten())]
                 else:
                     logging.debug("false multable")
                     logging.debug("mi = {:s}".format(str(mats[i])))
@@ -271,3 +273,5 @@ hex_Laue_group_mats = np.array([
     [[-__C1, __S1, 0], [__S1, __C1, 0],  [0, 0, -1]]
 ])
 HEX_LAUE_GROUP = MatrixGroup(hex_Laue_group_mats)
+# HEX_LAUE_GROUP = CUBIC_LAUE_GROUP
+

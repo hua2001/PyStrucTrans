@@ -1,5 +1,6 @@
 from pystructrans.general_imports import *
 from .lattice import Lattice
+from math import radians
 
 class BravaisLattice(Lattice):
     '''
@@ -210,8 +211,7 @@ class BravaisLattice(Lattice):
             e1 = np.array([a, 0, 0])
             e2 = np.array([b * np.cos(gamma), b * np.sin(gamma), 0])
             e3 = np.array([c * np.cos(beta), c * (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(gamma),
-                           c * np.sqrt(
-                               1 + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma) - np.cos(alpha) ** 2 - np.cos(
+                           c * np.sqrt(1 + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma) - np.cos(alpha) ** 2 - np.cos(
                                    beta) ** 2 - np.cos(gamma) ** 2) / np.sin(gamma)])
 
         return np.array([e1, e2, e3]).T, la.inv(C)
