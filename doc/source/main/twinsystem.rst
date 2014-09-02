@@ -15,7 +15,7 @@ a group of transformation stretch tensors, which are the variants of a martensit
     :param args: If two arguments are given, they must be (``Ulist``, ``Laue``).
                  If only one is given, it could be ``Ulist`` or ``Martensite``.
                  In the case of the former, ``Laue`` is the cubic Laue group.
-    :raise ValueError: Illegal construction parameters
+    :raise TypeError: Illegal construction parameters
 
     .. automethod:: pystructrans.TwinSystem.twintable
 
@@ -33,10 +33,7 @@ a group of transformation stretch tensors, which are the variants of a martensit
             >>> ts.twintable()
             [(0, 1), (0, 2), (1, 2)]
 
-    .. automethod:: pystructrans.TwinSystem.twinpairs
-
-        The returned list of TwinPair objects one-to-one correspond
-        to the return of :py:meth:`pystructrans.TwinSystem.gettwintable`
+    .. automethod:: pystructrans.TwinSystem.twinpairs        
 
         .. doctest::
 

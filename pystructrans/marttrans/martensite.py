@@ -42,13 +42,13 @@ class Martensite():
             elif len(args) == 4:
                 U = np.array([[args[0], args[1], 0], [args[1], args[2], 0], [0, 0, args[3]]])
         except:
-            raise ValueError("unrecognizable input")
+            raise TypeError("unrecognizable input")
 
         if not np.array_equal(U, U.T):
-            raise ValueError("not symmetric")
+            raise TypeError("not symmetric")
 
         if not la.det(U) > 0:
-            raise ValueError("not positive definite")
+            raise TypeError("not positive definite")
 
         return Martensite(U, self.getLaue())
 

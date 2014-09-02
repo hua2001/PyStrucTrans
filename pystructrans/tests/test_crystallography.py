@@ -180,7 +180,6 @@ class TestMatrixGroup(unittest.TestCase):
 
 from ..crystallography.sublattice import hnf_from_det, hnf_from_diag, hnfd
 
-
 class TestSublattice(unittest.TestCase):
     def test_hnf_from_diag(self):
         self.assertIn([[2, 0, 0], [0, 2, 0], [0, 0, 1]], hnf_from_diag([2, 2, 1]))

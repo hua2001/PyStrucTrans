@@ -68,6 +68,9 @@ class TwinSystem():
     def twinpairs(self):
         """
         get all twinnable variant pairs, in terms of TwinPair objects
+        
+        The returned list of TwinPair objects one-to-one correspond
+        to the return of :py:meth:`pystructrans.TwinSystem.gettwintable`
         """
         if self.__twinpairs is None:
             self.twintable()
