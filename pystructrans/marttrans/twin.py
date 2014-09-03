@@ -71,6 +71,17 @@ class TwinSystem():
         
         The returned list of TwinPair objects one-to-one correspond
         to the return of :py:meth:`pystructrans.TwinSystem.gettwintable`
+        .. doctest::
+
+            >>> ts = TwinSystem(Martensite().setU(0.9, 1.1))
+                    >>> ts.twintable()
+                        [(0, 1), (0, 2), (1, 2)]
+
+
+            >>> ts.twintable()
+            [(0, 1), (0, 2), (1, 2)]
+        :return: the indices of twinnable variants
+        :rtype: a list of indices (i, j) associated with twinnable variants
         """
         if self.__twinpairs is None:
             self.twintable()

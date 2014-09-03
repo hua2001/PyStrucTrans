@@ -1,5 +1,8 @@
 Twin System
 ===========
+.. testsetup:: *
+
+    from pystructrans import *
 
 TwinSystem object
 -----------------
@@ -7,7 +10,7 @@ The class :py:class:`pystructrans.TwinSystem` supports various operations on
 a group of transformation stretch tensors, which are the variants of a martensitic phase transformation.
 
 .. autoclass:: pystructrans.TwinSystem
-    :members: Ulist, Laue
+    :members: 
 
     To construct, a list of positive definite symmetric matrices
     and a Laue group are required. Or, use a :py:class:`pystructrans.Martensite` object.
@@ -17,56 +20,4 @@ a group of transformation stretch tensors, which are the variants of a martensit
                  In the case of the former, ``Laue`` is the cubic Laue group.
     :raise TypeError: Illegal construction parameters
 
-    .. automethod:: pystructrans.TwinSystem.twintable
-
-        .. testsetup:: *
-
-            from pystructrans import *
-
-        .. doctest::
-
-            >>> ts = TwinSystem(Martensite().setU(0.9, 1.1))
-                        >>> ts.twintable()
-                        [(0, 1), (0, 2), (1, 2)]
-
-
-            >>> ts.twintable()
-            [(0, 1), (0, 2), (1, 2)]
-
-    .. automethod:: pystructrans.TwinSystem.twinpairs        
-
-        .. doctest::
-
-            >>> tps = ts.twinpairs()
-            >>> tp = tps[0]
-
-            >>> import numpy as np
-            >>> np.array_equal(tp.Ui(), ts.Ulist()[0])
-            True
-            >>> np.array_equal(tp.Uj(), ts.Ulist()[1])
-            True
-
-    .. automethod:: pystructrans.TwinSystem.conventionaltwins
-
-        Returned indices corresponding to the return of
-        :py:meth:`pystructrans.TwinSystem.twintable` or
-        :py:meth:`pystructrans.TwinSystem.twinpairs`
-
-        .. doctest::
-
-            >>> ts.conventionaltwins()
-            [0, 1, 2]
-            >>> [tp.isconventional(ts.Laue()) for tp in tps]
-            [True, True, True]
-
-    .. automethod:: pystructrans.TwinSystem.compoundtwins
-
-        See the explanation of :py:meth:`pystructrans.TwinSystem.conventionaltwins`
-
-    .. automethod:: pystructrans.TwinSystem.typeItwins
-
-        See the explanation of :py:meth:`pystructrans.TwinSystem.conventionaltwins`
-
-    .. automethod:: pystructrans.TwinSystem.typeIItwins
-
-        See the explanation of :py:meth:`pystructrans.TwinSystem.conventionaltwins`
+    
