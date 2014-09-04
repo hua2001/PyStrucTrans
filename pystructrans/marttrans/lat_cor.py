@@ -17,7 +17,7 @@ def reduce_hnfs(args):
     """
     remove symmetry-related HNFs by the lattice group lg
     """
-    hnfs = args[0]
+    hnfs = args[0];
     lg = args[1]
     lprint = args[2] # if len(args) > 2 else print
     lprint("Reducing {:d} HNFs ...".format(len(hnfs)))
