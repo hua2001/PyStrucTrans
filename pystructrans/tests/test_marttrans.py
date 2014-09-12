@@ -30,8 +30,16 @@ class TestOrientationRelationship(unittest.TestCase):
         p_M = OR.plane_trans(L, p_A)
         self.assertListEqual(p_M, [[1, 0, 1], [1, 1, 1], [0, 1, 2]])
 
-# class TestTwin(unittest.TestCase):
-#     def test_solve_twin(self):
+class TestTwin(unittest.TestCase):
+    def test_solve_twin(self):
+        #set U and 2-fold rotation
+        U = np.array([[2.2,0.1,0.0],
+                      [0.1,2.1,0.0],
+                      0.0, 0.0,1.7])
+        e = np.array([1,1,2])/sqrt(6)
+        (Q1,a1,n1),(Q2,a2,n2) =Martensite.twin._solvetwin(U, e)
+        self.assertListEqual(Q1.T.dot(Q1), np.eye(3))
+        self.assertListEqual(Q2.T.dot(Q2), np.eye(3))
 
 
 class TestMartensite(unittest.TestCase):
