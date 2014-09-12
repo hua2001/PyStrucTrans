@@ -20,7 +20,7 @@ class TwinSystem():
                     self.__Ulist = np.array(args[0])
                 except:
                     raise ValueError("illegal construction parameters")
-            self.__Laue = CUBIC_LAUE_GROUP
+            self.__Laue = CUBIC_LAUE_GROUP.matrices()
         elif len(args) >= 2:
             try:
                 self.__Ulist = np.array(args[0])
@@ -383,7 +383,8 @@ def _solvetwin(U, e):
 
 def _solve_f(U, a, n):
     """
-    the volume fraction for U, a, n
+    the volume fraction for the nonlinear equation 
+    (U + f n \otimes a)(U + f a \otimes n) = (I + m \otimes b)(I + b \otimes m)
     """
     A = U.dot(U) - np.eye(3)
     cofU = _brute_cof(A)
@@ -420,6 +421,7 @@ def _solve_am(C):
 
     if c < SMALL:
         # TODO: solution is b = e, m = - 2 e where |e| = 1.
+        print('solution is b = e, m = - 2 e where |e| = 1.')
         return
     else:
         # if abs(eval[1] - 1) < 0.001:
