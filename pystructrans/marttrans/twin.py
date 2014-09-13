@@ -126,17 +126,15 @@ class TwinSystem():
         """
         return self.typeItwins()
 
-class TwinPair():
-    tol = 1e-6
-
-    def __init__(self, Ui, Uj, skipcheck=False):
-        TwinPair.tol
 
 class TwinPair():
     """
     A TwinPair object is constructed by two symmetry-related
     martensite variants U_i and U_j.
     """
+    
+    tol = 1e-6
+    
     def __init__(self, Ui, Uj, skipcheck=False):
 
         if not skipcheck and (not util.utils.pos_def_sym(Ui) or not util.utils.pos_def_sym(Uj)):
