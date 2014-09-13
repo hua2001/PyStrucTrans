@@ -176,8 +176,6 @@ class TestMatrixGroup(unittest.TestCase):
         self.assertTrue(np.array_equal(t, g.multable()))
         self.assertEqual(g.order(), 24)
 
-
-
 from ..crystallography.sublattice import hnf_from_det, hnf_from_diag, hnfd
 
 class TestSublattice(unittest.TestCase):

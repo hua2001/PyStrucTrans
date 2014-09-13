@@ -4,31 +4,32 @@ import pystructrans
 setup(name='pystructrans',
       version=pystructrans.__verison__,
       description='A python package for structural phase transformation',
-      # url='http://github.com/storborg/funniest',
-      author=['Yintao Song', 'Xian Chen'],
-      author_email=['yintaosong@gmail.com', 'x.ch.msti@gmail.com'],
-      license='GPL',
-      classifiers = [
-          'Development Status :: 2 - Pre-Alpha',
+      url='http://github.com/yintaosong/pystructrans',
+      author=('Yintao Song', 'Xian Chen'),
+      author_email=('yintaosong@gmail.com', 'x.ch.msti@gmail.com'),
+      license='LICENSE',
+      classifiers = (
+          'Development Status :: 3 - Alpha',
           'Environment :: Console',
           'Intended Audience :: Education',
           'Intended Audience :: Science/Research',
           'License :: Freeware',
           'Natural Language :: English',
-          'Programming Language :: Python :: 2.7'
-          'Programming Language :: Python :: 3.4'
-      ],
-      packages=[
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.4',
+          'Programming Language :: Python :: Implementation :: CPython'
+      ),
+      packages=(
           'pystructrans', 
           'pystructrans.crystallography',
           'pystructrans.marttrans',
           'pystructrans.util',
           'pystructrans.tests'
-      ],
-      install_requires=[
-          'numpy'
-      ],
-      scripts=['bin/lattcorr'],
+      ),
+      install_requires=(
+          'numpy >= 1.6.0'
+      ),
+      scripts=('bin/lattcorr',),
       entry_points={
         # 'console_scripts': [
         #                     'pst = pystructrans.command_line:main',

@@ -1,4 +1,3 @@
-include README.rst
-prune dev_test.py
+include README.md
 prune *.pyc
 prune *.hdf5

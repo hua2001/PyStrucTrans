@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
-import sys
 from optparse import OptionParser
-from pystructrans import lat_cor
-from pystructrans.marttrans.lat_opt import lat_opt_unpack
-from pystructrans.marttrans.lat_cor import reduce_hnfs
 from multiprocessing import Pool
-from numpy import fromstring
 import logging
+
+from numpy import fromstring
+
+from pystructrans import lat_cor
+from pystructrans.marttrans.lat_cor.lat_opt import lat_opt_unpack
+from pystructrans.marttrans.lat_cor import reduce_hnfs
+
 
 usage = '''
     usage: %prog [options] ibrava pbrava ibravm pbravm
