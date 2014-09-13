@@ -1,3 +1,4 @@
+from __future__ import division
 from pystructrans.general_imports import *
 from timeit import default_timer as timer
 import json
@@ -12,11 +13,11 @@ def lat_opt_unpack(args):
     args[2]['ihnf'] = args[3]
     return args[3], lat_opt(args[0], args[1], **(args[2]))
 
-def lat_opt(E1, E2, **kwargs):
+def lat_opt(E1, E2r, **kwargs):
     '''
     find the optimal lattice invarient shear move E1 as close as possible to E2
     allowed kwargs:
-     - LG2: special lattice group of E2
+     - LG2: special lattice group of E2r
      - nsol: number of solutions
      - dist: choose from "Cauchy", "Ericksen" and "strain", default is "Cauchy"
      - hdlr: logger handler, default is basicConfigure
@@ -35,11 +36,21 @@ def lat_opt(E1, E2, **kwargs):
     def print_ary(A):
         return "{:s}".format(A.tolist())
 
+    def maxiter_by_nsol(nsol):
+        """
+        automatically choose maxiter by nsol
+        """
+        if nsol < 3:
+            return 3
+        if nsol < 10:
+            return 4
+        return 5
+
     # read kwargs
     nsol = kwargs['nsol'] if 'nsol' in kwargs else 1
     global miniter, maxiter
-    maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else 2
-    miniter = kwargs['miniter'] if 'miniter' in kwargs else 2
+    maxiter = kwargs['maxiter'] if 'maxiter' in kwargs else maxiter_by_nsol(nsol)
+    miniter = kwargs['miniter'] if 'miniter' in kwargs else 3
     disp = kwargs['disp'] if 'disp' in kwargs else 1
     if 'logfile' in kwargs:
         logging.basicConfig(level=logging.INFO)
@@ -47,19 +58,13 @@ def lat_opt(E1, E2, **kwargs):
         logfile = kwargs['logfile']
         fhdlr = logging.FileHandler(logfile, mode='a')
         fhdlr.setLevel(kwargs['loglevel'] if 'loglevel' in kwargs else logging.INFO)
-        fhdlr.setFormatter(logging.Formatter('%(message)s'))
+        fhdlr.setFormatter(logging.Formatter(' %(message)s'))
         logger.addHandler(fhdlr)
 
-    def lprint(msg, lev=2):
-        # print with level
-        if disp >= lev:
-            print(msg)
-        if lev == 1:
-            logger.info(msg)
-        elif lev >= 2:
-            logger.debug(msg)
     if 'ihnf' in kwargs:
-        lprint("Processing the HNF No. {:d}".format(kwargs['ihnf']+1), 1)
+        logger.info("Processing the HNF No. {:d}".format(kwargs['ihnf'] + 1))
+        if disp > 0:
+            print("Processing the HNF No. {:d}".format(kwargs['ihnf'] + 1))
 
     # get dimension of the problem
     dim = len(E1)
@@ -69,26 +74,27 @@ def lat_opt(E1, E2, **kwargs):
 
     # LLL-reduction
     Er1 = LLL(E1)
-
     # starting point
     lo = np.array(np.rint(np.dot(la.inv(E1), Er1)), dtype='int')
 
     # determine distance function
     distance = kwargs['dist'] if 'dist' in kwargs else 'Cauchy'
 
-    lprint("distance is \"{:s}\"".format(distance), 2)
+    logger.debug("distance is \"{:s}\"".format(distance))
 
     # distance functions
     if distance == 'Ericksen':
-        dist = lambda x: Eric_dist(x, E1, E2)
+        dist = lambda x: Eric_dist(x, E1, E2r)
     if distance == 'strain':
-        dist = lambda x: strain_dist(x, E1, la.inv(E2))
+        E2inv = la.inv(E2r)
+        dist = lambda x: strain_dist(x, E1, E2inv)
     if distance == 'Cauchy':
-        dist = lambda x: Cauchy_dist(x, E1, la.inv(E2))
+        E2inv = la.inv(E2r)
+        dist = lambda x: Cauchy_dist(x, E1, E2inv)
 
     # lattice groups
     LG1 = Lattice(E1).getspeciallatticegroup().matrices()
-    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(E2).getspeciallatticegroup().matrices()
+    SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(E2r).getspeciallatticegroup().matrices()
     '''
     ====================
     Preparation - finish
@@ -262,7 +268,7 @@ def lat_opt(E1, E2, **kwargs):
 
     def findlocmin(start):
         # find local minimum
-        lprint("Finding the first local minimum ... ")
+        logger.debug("Finding the first local minimum ... ")
         minnode = start
         nextmin = minnode.steepest_des()
         minlociter = 0
@@ -270,14 +276,13 @@ def lat_opt(E1, E2, **kwargs):
             minnode = nextmin
             nextmin = minnode.steepest_des()
             minlociter += 1
-        lprint("Found local min at {:g} after {:d} iterations".format(minnode.elem_dist, minlociter))
+        logger.debug("Found local min at {:g} after {:d} iterations".format(minnode.elem_dist, minlociter))
 
         # DEBUG
         global nlocmin
         nlocmin += 1
 
         return minnode
-
 
     def bfs(source):
         """
@@ -290,8 +295,8 @@ def lat_opt(E1, E2, **kwargs):
         # bfs search from minnode
         EXPLORED[source.elem.tostring()] = True
         roots = [source]
-        update_solutions(roots[0])
-        lprint("loop starts with the first trial {:s} => {:g}".format(str(source.elem.flatten()), source.elem_dist), 2)
+        update_solutions(source)
+        logger.debug("loop starts with the first trial {:s} => {:g}".format(str(source.elem.flatten()), source.elem_dist))
         updated = True
 
         depth = 0
@@ -306,8 +311,6 @@ def lat_opt(E1, E2, **kwargs):
             # going down on the tree by iteration
             new_roots = []
 
-            # dmin1 = dmin2 = 1E10
-
             for root in roots:
                 for gen, elem in root.children:
                     hashcode = elem.tostring()
@@ -316,10 +319,19 @@ def lat_opt(E1, E2, **kwargs):
                         t = SLNode(elem, parent=gen, grandpa=root.parent)
                         new_roots.append(t)
 
-                        if t.elem_dist < source.elem_dist:
-                            # a new starting point
-                            del EXPLORED
-                            return t
+                        # if in min iter
+                        if depth <= miniter:
+                            restorelevel = logger.level
+                            logger.setLevel(logging.CRITICAL)
+
+                            potential_newstart = findlocmin(t)
+
+                            logger.setLevel(restorelevel)
+
+                            if potential_newstart.elem_dist < source.elem_dist:
+                                # a new starting point
+                                del EXPLORED
+                                return potential_newstart
 
                         # try to update the solution if the node element is closer than the last solution
                         if update_solutions(t):
@@ -328,12 +340,13 @@ def lat_opt(E1, E2, **kwargs):
             roots = new_roots
             # debug messages
             update_msg = "found update" if updated else "no update"
-            lprint("number of roots at depth {:d} is {:d}, construction time: {:g}, {:s}.".format(depth, len(roots), timer()-t0, update_msg), 2)
+            logger.debug("number of roots at depth {:d} is {:d}, construction time: {:g}, {:s}.".format(depth, len(roots), timer()-t0, update_msg))
 
         # all done
         del EXPLORED
         return None
 
+    logger.debug("starting point: {:s}".format(str(lo.flatten())))
     new_start = SLNode(lo)
     while new_start is not None:
         # local minimization
@@ -341,10 +354,8 @@ def lat_opt(E1, E2, **kwargs):
         # BFS
         new_start = bfs(minnode)
 
-#     del EXT_SOLS
-
     # if depth == maxiter and updated:
-    #     lprint("WARNING: maximum depth {:d} reached before solutions guaranteed".format(maxiter), 2)
+    #     lprint("DEBUG: maximum depth {:d} reached before solutions guaranteed".format(maxiter), 2)
 
     '''
     =======================
@@ -354,7 +365,15 @@ def lat_opt(E1, E2, **kwargs):
     # finish timer
     t_elapsed = timer() - t_start
 
-    # change back to the original E2
-    # lopt = [l.dot(chi) for l in lopt]
-    lprint("{:d} / {:d} solution(s) found by {:d} iterations and in {:g} sec.".format(len(dopt), nsol, depth, t_elapsed))
+    if 'ihnf' in kwargs:
+        logger.debug("HNF No. {:d} finished.".format(kwargs['ihnf']+1))
+    for d, l in zip(dopt, lopt):
+        logger.debug("{:.4f}, {:s}".format(d, str(l.flatten())))
+
+    final_msg = "{:d} / {:d} solution(s) found by {:d} iterations and in {:g} sec.".format(len(dopt), nsol, depth, t_elapsed)
+    if 'ihnf' in kwargs:
+        final_msg = "HNF No. {:d}: ".format(kwargs['ihnf']+1) + final_msg
+    logger.info(final_msg)
+    if disp > 1:
+        print(final_msg)
     return {'lopt': lopt, 'dopt': dopt}
