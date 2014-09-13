@@ -50,7 +50,7 @@ class TwinSystem():
         """
         return self.__Laue
 
-    def twintable(self):
+    def TwinTable(self):
         """
         get all twinnable variant pairs, in terms of indices in ``Ulist``
         """
@@ -63,9 +63,9 @@ class TwinSystem():
                     if tp.istwinnable():
                         self.__twintable.append((i, j))
                         self.__twinpairs.append(tp)
-        return self.__twintable
+        return np.array(self.__twintable)
 
-    def twinpairs(self):
+    def getTwinpairs(self):
         """
         get all twinnable variant pairs, in terms of TwinPair objects
         
@@ -87,44 +87,50 @@ class TwinSystem():
             self.twintable()
         return self.__twinpairs
 
-    def conventionaltwins(self):
+    def getConventional(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is conventional
         :rtype: :py:class:`list`
         """
         if self.__twinpairs is None:
-            self.twintable()
-        return [i for i in xrange(len(self.__twinpairs))
-                if self.__twinpairs[i].isconventional(self.Laue())]
+            self.TwinTable()
+        return np.array([i for i in xrange(len(self.__twinpairs))
+                if self.__twinpairs[i].isconventional(self.Laue())])
 
-    def compoundtwins(self):
+    def getCompound(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is compound
         :rtype: :py:class:`list`
         """
         if self.__twinpairs is None:
-            self.twintable()
-        return [i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].iscompound()]
+            self.TwinTable()
+        return np.array([i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].iscompound()])
 
-    def typeItwins(self):
+    def getTypeI(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
         if self.__twinpairs is None:
-            self.twintable()
-        return [i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].istypeI()]
+            self.TwinTable()
+        return np.array([i for i in xrange(len(self.__twinpairs)) if self.__twinpairs[i].istypeI()])
 
-    def typeIItwins(self):
+    def getTypeII(self):
         """
 
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
         return self.typeItwins()
+
+class TwinPair():
+    tol = 1e-6
+
+    def __init__(self, Ui, Uj, skipcheck=False):
+        TwinPair.tol
 
 class TwinPair():
     """
