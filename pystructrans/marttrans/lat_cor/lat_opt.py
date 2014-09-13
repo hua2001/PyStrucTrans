@@ -4,12 +4,17 @@ from timeit import default_timer as timer
 from pystructrans.general_imports import *
 from pystructrans.marttrans.lat_cor.dist import Eric_dist, strain_dist, Cauchy_dist
 from pystructrans.crystallography import Lattice, LLL
+from .dfs import dfs
+from .slnode import SLNode
+
+# global SLNode
 
 # create logger
 logger = logging.getLogger(__name__)
-# logger = multiprocessing.get_logger()
 
 def lat_opt_unpack(args):
+    import multiprocessing
+    logger = multiprocessing.get_logger()
     args[2]['ihnf'] = args[3]
     return args[3], lat_opt(args[0], args[1], **(args[2]))
 
@@ -68,6 +73,7 @@ def lat_opt(E1, E2r, **kwargs):
 
     # get dimension of the problem
     dim = len(E1)
+    SLNode.dim = dim
 
     # start timer
     t_start = timer()
@@ -95,118 +101,14 @@ def lat_opt(E1, E2r, **kwargs):
     # lattice groups
     LG1 = Lattice(E1).getspeciallatticegroup().matrices()
     SOLG2 = kwargs['SOLG2'] if 'SOLG2' in kwargs else Lattice(E2r).getspeciallatticegroup().matrices()
+
+    SLNODE_CACHE = {'dist': dist, 'lg1': LG1, 'lg2': SOLG2}
+    DFS_CACHE = {'counter': 0}
+
     '''
     ====================
     Preparation - finish
     ====================
-    '''
-
-    '''
-    ===================
-    Travesal of SL(n,Z)
-    ===================
-    '''
-    class SLNode ():
-        "Tree structure of GL(n,Z) group"
-
-        # all 12 transvectives in the form of a 6x2 array of matrices
-        T1 = np.array([np.eye(dim, dtype="int")
-                       + np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
-                       for i in xrange(dim) for j in xrange(dim) if i != j])
-        T2 = np.array([np.eye(dim, dtype="int")
-                       - np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
-                       for i in xrange(dim) for j in xrange(dim) if i != j])
-        _T = np.append(T1, T2, axis=0)
-
-        onetotwo = [(i, j) for i in xrange(dim) for j in xrange(dim) if i != j]
-
-        def __init__(self, elem, parent=None, grandpa=None):
-            """
-            constructed by node element
-            """
-            self.elem = elem
-            self.parent = parent
-            self.grandpa = grandpa
-            self.elem_dist = dist(self.elem)
-            self.children = self.generate_children()
-            self.children_dist = None
-
-        def generate_children(self):
-            """
-            generate children nodes
-            """
-            nobacktrans = []
-            for i in xrange(len(SLNode._T)):
-                if dim != 3 or (
-                    not SLNode.gobacktoparent(i, self.parent) and
-                    not SLNode.gobacktouncle(i, self.parent, self.grandpa) and
-                    not SLNode.gobacktosibling(i, self.parent)
-                ):
-                    nobacktrans.append(i)
-            return ((j, self.elem.dot(SLNode._T[j])) for j in nobacktrans)
-
-        @classmethod
-        def gobacktoparent(cls, child, parent):
-            N = dim * (dim - 1)
-            return False if parent is None else child == (parent + N) % N
-
-        @classmethod
-        def gobacktouncle(cls, child, parent, grandpa):
-            """
-            [Tij, Tjk] = Tik => Tij Tjk = Tik Tjk Tij
-            """
-            if parent is None or grandpa is None:
-                return False
-            else:
-                N = dim * (dim - 1)
-                ic, kc = SLNode.onetotwo[child % N]
-                jp, kp = SLNode.onetotwo[parent % N]
-                ig, jg = SLNode.onetotwo[grandpa % N]
-                return ic == ig and jg == jp and kp == kc
-
-        @classmethod
-        def gobacktosibling(cls, child, parent):
-            """
-            [Tij Tkl] = 1 =>
-            """
-            if parent is None:
-                return False
-            else:
-                N = dim * (dim - 1)
-                i, j = SLNode.onetotwo[child % N]
-                k, l = SLNode.onetotwo[parent % N]
-                return (i, j) > (k, l)
-
-        def calc_neighbor_dist(self):
-            """distance values of neighbors"""
-            nb = (self.elem.dot(t) for t in SLNode._T)
-            return (dist(c) for c in nb)
-
-        def steepest_des(self):
-            """direction of the steepest descendant"""
-            dmin = 1E10
-            nbmin = None
-            for i, nbdist in enumerate(self.calc_neighbor_dist()):
-                if nbdist - self.elem_dist < dmin:
-                    nbmin = i
-                    dmin = nbdist - self.elem_dist
-            return SLNode(self.elem.dot(SLNode._T[nbmin])) if dmin < 0 else None
-
-        def is_min(self):
-            return all(list(self.calc_neighbor_dist()) >= self.elem_dist)
-
-        def copy(self, that):
-            self.elem = that.elem
-            self.elem_dist = that.elem_dist
-            self.children = that.generate_children()
-
-        def __str__(self):
-            return "GLTree - "+print_ary(self.elem)
-
-    '''
-    ============================
-    Tree data structure - finish
-    ============================
     '''
 
     '''
@@ -266,24 +168,6 @@ def lat_opt(E1, E2r, **kwargs):
             return True
         return False
 
-    def findlocmin(start):
-        # find local minimum
-        logger.debug("Finding the first local minimum ... ")
-        minnode = start
-        nextmin = minnode.steepest_des()
-        minlociter = 0
-        while nextmin is not None:
-            minnode = nextmin
-            nextmin = minnode.steepest_des()
-            minlociter += 1
-        logger.debug("Found local min at {:g} after {:d} iterations".format(minnode.elem_dist, minlociter))
-
-        # DEBUG
-        global nlocmin
-        nlocmin += 1
-
-        return minnode
-
     def bfs(source):
         """
         breath first search of solutions
@@ -316,18 +200,12 @@ def lat_opt(E1, E2r, **kwargs):
                     hashcode = elem.tostring()
                     if not hashcode in EXPLORED:
                         EXPLORED[hashcode] = True
-                        t = SLNode(elem, parent=gen, grandpa=root.parent)
+                        t = SLNode(elem, SLNODE_CACHE, parent=gen, grandpa=root.parent)
                         new_roots.append(t)
 
                         # if in min iter
                         if depth <= miniter:
-                            restorelevel = logger.level
-                            logger.setLevel(logging.CRITICAL)
-
-                            potential_newstart = findlocmin(t)
-
-                            logger.setLevel(restorelevel)
-
+                            potential_newstart = dfs(t, DFS_CACHE)
                             if potential_newstart.elem_dist < source.elem_dist:
                                 # a new starting point
                                 del EXPLORED
@@ -347,12 +225,21 @@ def lat_opt(E1, E2r, **kwargs):
         return None
 
     logger.debug("starting point: {:s}".format(str(lo.flatten())))
-    new_start = SLNode(lo)
+    new_start = SLNode(lo, SLNODE_CACHE)
+    nrestart = 0
+
     while new_start is not None:
         # local minimization
-        minnode = findlocmin(new_start)
+        minnode = dfs(new_start, DFS_CACHE)
+        # DEBUG
+        nrestart += 1
         # BFS
         new_start = bfs(minnode)
+
+    DFS_CACHE = {'counter': 0}
+    SLNODE_CACHE = {'dist': dist, 'lg1': LG1, 'lg2': SOLG2}
+
+    logger.debug("restarted {:d} times in total".format(nrestart))
 
     # if depth == maxiter and updated:
     #     lprint("DEBUG: maximum depth {:d} reached before solutions guaranteed".format(maxiter), 2)

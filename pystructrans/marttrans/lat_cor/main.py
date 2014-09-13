@@ -304,7 +304,7 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     if disp > 0:
         print(output)
     for line in output.split("\n"):
-        logger.debug(line)
+        logger.info(line)
     ''' 
     =====================
     Print result - finish
