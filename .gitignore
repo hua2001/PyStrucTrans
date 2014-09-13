@@ -3,9 +3,10 @@
 !pystructrans/
 !doc/
 !bin/
+
 !.gitignore
-!COPYING
-!.README.rst
+!.README.md
 !setup.py
 !MENIFEST.in
+!LICENSE
 !_static/

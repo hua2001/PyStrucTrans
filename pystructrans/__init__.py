@@ -7,5 +7,4 @@ __verison__ = "1.0.0a"
 
 from .crystallography import Lattice, BravaisLattice
 from .marttrans import *
-from .util import BST, Euler, rotation
-# from runtests import test
+from .util import Euler, rotation

@@ -1,10 +1,10 @@
 from __future__ import division
-from pystructrans.general_imports import *
 from timeit import default_timer as timer
-import json
 
-from .dist import Eric_dist, strain_dist, Cauchy_dist
-from ..crystallography import Lattice, LLL
+from pystructrans.general_imports import *
+from pystructrans.marttrans.lat_cor.dist import Eric_dist, strain_dist, Cauchy_dist
+from pystructrans.crystallography import Lattice, LLL
+
 # create logger
 logger = logging.getLogger(__name__)
 # logger = multiprocessing.get_logger()

@@ -1,4 +1,5 @@
-from ..general_imports import *
+from __future__ import absolute_import
+from pystructrans.general_imports import *
 
 def Eric_dist(x, E1, E2):
     dim = len(E1)
