@@ -84,7 +84,7 @@ class TwinSystem():
         :rtype: a list of indices (i, j) associated with twinnable variants
         """
         if self.__twinpairs is None:
-            self.TwinTable()
+            self.twintable()
         return self.__twinpairs
 
     def getConventional(self):
