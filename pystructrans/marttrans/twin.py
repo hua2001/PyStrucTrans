@@ -74,8 +74,8 @@ class TwinSystem():
         .. doctest::
 
             >>> ts = TwinSystem(Martensite().setU(0.9, 1.1))
-                    >>> ts.twintable()
-                        [(0, 1), (0, 2), (1, 2)]
+            >>> ts.twintable()
+                [(0, 1), (0, 2), (1, 2)]
 
 
             >>> ts.twintable()
