@@ -20,7 +20,8 @@ class TwinSystem():
                     self.__Ulist = np.array(args[0])
                 except:
                     raise ValueError("illegal construction parameters")
-            self.__Laue = CUBIC_LAUE_GROUP.matrices()
+            # self.__Laue = CUBIC_LAUE_GROUP.matrices()
+            self.__Laue = CUBIC_LAUE_GROUP
         elif len(args) >= 2:
             try:
                 self.__Ulist = np.array(args[0])
@@ -124,7 +125,7 @@ class TwinSystem():
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
-        return self.typeItwins()
+        return self.getTypeI()
 
 
 class TwinPair():
@@ -185,7 +186,7 @@ class TwinPair():
 
     def isconventional(self, *lauegroup):
         """
-
+        lauegroup is a MatrixGroup.
         :return:  if the twin pair is conventionally twinned
         """
         if self.__conventional is None:
