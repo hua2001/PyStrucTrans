@@ -177,7 +177,8 @@ class TwinPair():
 
     def istwinnable(self):
         """
-
+        twinnable means that
+        there exists a Q in SO(3) s.t. Ui and Uj are rank1 connected.
         :return: if the twin pair is in fact twinnable
         """
         if np.max(np.abs(self.__Ui - self.__Uj)) < SMALL:
@@ -205,6 +206,9 @@ class TwinPair():
         """
 
         :return: axes of possible 180 degree rotations relating two variants
+        noticed that the length of self.__ax varies and depends on the types of twin system.
+        len(self.__ax) = 1 for the type I/II twins
+        len(self.__ax) = 2 for the compound twin
         """
         if self.__ax is None:
             if not self.istwinnable():
@@ -278,7 +282,7 @@ class TwinPair():
         if not self.istwinnable():
             raise AttributeError("only twinnable twin pairs have twin parameters")
 
-        if self.__twinparam is None:
+        if self.__twinparam is None and not self.ax() is None:
             t_ax = self.ax()[0]
             self.__twinparam = _solvetwin(self.__Ui, t_ax)
 
@@ -366,8 +370,10 @@ def _solvetwin(U, e):
     find the two solutions to the twinning equation
     """
 
-    e = np.array(e)
-    Uinv = np.array(la.inv(U))
+    ehat = e/la.norm(e)
+    Uinv = la.inv(U)
+    R180 = -np.eye(3) + 2*np.outer(ehat,ehat)
+    uj = np.dot(R180.dot(U), R180.T)
 
     n1 = e
     denominator = np.dot(np.dot(Uinv, e), np.dot(Uinv, e))
@@ -375,14 +381,14 @@ def _solvetwin(U, e):
     rho = la.norm(n1)
     n1 = np.round(n1/rho, 10)
     a1 = np.round(rho * a1, 10)
-    Q1 = (U + np.outer(a1, n1)).dot(Uinv)
+    Q1 = (U + np.outer(a1, n1)).dot(la.inv(uj))
 
     n2 = 2 * (e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
     a2 = U.dot(e)
     rho = la.norm(n2)
     n2 = np.round(n2/rho, 10)
     a2 = np.round(rho * a2, 10)
-    Q2 = (U + np.outer(a2, n2)).dot(Uinv)
+    Q2 = (U + np.outer(a2, n2)).dot(la.inv(uj))
     return (Q1, a1, n1), (Q2, a2, n2)
 
 
