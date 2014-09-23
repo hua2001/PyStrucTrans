@@ -11,7 +11,9 @@ def pos_def_sym(U):
     """
     check if U is [3 x 3] positive definite and symmetric
     """
-    return is_3_by_3(U) and la.det(U) > 0 and np.array_equal(U, U.T)
+    dU = (U - U.T).reshape(9)
+    # return is_3_by_3(U) and la.det(U) > 0 and np.array_equal(U, U.T)
+    return is_3_by_3(U) and la.det(U) > 0 and la.norm(dU) < 1e-6
 
 def sort_eig(A):
     """

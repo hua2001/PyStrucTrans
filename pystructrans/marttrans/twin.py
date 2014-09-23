@@ -134,7 +134,8 @@ class TwinPair():
     martensite variants U_i and U_j.
     """
     
-    tol = 1e-6
+    global tol
+    tol = 1e-3
     
     def __init__(self, Ui, Uj, skipcheck=False):
 
@@ -183,7 +184,8 @@ class TwinPair():
         """
         if np.max(np.abs(self.__Ui - self.__Uj)) < SMALL:
             return False
-        return abs(self.__e[1] - 1) < SMALL
+        # return abs(self.__e[1] - 1) < SMALL
+        return abs(self.__e[1] - 1) < tol
 
     def isconventional(self, *lauegroup):
         """
@@ -282,9 +284,13 @@ class TwinPair():
         if not self.istwinnable():
             raise AttributeError("only twinnable twin pairs have twin parameters")
 
-        if self.__twinparam is None and not self.ax() is None:
-            t_ax = self.ax()[0]
-            self.__twinparam = _solvetwin(self.__Ui, t_ax)
+        if self.__twinparam is None:
+            if len(self.ax())>0:
+                t_ax = self.ax()[0]
+                self.__twinparam = _solvetwin(self.__Ui, self.__Uj, t_ax)
+            else:
+                self.__twinparam = _solvetwin(self.__Ui, self.__Uj, None)
+
 
         return self.__twinparam
 
@@ -365,32 +371,44 @@ class TwinPair():
 #                     [1/sqrt(2), 0, 1/sqrt(2)], [1/sqrt(2), 0, -1/sqrt(2)],
 #                     [0, 1/sqrt(2), 1/sqrt(2)], [0, 1/sqrt(2), 1/sqrt(2)]]
 
-def _solvetwin(U, e):
+def _solvetwin(U, Uj, e):
     """
     find the two solutions to the twinning equation
     """
+    if not e == None:
+        ehat = e/la.norm(e)
+        Uinv = la.inv(U)
+        R180 = -np.eye(3) + 2*np.outer(ehat, ehat)
+        uj = np.dot(R180.dot(U), R180.T)
+        if _isvariant(U, uj):
+            n1 = e
+            denominator = np.dot(np.dot(Uinv, e), np.dot(Uinv, e))
+            a1 = 2 * (Uinv.dot(e)/denominator - U.dot(e))
+            rho = la.norm(n1)
+            n1 = np.round(n1/rho, 10)
+            a1 = np.round(rho * a1, 10)
+            Q1 = (U + np.outer(a1, n1)).dot(la.inv(uj))
 
-    ehat = e/la.norm(e)
-    Uinv = la.inv(U)
-    R180 = -np.eye(3) + 2*np.outer(ehat,ehat)
-    uj = np.dot(R180.dot(U), R180.T)
-
-    n1 = e
-    denominator = np.dot(np.dot(Uinv, e), np.dot(Uinv, e))
-    a1 = 2 * (Uinv.dot(e)/denominator - U.dot(e))
-    rho = la.norm(n1)
-    n1 = np.round(n1/rho, 10)
-    a1 = np.round(rho * a1, 10)
-    Q1 = (U + np.outer(a1, n1)).dot(la.inv(uj))
-
-    n2 = 2 * (e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
-    a2 = U.dot(e)
-    rho = la.norm(n2)
-    n2 = np.round(n2/rho, 10)
-    a2 = np.round(rho * a2, 10)
-    Q2 = (U + np.outer(a2, n2)).dot(la.inv(uj))
-    return (Q1, a1, n1), (Q2, a2, n2)
-
+            n2 = 2 * (e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
+            a2 = U.dot(e)
+            rho = la.norm(n2)
+            n2 = np.round(n2/rho, 10)
+            a2 = np.round(rho * a2, 10)
+            Q2 = (U + np.outer(a2, n2)).dot(la.inv(uj))
+            return (Q1, a1, n1), (Q2, a2, n2)
+        else:
+            return None
+    else:
+        cmix = np.dot(la.inv(U).dot(Uj), Uj.dot(la.inv(U)))
+        (Q1, hat_a1, hat_n1), (Q2, hat_a2, hat_n2) = _solve_am(cmix)
+        print(la.norm(cmix - (np.eye(3)+np.outer(hat_n2, hat_a2)).dot(np.eye(3)+np.outer(hat_a2, hat_n2))))
+        rho1 = U.T.dot(hat_n1)
+        rho2 = U.T.dot(hat_n2)
+        n1 = U.T.dot(hat_n1)/rho1
+        a1 = rho1*hat_a1
+        n2 = U.T.dot(hat_n2)/rho2
+        a2 = rho2*hat_a2
+        return (Q1, a1, n1), (Q2, a2, n2)
 
 def _solve_f(U, a, n):
     """
@@ -445,9 +463,12 @@ def _solve_am(C):
             m2 /= rho2
             b1 = rho1 * ((math.sqrt(eval[2]) * c1 / c) * evec[0] + kappa*(math.sqrt(eval[0]) * c3 / c) * evec[2])
             b2 = rho2 * ((math.sqrt(eval[2]) * c1 / c) * evec[0] - kappa*(math.sqrt(eval[0]) * c3 / c) * evec[2])
-            Cinv = la.inv(C)
-            R1 = (np.eye(3) + np.outer(b1, m1)).dot(Cinv)
-            R2 = (np.eye(3) + np.outer(b1, m1)).dot(Cinv)
+            ec, vc = la.eig(C)
+            ec = np.sqrt(ec)
+            Csqrt = np.dot(vc.dot(np.diag(ec)), la.inv(vc))
+            # print(la.norm((Csqrt.dot(Csqrt) - C).reshape(9))<1e-4)
+            R1 = (np.eye(3) + np.outer(b1, m1)).dot(la.inv(Csqrt))
+            R2 = (np.eye(3) + np.outer(b2, m2)).dot(la.inv(Csqrt))
             return (R1, b1, m1), (R2, b2, m2)
 
 def _brute_cof(A):
@@ -463,3 +484,16 @@ def _brute_cof(A):
         return np.array(minor).reshape(3, 3)
     else:
         raise TypeError('Please input a square matrix.')
+
+def _isvariant(U, V):
+    """check if U and V are variants of a Martensite object"""
+    ulist = Martensite(U).getvariants()
+    flag =0
+    for u in ulist:
+        dv = (V - u).reshape(9)
+        if la.norm(dv) < SMALL:
+            flag+=1
+    if flag == 0:
+        return False
+    else:
+        return True
