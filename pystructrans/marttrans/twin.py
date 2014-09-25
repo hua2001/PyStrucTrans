@@ -294,12 +294,22 @@ class TwinPair():
 
         return self.__twinparam
 
-    def iscompatible(self):
+    def iscompatible(self, twintype="C"):
         """
 
         :return: if the twin can be compatible with the reference (identity matrix)
         """
-        return np.array(np.array(self.volumefrac()) is not None).all()
+        if twintype not in ["I", "II", "C"]:
+            raise ValueError("unknown twin type {:s}", str(twintype))
+        elif twintype == "I":
+            return not self.volumefrac()[0]==None
+        elif twintype == "II":
+            return not self.volumefrac()[1]==None
+        else:
+            return not self.volumefrac()[0]==None or not self.volumefrac()[1]==None
+
+
+        # return np.array(np.array(self.volumefrac()) is not None).all()
 
 
     def volumefrac(self):
@@ -335,7 +345,7 @@ class TwinPair():
             raise AttributeError("twin pair is incompatible")
 
         tp = self.twinparam()
-        fs = self.volumefrac(twintype)
+        fs = self.volumefrac()
         if not isinstance(fs, tuple):
             fs = (fs, )
         hps = []
