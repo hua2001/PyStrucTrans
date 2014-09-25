@@ -302,28 +302,25 @@ class TwinPair():
         return np.array(np.array(self.volumefrac()) is not None).all()
 
 
-    def volumefrac(self, twintype="C"):
+    def volumefrac(self):
         """
 
-        :return: twinning volume fraction to satisfy compatibility condition
+        :return: twinning volume fractions for the Austenite/Martensite
+        interfaces given by (U, aI, nI)/I and (U, aII, nII)/I where
+        (aI, nI) and (aII, nII) are the twinparam()[0][1:] and twinparam()[1][1:]
         """
-        if twintype not in ["I", "II", "C"]:
-            raise ValueError("unknown twin type")
-
-        if twintype in ["I", "C"]:
-            if self.__fI is None:
-                # only solve for type I
-                a, n = self.twinparam()[0][1:]
-                self.__fI = _solve_f(self.__Ui, a, n)
-            if twintype is "I":
-                return self.__fI
+        if not self.twinparam()[0] == None:
+            aI, nI = self.twinparam()[0][1:]
+            self.__fI = _solve_f(self.__Ui, aI, nI)
         else:
-            if self.__fII is None:
-                # only solve for type II
-                a, n = self.twinparam()[1][1:]
-                self.__fII = _solve_f(self.__Ui, a, n)
-            if twintype is "II":
-                return self.__fII
+            self.__fI = None
+
+        if not self.twinparam()[1] == None:
+            aII, nII = self.twinparam()[1][1:]
+            self.__fII = _solve_f(self.__Ui, aII, nII)
+        else:
+            self.__fII = None
+
         return self.__fI, self.__fII
 
     def habitplanes(self, twintype="C"):
@@ -401,7 +398,6 @@ def _solvetwin(U, Uj, e):
     else:
         cmix = np.dot(la.inv(U).dot(Uj), Uj.dot(la.inv(U)))
         (Q1, hat_a1, hat_n1), (Q2, hat_a2, hat_n2) = _solve_am(cmix)
-        print(la.norm(cmix - (np.eye(3)+np.outer(hat_n2, hat_a2)).dot(np.eye(3)+np.outer(hat_a2, hat_n2))))
         rho1 = U.T.dot(hat_n1)
         rho2 = U.T.dot(hat_n2)
         n1 = U.T.dot(hat_n1)/rho1
