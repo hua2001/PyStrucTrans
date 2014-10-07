@@ -135,7 +135,7 @@ class UnitCell():
             raise visualError('The number of vertices is not valid.')
         
     def getPrimitive(self):
-        E = self._lattice.getBase().T
+        E = self._lattice.getbase().T
         return vertex(self._o, E, self._dim)
     def getConventionalVex(self):
         C = self._lattice.getConventionalBase().T
