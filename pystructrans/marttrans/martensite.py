@@ -130,7 +130,7 @@ class Martensite():
             raise AttributeError("U has not been initialized")
         lg = Lattice(self.getU()).getLauegroup()
         lg0 = self.getLaue()
-        return lg.order() < lg0.order() and lg0.hassubgroup(lg)
+        return lg.order() <= lg0.order() and lg0.hassubgroup(lg)
 
     def getLaueidx(self):
         if self.__Laueidx is None:

@@ -280,6 +280,7 @@ class TwinPair():
         """
 
         :return: twin parameters of the twin pair if it is twinnable
+        :rtype: (Q1, a1, n1), (Q2, a2, n2)
         """
         if not self.istwinnable():
             raise AttributeError("only twinnable twin pairs have twin parameters")
@@ -290,7 +291,6 @@ class TwinPair():
                 self.__twinparam = _solvetwin(self.__Ui, self.__Uj, t_ax)
             else:
                 self.__twinparam = _solvetwin(self.__Ui, self.__Uj, None)
-
 
         return self.__twinparam
 
