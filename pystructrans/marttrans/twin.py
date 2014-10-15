@@ -20,7 +20,8 @@ class TwinSystem():
                     self.__Ulist = np.array(args[0])
                 except:
                     raise ValueError("illegal construction parameters")
-            self.__Laue = CUBIC_LAUE_GROUP.matrices()
+            # self.__Laue = CUBIC_LAUE_GROUP.matrices()
+            self.__Laue = CUBIC_LAUE_GROUP
         elif len(args) >= 2:
             try:
                 self.__Ulist = np.array(args[0])
@@ -74,17 +75,17 @@ class TwinSystem():
         .. doctest::
 
             >>> ts = TwinSystem(Martensite().setU(0.9, 1.1))
-            >>> ts.twintable()
-                [(0, 1), (0, 2), (1, 2)]
+            >>> ts.TwinTable()
+            [(0, 1), (0, 2), (1, 2)]
 
 
-            >>> ts.twintable()
+            >>> ts.TwinTable()
             [(0, 1), (0, 2), (1, 2)]
         :return: the indices of twinnable variants
         :rtype: a list of indices (i, j) associated with twinnable variants
         """
         if self.__twinpairs is None:
-            self.twintable()
+            self.TwinTable()
         return self.__twinpairs
 
     def getConventional(self):
@@ -124,7 +125,7 @@ class TwinSystem():
         :return: the idecies of twintable/twinpairs whose corresponding TwinPair is Type I/II
         :rtype: :py:class:`list`
         """
-        return self.typeItwins()
+        return self.getTypeI()
 
 
 class TwinPair():
@@ -133,7 +134,8 @@ class TwinPair():
     martensite variants U_i and U_j.
     """
     
-    tol = 1e-6
+    global tol
+    tol = 1e-3
     
     def __init__(self, Ui, Uj, skipcheck=False):
 
@@ -176,16 +178,18 @@ class TwinPair():
 
     def istwinnable(self):
         """
-
+        twinnable means that
+        there exists a Q in SO(3) s.t. Ui and Uj are rank1 connected.
         :return: if the twin pair is in fact twinnable
         """
         if np.max(np.abs(self.__Ui - self.__Uj)) < SMALL:
             return False
-        return abs(self.__e[1] - 1) < SMALL
+        # return abs(self.__e[1] - 1) < SMALL
+        return abs(self.__e[1] - 1) < tol
 
     def isconventional(self, *lauegroup):
         """
-
+        lauegroup is a MatrixGroup.
         :return:  if the twin pair is conventionally twinned
         """
         if self.__conventional is None:
@@ -204,6 +208,9 @@ class TwinPair():
         """
 
         :return: axes of possible 180 degree rotations relating two variants
+        noticed that the length of self.__ax varies and depends on the types of twin system.
+        len(self.__ax) = 1 for the type I/II twins
+        len(self.__ax) = 2 for the compound twin
         """
         if self.__ax is None:
             if not self.istwinnable():
@@ -278,41 +285,52 @@ class TwinPair():
             raise AttributeError("only twinnable twin pairs have twin parameters")
 
         if self.__twinparam is None:
-            t_ax = self.ax()[0]
-            self.__twinparam = _solvetwin(self.__Ui, t_ax)
+            if len(self.ax())>0:
+                t_ax = self.ax()[0]
+                self.__twinparam = _solvetwin(self.__Ui, self.__Uj, t_ax)
+            else:
+                self.__twinparam = _solvetwin(self.__Ui, self.__Uj, None)
+
 
         return self.__twinparam
 
-    def iscompatible(self):
+    def iscompatible(self, twintype="C"):
         """
 
         :return: if the twin can be compatible with the reference (identity matrix)
         """
-        return np.array(np.array(self.volumefrac()) is not None).all()
-
-
-    def volumefrac(self, twintype="C"):
-        """
-
-        :return: twinning volume fraction to satisfy compatibility condition
-        """
         if twintype not in ["I", "II", "C"]:
-            raise ValueError("unknown twin type")
-
-        if twintype in ["I", "C"]:
-            if self.__fI is None:
-                # only solve for type I
-                a, n = self.twinparam()[0][1:]
-                self.__fI = _solve_f(self.__Ui, a, n)
-            if twintype is "I":
-                return self.__fI
+            raise ValueError("unknown twin type {:s}", str(twintype))
+        elif twintype == "I":
+            return not self.volumefrac()[0]==None
+        elif twintype == "II":
+            return not self.volumefrac()[1]==None
         else:
-            if self.__fII is None:
-                # only solve for type II
-                a, n = self.twinparam()[1][1:]
-                self.__fII = _solve_f(self.__Ui, a, n)
-            if twintype is "II":
-                return self.__fII
+            return not self.volumefrac()[0]==None or not self.volumefrac()[1]==None
+
+
+        # return np.array(np.array(self.volumefrac()) is not None).all()
+
+
+    def volumefrac(self):
+        """
+
+        :return: twinning volume fractions for the Austenite/Martensite
+        interfaces given by (U, aI, nI)/I and (U, aII, nII)/I where
+        (aI, nI) and (aII, nII) are the twinparam()[0][1:] and twinparam()[1][1:]
+        """
+        if not self.twinparam()[0] == None:
+            aI, nI = self.twinparam()[0][1:]
+            self.__fI = _solve_f(self.__Ui, aI, nI)
+        else:
+            self.__fI = None
+
+        if not self.twinparam()[1] == None:
+            aII, nII = self.twinparam()[1][1:]
+            self.__fII = _solve_f(self.__Ui, aII, nII)
+        else:
+            self.__fII = None
+
         return self.__fI, self.__fII
 
     def habitplanes(self, twintype="C"):
@@ -327,7 +345,7 @@ class TwinPair():
             raise AttributeError("twin pair is incompatible")
 
         tp = self.twinparam()
-        fs = self.volumefrac(twintype)
+        fs = self.volumefrac()
         if not isinstance(fs, tuple):
             fs = (fs, )
         hps = []
@@ -360,30 +378,43 @@ class TwinPair():
 #                     [1/sqrt(2), 0, 1/sqrt(2)], [1/sqrt(2), 0, -1/sqrt(2)],
 #                     [0, 1/sqrt(2), 1/sqrt(2)], [0, 1/sqrt(2), 1/sqrt(2)]]
 
-def _solvetwin(U, e):
+def _solvetwin(U, Uj, e):
     """
     find the two solutions to the twinning equation
     """
+    if not e == None:
+        ehat = e/la.norm(e)
+        Uinv = la.inv(U)
+        R180 = -np.eye(3) + 2*np.outer(ehat, ehat)
+        uj = np.dot(R180.dot(U), R180.T)
+        if _isvariant(U, uj):
+            n1 = e
+            denominator = np.dot(np.dot(Uinv, e), np.dot(Uinv, e))
+            a1 = 2 * (Uinv.dot(e)/denominator - U.dot(e))
+            rho = la.norm(n1)
+            n1 = np.round(n1/rho, 10)
+            a1 = np.round(rho * a1, 10)
+            Q1 = (U + np.outer(a1, n1)).dot(la.inv(uj))
 
-    e = np.array(e)
-    Uinv = np.array(la.inv(U))
-
-    n1 = e
-    denominator = np.dot(np.dot(Uinv, e), np.dot(Uinv, e))
-    a1 = 2 * (Uinv.dot(e)/denominator - U.dot(e))
-    rho = la.norm(n1)
-    n1 = np.round(n1/rho, 10)
-    a1 = np.round(rho * a1, 10)
-    Q1 = (U + np.outer(a1, n1)).dot(Uinv)
-
-    n2 = 2 * (e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
-    a2 = U.dot(e)
-    rho = la.norm(n2)
-    n2 = np.round(n2/rho, 10)
-    a2 = np.round(rho * a2, 10)
-    Q2 = (U + np.outer(a2, n2)).dot(Uinv)
-    return (Q1, a1, n1), (Q2, a2, n2)
-
+            n2 = 2 * (e - np.dot(U, U.dot(e))/np.dot(U.dot(e), U.dot(e)))
+            a2 = U.dot(e)
+            rho = la.norm(n2)
+            n2 = np.round(n2/rho, 10)
+            a2 = np.round(rho * a2, 10)
+            Q2 = (U + np.outer(a2, n2)).dot(la.inv(uj))
+            return (Q1, a1, n1), (Q2, a2, n2)
+        else:
+            return None
+    else:
+        cmix = np.dot(la.inv(U).dot(Uj), Uj.dot(la.inv(U)))
+        (Q1, hat_a1, hat_n1), (Q2, hat_a2, hat_n2) = _solve_am(cmix)
+        rho1 = U.T.dot(hat_n1)
+        rho2 = U.T.dot(hat_n2)
+        n1 = U.T.dot(hat_n1)/rho1
+        a1 = rho1*hat_a1
+        n2 = U.T.dot(hat_n2)/rho2
+        a2 = rho2*hat_a2
+        return (Q1, a1, n1), (Q2, a2, n2)
 
 def _solve_f(U, a, n):
     """
@@ -438,9 +469,12 @@ def _solve_am(C):
             m2 /= rho2
             b1 = rho1 * ((math.sqrt(eval[2]) * c1 / c) * evec[0] + kappa*(math.sqrt(eval[0]) * c3 / c) * evec[2])
             b2 = rho2 * ((math.sqrt(eval[2]) * c1 / c) * evec[0] - kappa*(math.sqrt(eval[0]) * c3 / c) * evec[2])
-            Cinv = la.inv(C)
-            R1 = (np.eye(3) + np.outer(b1, m1)).dot(Cinv)
-            R2 = (np.eye(3) + np.outer(b1, m1)).dot(Cinv)
+            ec, vc = la.eig(C)
+            ec = np.sqrt(ec)
+            Csqrt = np.dot(vc.dot(np.diag(ec)), la.inv(vc))
+            # print(la.norm((Csqrt.dot(Csqrt) - C).reshape(9))<1e-4)
+            R1 = (np.eye(3) + np.outer(b1, m1)).dot(la.inv(Csqrt))
+            R2 = (np.eye(3) + np.outer(b2, m2)).dot(la.inv(Csqrt))
             return (R1, b1, m1), (R2, b2, m2)
 
 def _brute_cof(A):
@@ -456,3 +490,16 @@ def _brute_cof(A):
         return np.array(minor).reshape(3, 3)
     else:
         raise TypeError('Please input a square matrix.')
+
+def _isvariant(U, V):
+    """check if U and V are variants of a Martensite object"""
+    ulist = Martensite(U).getvariants()
+    flag =0
+    for u in ulist:
+        dv = (V - u).reshape(9)
+        if la.norm(dv) < SMALL:
+            flag+=1
+    if flag == 0:
+        return False
+    else:
+        return True
