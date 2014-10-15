@@ -1,6 +1,6 @@
-from ..general_imports import *
+from pystructrans.general_imports import *
 from itertools import chain
-from ..util import divisors, rotation
+from pystructrans.util import divisors, rotation
 
 # square group
 SQUARE_GROUP = np.array([

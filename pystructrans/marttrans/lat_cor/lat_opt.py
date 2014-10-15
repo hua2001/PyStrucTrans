@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 from timeit import default_timer as timer
 
 from pystructrans.general_imports import *

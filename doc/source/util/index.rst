@@ -7,6 +7,4 @@ A set of convenient utilities are provided in :py:mod:`pystructrans`.
    :titlesonly:
    :numbered: 1
 
-   bst
    rotation
-   binarytree
