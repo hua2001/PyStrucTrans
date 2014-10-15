@@ -18,6 +18,10 @@ will search for the 3 best lattice correspondences from f.c.c. (id = 2) with *a*
 
 For more detail, refer to the documentation.
 
-### Dependencies
+## Dependencies
 
 Numpy >= 1.6.0
+
+## Licence
+
+[The MIT Lincense](http://opensource.org/licenses/MIT)
