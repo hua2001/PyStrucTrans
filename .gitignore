@@ -1,12 +1,11 @@
-/*
+*
 
-!pystructrans/
-!doc/
 !bin/
+!doc/
+!pystructrans/
 
 !.gitignore
-!.README.md
+!README.md
 !setup.py
 !MENIFEST.in
 !LICENSE
-!_static/
