@@ -1,10 +1,10 @@
 from setuptools import setup
 import structrans
 
-setup(name='pystructrans',
+setup(name='PyStrucTrans',
       version=structrans.__verison__,
       description='A python package for structural phase transformation',
-      url='http://github.com/yintaosong/pystructrans',
+      url='http://github.com/structrans/pystructrans',
       author=('Yintao Song', 'Xian Chen'),
       author_email=('yintaosong@gmail.com', 'x.ch.msti@gmail.com'),
       license='LICENSE',
@@ -20,22 +20,18 @@ setup(name='pystructrans',
           'Programming Language :: Python :: Implementation :: CPython'
       ),
       packages=(
-          'pystructrans', 
-          'pystructrans.crystallography',
-          'pystructrans.marttrans',
-          'pystructrans.util',
-          'pystructrans.tests'
+          'structrans',
+          'structrans.crystallography',
+          'structrans.marttrans',
+          'structrans.util',
+          'structrans.tests'
       ),
       install_requires=(
           'numpy >= 1.6.0'
       ),
       scripts=('bin/lattcorr',),
       entry_points={
-        # 'console_scripts': [
-        #                     'pst = pystructrans.command_line:main',
-        #                     'lattcorr.py = pystructrans.command_line:run_lat_cor',
-        #                     'main = pystructrans.command_line'
-        #                     ],
+        # 'console_scripts': []
       },
       data_files=[],
       test_suite='nose.collector',

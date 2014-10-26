@@ -2,7 +2,7 @@
 
 !bin/
 !doc/
-!pystructrans/
+!structrans/
 
 !.gitignore
 !README.md
