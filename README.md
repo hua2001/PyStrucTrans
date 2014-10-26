@@ -8,7 +8,7 @@ Download and upzip the repository. Install the package by running the following 
 
 Then import the library in your python script
 
-    import pystructrans
+    import structrans
 
 There is one shell command, `lattcorr`, that can be directly used after the installation. This command will invoke the python interpreter and search for the optimal lattice correspondences based on the provided lattice parameters. For example
 

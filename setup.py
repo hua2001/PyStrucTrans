@@ -1,8 +1,8 @@
 from setuptools import setup
-import pystructrans
+import structrans
 
 setup(name='pystructrans',
-      version=pystructrans.__verison__,
+      version=structrans.__verison__,
       description='A python package for structural phase transformation',
       url='http://github.com/yintaosong/pystructrans',
       author=('Yintao Song', 'Xian Chen'),

@@ -18,6 +18,18 @@ we can get a matrix ``R``
 .. doctest::
 
     >>> import numpy as np
+        >>> import numpy.linalg as la
+        >>> np.set_printoptions(suppress=True)
+        >>> from structrans import rotation
+        >>> angle = 120
+        >>> axis = [1, 1, 1]
+        >>> R = rotation(angle, axis)
+        >>> print(R)
+        [[ 0. -0.  1.]
+         [ 1.  0. -0.]
+         [-0.  1.  0.]]
+
+    We can check that it is in
     >>> import numpy.linalg as la
     >>> np.set_printoptions(suppress=True)
     >>> from pystructrans import rotation
@@ -74,6 +86,34 @@ Define three ``angles`` and the ``order`` of three intrinsic rotation axis
 .. doctest::
 
     >>> import numpy as np
+        >>> import numpy.linalg as la
+        >>> np.set_printoptions(suppress=True)
+
+        >>> from structrans import Euler
+
+        >>> angles = [90, 90, 90]
+        >>> order = 'XYZ'
+        >>> R = Euler(angles, order)
+        >>> print(R)
+        [[ 0.  0.  1.]
+         [ 0.  1.  0.]
+         [-1.  0.  0.]]
+
+    Again, it is in
+        >>> import numpy.linalg as la
+        >>> np.set_printoptions(suppress=True)
+
+        >>> from structrans import Euler
+
+        >>> angles = [90, 90, 90]
+        >>> order = 'XYZ'
+        >>> R = Euler(angles, order)
+        >>> print(R)
+        [[ 0.  0.  1.]
+         [ 0.  1.  0.]
+         [-1.  0.  0.]]
+
+    Again, it is in
     >>> import numpy.linalg as la
     >>> np.set_printoptions(suppress=True)
 
