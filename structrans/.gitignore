@@ -1,5 +1,7 @@
+!*
+
 *~
 *_dev*
-*.pyc
+*.py[ocd]
 *.DS_Store
 *pycache__
