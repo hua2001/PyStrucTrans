@@ -1,0 +1,17 @@
+body {
+    font-size: 12pt;
+}
+
+table.cover-table {
+    margin: auto;
+    max-width: 600px;
+}
+
+table.cover-table tbody td {
+    border: 0px;
+    padding: 25px;
+}
+
+.cover-section-title {
+    line-height: 5pt;
+}

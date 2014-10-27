@@ -1,0 +1,114 @@
+Lattice
+=======
+
+The class :py:class:`Lattice <structrans.Lattice>` handles the generic lattice objects.
+
+**Definition**
+
+A lattice :math:`\mathcal L` is a set of discrete points in :math:`\mathbb R^N`.
+It is defined through three linearly independent *lattice vectors*,
+:math:`\mathbf e_i\in\mathbb R^N`, :math:`i = 1, \cdots, N`:
+
+.. math:: \mathcal{L}(\mathbf e_i) = \{\mathbf x\in\mathbb R^N : \mathbf x = \mu^i\mathbf e_i, \mu^i \in \mathbb Z\}.
+   :label: lattice-1
+
+In terms of matrix multiplication, each point in :math:`\mathcal L` is obtained
+by mutltiplying the *base matrix* :math:`\mathbf E\in\mathbb R^{N\times N}`
+by an integer vector :math:`\boldsymbol\mu\in\mathbb Z^N`, *i.e.*
+
+.. math::
+
+    \mathbf x =  \mu^1\mathbf e_1 + \cdots + \mu^N\mathbf e_N
+    =
+    \begin{bmatrix}
+    e^1_1 & \cdots & e^1_N \\
+    \vdots & \ddots & \vdots \\
+    e^N_1 & \cdots & e^N_N
+    \end{bmatrix}
+    \begin{bmatrix}
+    \mu^1 \\ \vdots \\ \mu^N
+    \end{bmatrix}
+    =
+    \mathbf E\boldsymbol \mu.
+
+Then the definition :eq:`lattice-1` is equivalent to
+
+.. math:: \mathcal{L}(\mathbf E) = \{\mathbf x\in\mathbb R^N : \mathbf x = \mathbf E\boldsymbol\mu, \boldsymbol\mu \in \mathbb Z^N\}.
+
+This definition is valid for any :math:`\mathbf E\in\mathbb R^{N\times N}`, such that :math:`\text{det }\mathbf E\neq0`.
+
+**Equivalence**
+
+Two lattice are equivalent if and only if their bases are related through
+a unimodular integer matrix in the *general linear group*
+:math:`GL(3, \mathbb Z)`:, *i.e.*
+
+.. math::
+
+    \mathcal L(\mathbf E_1) = \mathcal L(\mathbf E_2) \iff
+    \mathbf E_1\mathbf L = \mathbf E_2, \mathbf L \in~GL(3, \mathbb Z)
+
+**Symmetry groups**
+
+.. todo::
+
+    * point group
+    * Laue group
+    * lattice group
+    * special lattice group
+
+
+Lattice object
+--------------
+
+.. autoclass:: structrans.Lattice
+    :members:
+
+Examples
+--------
+
+.. doctest::
+
+    >>> from structrans import *
+    >>> import numpy as np
+    >>> lat = Lattice([[1., 1., 0],[-1., 1., 0],[0, 0, 1.]])
+    >>> E = lat.base()
+    >>> print(E)
+    [[ 1.  1.  0.]
+     [-1.  1.  0.]
+     [ 0.  0.  1.]]
+    >>> print(lat.dimension())
+    3
+    >>> print(lat)
+    3 dimensional lattice:
+        e_1 = [ 1. -1.  0.]
+        e_2 = [ 1.  1.  0.]
+        e_3 = [ 0.  0.  1.]
+
+.. note:: Lattice is an immutable object. Once instantiated,
+          the base matrix :math:`\mathbf E` cannot be changed.
+
+.. doctest::
+
+    >>> E[0, 1] = 0
+    >>> print(E)
+    [[ 1.  0.  0.]
+     [-1.  1.  0.]
+     [ 0.  0.  1.]]
+    >>> print(lat.base())
+    [[ 1.  1.  0.]
+     [-1.  1.  0.]
+     [ 0.  0.  1.]]
+
+.. doctest::
+
+    >>> L = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
+    >>> import numpy.linalg as la
+    >>> la.det(L)
+    1.0
+
+    >>> E2 = lat.getbase().dot(L)
+    >>> lat2 = Lattice(E2)
+    >>> lat == lat2
+    True
+

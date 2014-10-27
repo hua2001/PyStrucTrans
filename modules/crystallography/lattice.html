@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Lattice &mdash; PyStrucTrans 1.0.0b documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootswatch-3.2.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/extra-styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0b',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="PyStrucTrans 1.0.0b documentation" href="../../index.html" />
+    <link rel="up" title="Crystallography" href="index.html" />
+    <link rel="prev" title="Crystallography" href="index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html">
+          PyStrucTrans</a>
+        <span class="navbar-text navbar-version pull-left"><b>1.0.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Module References</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Lattice</a><ul>
+<li><a class="reference internal" href="#lattice-object">Lattice object</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="index.html" title="Previous Chapter: Crystallography"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Crystallography</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="lattice">
+<h1>Lattice<a class="headerlink" href="#lattice" title="Permalink to this headline">¶</a></h1>
+<p>The class <a class="reference internal" href="#structrans.Lattice" title="structrans.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">Lattice</span></tt></a> handles the generic lattice objects.</p>
+<p><strong>Definition</strong></p>
+<p>A lattice <span class="math">\(\mathcal L\)</span> is a set of discrete points in <span class="math">\(\mathbb R^N\)</span>.
+It is defined through three linearly independent <em>lattice vectors</em>,
+<span class="math">\(\mathbf e_i\in\mathbb R^N\)</span>, <span class="math">\(i = 1, \cdots, N\)</span>:</p>
+<div class="math" id="equation-lattice-1">
+<span class="eqno">(1)</span>\[\mathcal{L}(\mathbf e_i) = \{\mathbf x\in\mathbb R^N : \mathbf x = \mu^i\mathbf e_i, \mu^i \in \mathbb Z\}.\]</div>
+<p>In terms of matrix multiplication, each point in <span class="math">\(\mathcal L\)</span> is obtained
+by mutltiplying the <em>base matrix</em> <span class="math">\(\mathbf E\in\mathbb R^{N\times N}\)</span>
+by an integer vector <span class="math">\(\boldsymbol\mu\in\mathbb Z^N\)</span>, <em>i.e.</em></p>
+<div class="math">
+\[\begin{split}\mathbf x =  \mu^1\mathbf e_1 + \cdots + \mu^N\mathbf e_N
+=
+\begin{bmatrix}
+e^1_1 &amp; \cdots &amp; e^1_N \\
+\vdots &amp; \ddots &amp; \vdots \\
+e^N_1 &amp; \cdots &amp; e^N_N
+\end{bmatrix}
+\begin{bmatrix}
+\mu^1 \\ \vdots \\ \mu^N
+\end{bmatrix}
+=
+\mathbf E\boldsymbol \mu.\end{split}\]</div>
+<p>Then the definition <a href="#equation-lattice-1">(1)</a> is equivalent to</p>
+<div class="math">
+\[\mathcal{L}(\mathbf E) = \{\mathbf x\in\mathbb R^N : \mathbf x = \mathbf E\boldsymbol\mu, \boldsymbol\mu \in \mathbb Z^N\}.\]</div>
+<p>This definition is valid for any <span class="math">\(\mathbf E\in\mathbb R^{N\times N}\)</span>, such that <span class="math">\(\text{det }\mathbf E\neq0\)</span>.</p>
+<p><strong>Equivalence</strong></p>
+<p>Two lattice are equivalent if and only if their bases are related through
+a unimodular integer matrix in the <em>general linear group</em>
+<span class="math">\(GL(3, \mathbb Z)\)</span>:, <em>i.e.</em></p>
+<div class="math">
+\[\mathcal L(\mathbf E_1) = \mathcal L(\mathbf E_2) \iff
+\mathbf E_1\mathbf L = \mathbf E_2, \mathbf L \in~GL(3, \mathbb Z)\]</div>
+<p><strong>Symmetry groups</strong></p>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<ul class="last simple">
+<li>point group</li>
+<li>Laue group</li>
+<li>lattice group</li>
+<li>special lattice group</li>
+</ul>
+</div>
+<div class="section" id="lattice-object">
+<h2>Lattice object<a class="headerlink" href="#lattice-object" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="structrans.Lattice">
+<em class="property">class </em><tt class="descclassname">structrans.</tt><tt class="descname">Lattice</tt><big>(</big><em>E</em><big>)</big><a class="headerlink" href="#structrans.Lattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the base class of lattices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attribute E:</th><td class="field-body">two-dimensional square matrix (any type can be converted to <a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.8)"><tt class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></tt></a>)</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="structrans.Lattice.Laue_group">
+<tt class="descname">Laue_group</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.Lattice.Laue_group" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">get the Laue group in <span class="math">\(SO(3)\)</span> of a 3D lattice, in <span class="math">\(SO(2)\)</span> of a 2D lattice.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">MatrixGroup</span></tt></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises <a class="reference external" href="http://docs.python.org/3.4/library/exceptions.html#AttributeError" title="(in Python v3.4)">AttributeError</a>:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">Laue groups for other than 2D and 3D lattices are not implemented yet.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.base">
+<tt class="descname">base</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.Lattice.base" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the base matrix</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.8)"><tt class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.dimension">
+<tt class="descname">dimension</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.Lattice.dimension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the dimenstion of the lattice.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(<em>integer</em>) - the dimenstion of the lattice</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.inlatticegroup">
+<tt class="descname">inlatticegroup</tt><big>(</big><em>M</em><big>)</big><a class="headerlink" href="#structrans.Lattice.inlatticegroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <cite>M</cite> is in the lattice group of the lattice.
+This method works for lattices in any dimension.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.inpointgroup">
+<tt class="descname">inpointgroup</tt><big>(</big><em>Q</em><big>)</big><a class="headerlink" href="#structrans.Lattice.inpointgroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if <cite>Q</cite> is in the point group of the lattice.
+This method works for lattices in any dimension.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.lattice_group">
+<tt class="descname">lattice_group</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.Lattice.lattice_group" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">get the lattice group in <span class="math">\(GL(3, \mathbb Z)\)</span> of a 3D lattice</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">MatrixGroup</span></tt></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises <a class="reference external" href="http://docs.python.org/3.4/library/exceptions.html#AttributeError" title="(in Python v3.4)">AttributeError</a>:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">Lattice groups for other than 2D and 3D lattices are not implemented yet.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.point_group">
+<tt class="descname">point_group</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.Lattice.point_group" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">get the point group in <span class="math">\(O(3)\)</span> of a 3D lattice, in <span class="math">\(O(2)\)</span> of a 2D lattice</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">MatrixGroup</span></tt></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises <a class="reference external" href="http://docs.python.org/3.4/library/exceptions.html#AttributeError" title="(in Python v3.4)">AttributeError</a>:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">Point groups for other than 2D and 3D lattices are not implemented yet.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.Lattice.special_lattice_group">
+<tt class="descname">special_lattice_group</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.Lattice.special_lattice_group" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">get the special lattice group in <span class="math">\(SL(3, \mathbb Z)\)</span> of a 3D lattice</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><tt class="xref py py-class docutils literal"><span class="pre">MatrixGroup</span></tt></td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises <a class="reference external" href="http://docs.python.org/3.4/library/exceptions.html#AttributeError" title="(in Python v3.4)">AttributeError</a>:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">Special lattice groups for other than 2D and 3D lattices are not implemented yet.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">structrans</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lat</span> <span class="o">=</span> <span class="n">Lattice</span><span class="p">([[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mi">0</span><span class="p">],[</span><span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">E</span> <span class="o">=</span> <span class="n">lat</span><span class="o">.</span><span class="n">base</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">E</span><span class="p">)</span>
+<span class="go">[[ 1.  1.  0.]</span>
+<span class="go"> [-1.  1.  0.]</span>
+<span class="go"> [ 0.  0.  1.]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">lat</span><span class="o">.</span><span class="n">dimension</span><span class="p">())</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span>
+<span class="go">3 dimensional lattice:</span>
+<span class="go">    e_1 = [ 1. -1.  0.]</span>
+<span class="go">    e_2 = [ 1.  1.  0.]</span>
+<span class="go">    e_3 = [ 0.  0.  1.]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Lattice is an immutable object. Once instantiated,
+the base matrix <span class="math">\(\mathbf E\)</span> cannot be changed.</p>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">E</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">E</span><span class="p">)</span>
+<span class="go">[[ 1.  0.  0.]</span>
+<span class="go"> [-1.  1.  0.]</span>
+<span class="go"> [ 0.  0.  1.]]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">lat</span><span class="o">.</span><span class="n">base</span><span class="p">())</span>
+<span class="go">[[ 1.  1.  0.]</span>
+<span class="go"> [-1.  1.  0.]</span>
+<span class="go"> [ 0.  0.  1.]]</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy.linalg</span> <span class="kn">as</span> <span class="nn">la</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">la</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="go">1.0</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">E2</span> <span class="o">=</span> <span class="n">lat</span><span class="o">.</span><span class="n">getbase</span><span class="p">()</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">L</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lat2</span> <span class="o">=</span> <span class="n">Lattice</span><span class="p">(</span><span class="n">E2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lat</span> <span class="o">==</span> <span class="n">lat2</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2014, Yintao Song and Xian Chen.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

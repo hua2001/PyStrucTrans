@@ -1,0 +1,8 @@
+Tutorials
+=========
+
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   tut_latcor.rst

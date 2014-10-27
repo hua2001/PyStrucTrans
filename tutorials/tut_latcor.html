@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Search lattice correspondences &mdash; PyStrucTrans 1.0.0b documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.2.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/extra-styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.0b',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="PyStrucTrans 1.0.0b documentation" href="../index.html" />
+    <link rel="up" title="Tutorials" href="index.html" />
+    <link rel="next" title="Module References" href="../modules/index.html" />
+    <link rel="prev" title="Tutorials" href="index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          PyStrucTrans</a>
+        <span class="navbar-text navbar-version pull-left"><b>1.0.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/index.html">Module References</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Search lattice correspondences</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="index.html" title="Previous Chapter: Tutorials"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Tutorials</span>
+    </a>
+  </li>
+  <li>
+    <a href="../modules/index.html" title="Next Chapter: Module References"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Module Reference... &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="search-lattice-correspondences">
+<h1>Search lattice correspondences<a class="headerlink" href="#search-lattice-correspondences" title="Permalink to this headline">¶</a></h1>
+<p>The following example uses <tt class="xref py py-func docutils literal"><span class="pre">structrans.lat_cor()</span></tt> to find
+the best two lattice correspondences from <em>face centered cubic</em> with <cite>a</cite> = 2
+to <em>primitive tetragonal</em> with <cite>a</cite> = 1.414 and <cite>c</cite> = 2.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">structrans</span> <span class="kn">import</span> <span class="n">lat_cor</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">lat_cor</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.414</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">disp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nsol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">Input data</span>
+<span class="go">==========</span>
+<span class="go"> - Austenite lattice:</span>
+<span class="go">    3D Bravais Lattice - Cubic F (face centered cubic):    a = 2</span>
+<span class="go"> - Martensite lattice:</span>
+<span class="go">    3D Bravais Lattice - Tetragonal P:    a = 1.414,    c = 2</span>
+<span class="gp">...</span>
+<span class="go">Solution 1 out of 2:</span>
+<span class="go">----------------------</span>
+<span class="go"> - Lattice correspondence:</span>
+<span class="go">    [ 0.00  0.50 -0.50] ==&gt; [ 1 0 0 ]</span>
+<span class="go">    [ 0.00  0.50  0.50] ==&gt; [ 0 1 0 ]</span>
+<span class="go">    [ 1.00  0.00  0.00] ==&gt; [ 0 0 1 ]</span>
+<span class="go"> - Transformation stretch matrix:</span>
+<span class="go">   U = [ 1.000000  0.000000  0.000000]</span>
+<span class="go">       [ 0.000000  0.999849  0.000000]</span>
+<span class="go">       [ 0.000000  0.000000  0.999849]</span>
+<span class="go"> ...</span>
+<span class="go"> - Sorted eigen strains:</span>
+<span class="go">    lambda_1 = 0.999849, lambda_2 = 0.999849, lambda_3 = 1.</span>
+<span class="go"> ...</span>
+
+<span class="go">Solution 2 out of 2:</span>
+<span class="go">----------------------</span>
+<span class="go"> - Lattice correspondence:</span>
+<span class="go">    [ 0.50  0.50  0.00] ==&gt; [ 1 0 0 ]</span>
+<span class="go">    [ 0.00  0.50  0.50] ==&gt; [ 0 1 0 ]</span>
+<span class="go">    [ 1.00 -0.50  0.50] ==&gt; [ 0 0 1 ]</span>
+<span class="go"> - Transformation stretch matrix:</span>
+<span class="go">   U = [ 0.891999  0.044213 -0.277838]</span>
+<span class="go">       [ 0.044213  0.920273 -0.161105]</span>
+<span class="go">       [-0.277838 -0.161105  1.330925]</span>
+<span class="go"> ...</span>
+<span class="go"> - Sorted eigen strains:</span>
+<span class="go">    lambda_1 = 0.750388, lambda_2 = 0.881537, lambda_3 = 1.51127.</span>
+<span class="go"> ...</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2014, Yintao Song and Xian Chen.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
