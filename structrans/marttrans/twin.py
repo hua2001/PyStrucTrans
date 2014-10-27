@@ -276,6 +276,20 @@ class TwinPair():
             self.__XII = la.norm(self.__Ui.dot(t_ax))
         return self.__XII
 
+    def direct_cof(self):
+        """
+
+        :return: values of the cofactor conditions directly calculated from
+        U.a.cof(U^2-I)n
+        :rtype: (XI, XII)
+        """
+        U = self.Ui()
+        (Q1, a1, n1), (Q2, a2, n2) = self.twinparam()
+        A = U.dot(U) - np.eye(3)
+        cofU = _brute_cof(A)
+        return -np.dot(U.dot(a1), cofU.dot(n1)), -np.dot(U.dot(a2), cofU.dot(n2))
+
+
     def twinparam(self):
         """
 
