@@ -100,19 +100,22 @@ def lat_cor(ibrava, pbrava, ibravm, pbravm, **kwargs):
     lprint("==========")
     
     # construct
-    Lat_A = BravaisLattice(ibrava, pbrava, N=dim)
-    Lat_M = BravaisLattice(ibravm, pbravm, N=dim)
+    Lat_A = BravaisLattice(ibrava, pbrava, dim=dim)
+    Lat_M = BravaisLattice(ibravm, pbravm, dim=dim)
     
-    E_A = Lat_A.getbase()
-    E_M = Lat_M.getbase()
-    E_Mr = LLL(E_M)
-    chi = np.array(np.rint(la.inv(E_Mr).dot(E_M)), dtype='int')
+    E_A = Lat_A.base()
+    E_M = Lat_M.base()
+    #E_Mr = LLL(E_M)
+    #chi = np.array(np.rint(la.inv(E_Mr).dot(E_M)), dtype='int')
+
+    E_Mr = E_M
+    chi = np.eye(dim, dtype=np.int)
 
     C_A = Lat_A.getConventionalTrans()
     C_M = Lat_M.getConventionalTrans()
     
-    LG_A = Lat_A.getspeciallatticegroup().matrices()
-    LG_M = Lattice(E_Mr).getspeciallatticegroup().matrices()
+    LG_A = Lat_A.special_lattice_group().matrices()
+    LG_M = Lattice(E_Mr).special_lattice_group().matrices()
 
     lprint(" - Austenite lattice:", 1)
     lprint("    {:s}".format(str(Lat_A)), 1)

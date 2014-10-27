@@ -8,10 +8,10 @@ class BravaisLattice(Lattice):
 
     :param latID: id of the Bravais lattice type
     :param latParam: lattice parameters
-    :param N: dimension of the Bravais lattice, 2 or 3.
+    :param dim: dimension of the Bravais lattice, 2 or 3.
     '''  
  
-    def __init__(self, latID, latParam, N=3):
+    def __init__(self, latID, latParam, dim=3):
         '''
         Constructor
         '''
@@ -28,15 +28,15 @@ class BravaisLattice(Lattice):
         except Exception:
             raise ValueError('invalid lattice parameters')
 
-        # 3D Bravais lattices        
-        if N == 3:
+        # 3D Bravais lattices
+        if dim == 3:
             if not latID in range(1, 15):
                 raise ValueError('3D Bravais lattice ID must between 1 and 14')
             pramlen = [1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 6] 
             if not np.alen(latParam) == pramlen[latID - 1]:
                 raise ValueError('the number of lattice parameters does not match the type of Bravais lattice.')
             E, C = self.__primitiveBase3D__(latID, latParam)
-        if N == 2:
+        if dim == 2:
             if not latID in range(1, 6):
                 raise ValueError('2D Bravais lattice ID must be between 1 and 5.')
             pramlen = [1, 2, 2, 1, 3] 
@@ -66,18 +66,19 @@ class BravaisLattice(Lattice):
             # centered rectangular
             e1 = 0.5*np.array([p[0], p[1]])
             e2 = 0.5*np.array([-p[0], p[1]])
-            C = 0.5*np.array([[1, -1],[1, 1]])
+            C = 0.5*np.array([[1, -1], [1, 1]])
         elif n == 4:
             # hexagonal            
-            e1 = p[0]*np.array([1, 0])
-            e2 = p[0]*np.array([0.5, np.sqrt(3)])
+            e1 = p[0] * np.array([1, 0])
+            e2 = p[0] * 0.5 *np.array([1, np.sqrt(3)])
         elif n == 5:
             # oblique
             gamma = p[2]*np.pi/180.
             e1 = p[0]*np.array([1,0])
             e2 = p[1]*np.array([np.cos(gamma), np.sin(gamma)])        
         return np.array([e1, e2]).T, la.inv(C)
-    
+
+
     def __primitiveBase3D__(self, n, p):
         '''
         generate the base matrix for primitive cell of 3D Bravais lattices
@@ -184,7 +185,7 @@ class BravaisLattice(Lattice):
             a = p[0]
             b = p[1]
             c = p[2]
-            beta = p[3] * np.pi / 180.
+            beta = radians(p[3])
             e1 = np.array([a, 0, 0])
             e2 = np.array([0, b, 0])
             e3 = np.array([c * np.cos(beta), 0, c * np.sin(beta)])
@@ -193,7 +194,7 @@ class BravaisLattice(Lattice):
             a = p[0]
             b = p[1]
             c = p[2]
-            beta = p[3] * np.pi / 180
+            beta = radians(p[3])
             e1 = np.array([a / 2, b / 2, 0])
             e2 = np.array([-a / 2, b / 2, 0])
             e3 = np.array([c * np.cos(beta), 0, c * np.sin(beta)])
@@ -205,14 +206,14 @@ class BravaisLattice(Lattice):
             a = p[0]
             b = p[1]
             c = p[2]
-            alpha = p[3] * np.pi / 180
-            beta = p[4] * np.pi / 180
-            gamma = p[5] * np.pi / 180
+            alpha = radians(p[3])
+            beta = radians(p[4])
+            gamma = radians(p[5])
             e1 = np.array([a, 0, 0])
             e2 = np.array([b * np.cos(gamma), b * np.sin(gamma), 0])
             e3 = np.array([c * np.cos(beta), c * (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(gamma),
-                           c * np.sqrt(1 + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma) - np.cos(alpha) ** 2 - np.cos(
-                                   beta) ** 2 - np.cos(gamma) ** 2) / np.sin(gamma)])
+                           c * np.sqrt(1 + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma) - np.cos(alpha) ** 2
+                                       - np.cos(beta) ** 2 - np.cos(gamma) ** 2) / np.sin(gamma)])
 
         return np.array([e1, e2, e3]).T, la.inv(C)
 
@@ -243,25 +244,21 @@ class BravaisLattice(Lattice):
             # print the first lattice parameter
             des_str = des_str+':    a = {:g}'.format(self.__latParam[0])
             # print b if it exists
-            if self.__latID in range(8,15):
+            if self.__latID in range(8, 15):
                 des_str = des_str+',    b = {:g}'.format(self.__latParam[1])
             #print c if it exists
             if self.__latID in np.array([4,6,7]):
                 des_str = des_str+',    c = {:g}'.format(self.__latParam[1])
-            if self.__latID in range(8,15):
+            if self.__latID in range(8, 15):
                 des_str = des_str+',    c = {:g}'.format(self.__latParam[2])
             # print alpha if it exists
-            if self.__latID == 5.:
+            if self.__latID in [5, 14]:
                 des_str = des_str+u',    alpha = {:g}'.format(self.__latParam[1])
-            if self.__latID == 14.:
-                des_str = des_str+u',    alpha = {:g}'.format(self.__latParam[3])
             # print beta if it exists
             if self.__latID in np.array([12., 13.]):
                 des_str = des_str+u',    beta = {:g}'.format(self.__latParam[3])
-            if self.__latID == 14.:
+            if self.__latID == 14:
                 des_str = des_str+u',    beta = {:g}'.format(self.__latParam[4])
-            # print gamma if it exists
-            if self.__latID == 14.:
                 des_str = des_str+u',    gamma = {:g}'.format(self.__latParam[5])
         else:
             des_str = '2D Bravais Lattice - '

@@ -1,4 +1,0 @@
-Lattice correspondence
-======================
-
-Lattice correspondence

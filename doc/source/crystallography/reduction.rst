@@ -1,5 +1,0 @@
-Lattice reduction
-=================
-
-LLL reduction
--------------

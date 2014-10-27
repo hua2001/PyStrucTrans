@@ -3,29 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. py:module:: pystructrans
+.. py:module:: structrans
 
-PyStrucTrans documentation
-==========================
+PyStrucTrans
+============
 
-Contents:
 
 .. toctree::
-   :maxdepth: 3
-   :numbered:
-   :titlesonly:
-   
-   main/lattice
-   main/bravais_lattice
-   main/martensite
-   main/twinsystem
-   crystallography/index
-   marttrans/index
-   util/index
+    :hidden:
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
+    tutorials/index
+    modules/index
 
