@@ -1,0 +1,15 @@
+# sphinx build folder
+.doctrees/
+_sources/
+.buildinfo
+
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Editor backup files #
+#######################
+*~
