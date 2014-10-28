@@ -1,4 +1,4 @@
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, print_function, division, generators
 
 from sys import version as SYS_VERSION
 if SYS_VERSION > '3':

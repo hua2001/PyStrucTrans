@@ -6,14 +6,14 @@ class SLNode:
 
     dim = 3
     # all 12 transvectives in the form of a 6x2 array of matrices
-    T1 = np.array([np.eye(dim, dtype="int")
-                   + np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
-                   for i in xrange(dim) for j in xrange(dim) if i != j])
-    T2 = np.array([np.eye(dim, dtype="int")
-                   - np.tensordot(np.eye(dim, dtype="int")[i], np.eye(dim, dtype="int")[j], axes=0)
-                   for i in xrange(dim) for j in xrange(dim) if i != j])
+    T1 = np.array([np.eye(3, dtype="int")
+                   + np.tensordot(np.eye(3, dtype="int")[i], np.eye(3, dtype="int")[j], axes=0)
+                   for i in xrange(3) for j in xrange(3) if i != j])
+    T2 = np.array([np.eye(3, dtype="int")
+                   - np.tensordot(np.eye(3, dtype="int")[i], np.eye(3, dtype="int")[j], axes=0)
+                   for i in xrange(3) for j in xrange(3) if i != j])
     _T = np.append(T1, T2, axis=0)
-    onetotwo = [(i, j) for i in xrange(dim) for j in xrange(dim) if i != j]
+    onetotwo = [(i, j) for i in xrange(3) for j in xrange(3) if i != j]
 
     def __init__(self, elem, cache, parent=None, grandpa=None):
         """

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import copy
 import math
 from timeit import default_timer as timer
@@ -7,7 +9,7 @@ from structrans import BravaisLattice
 from structrans.crystallography import HermiteNormalForms, HNFDecomposition, LLL, Lattice
 
 # create logger
-from .lat_opt import lat_opt
+from structrans.marttrans.lat_cor.lat_opt import lat_opt
 
 logger = logging.getLogger(__name__)
 
