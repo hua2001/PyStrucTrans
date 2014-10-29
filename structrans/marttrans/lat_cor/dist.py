@@ -32,3 +32,21 @@ def Cauchy_dist(x, E1, E2inv):
     Cinv = np.dot(Finv, Finv.T)
     v = (Cinv - np.eye(dim)).reshape(dim**2)
     return np.dot(v.T, v)
+
+
+def Cauchy_dist_vec(xs, E1, E2inv):
+    if len(xs) < 100:
+        return np.array([Cauchy_dist(x, E1, E2inv) for x in xs])
+    else:
+        dim = len(E1)
+        dimsquare = dim**2
+        xs = xs.reshape(len(xs), dim, dim)
+        F1 = np.tensordot(xs, E2inv, axes=([2], [0]))
+        Fts = np.tensordot(F1, E1, axes=([1], [1]))
+        Cs = np.diagonal(np.tensordot(Fts, Fts, axes=([1], [1])), axis1=0, axis2=2).transpose(2, 0, 1)
+        I = np.eye(dim)
+        Es = (Cs - I).reshape(len(xs), dimsquare)
+        return np.array([e.dot(e) for e in Es])
+
+
+

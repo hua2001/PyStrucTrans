@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 from structrans.general_imports import *
-import copy
-import math
 from timeit import default_timer as timer
+import itertools
 
 from structrans import BravaisLattice
-from structrans.crystallography import HermiteNormalForms, HNFDecomposition, LLL, Lattice
 from structrans.marttrans.lat_cor.quartic_opt import _quart_min
 from structrans.marttrans.lat_cor.dist import Cauchy_dist, Eric_dist, strain_dist
+from structrans.marttrans.lat_cor.dist import Cauchy_dist_vec
 
 # create logger
 logger = logging.getLogger(__name__)
@@ -24,21 +23,23 @@ def _vec_generator(maxlen, dim, x0=None):
             yield [n]
             if n > 0:
                 yield [-n]
-            n = n + 1
+            n = abs(n) + 1
     else:
         firstDigit = x0[0]
         xs = x0[1:]
         while firstDigit <= maxlen:
-            g = _vec_generator(np.sqrt(maxlen**2 - firstDigit**2), dim - 1, xs)
+            g = _vec_generator(np.sqrt(max(0, maxlen**2 - firstDigit**2)), dim - 1, xs)
             for subvec in g:
-                v = subvec[:]
-                v.append(firstDigit)
+                v = [firstDigit] * dim
+                v[1:] = subvec[:]
                 yield v
-                if firstDigit != 0:
-                    v = subvec[:]
-                    v.append(-firstDigit)
+            if firstDigit > 0:
+                g = _vec_generator(np.sqrt(max(0, maxlen**2 - firstDigit**2)), dim - 1, xs)
+                for subvec in g:
+                    v = [-firstDigit] * dim
+                    v[1:] = subvec[:]
                     yield v
-            firstDigit += 1
+            firstDigit = abs(firstDigit) + 1
             xs = None
 
 def lat_cor(brava, pa, bravm, pm, **kwargs):
@@ -49,6 +50,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
      - nsol: number of solutions
      - vol_th: volume change threshold
      - dist: choose from "Cauchy", "Ericksen" and "strain", default is "Cauchy"
+     - slice_sz: size of each slice of L's for vectorized calculation, default is 1000
      - disp: level of detail of printing, default is 2
              0 => no print
              1 => two lattices and solution
@@ -73,6 +75,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     vol_th = readkw('vol_th', 0.1)
     disp = readkw('disp', 1)
     dim = readkw('dim', 3)
+    slice_sz = readkw('slice_sz', 100)
     distName = readkw('dist', 'Cauchy')
 
 
@@ -116,6 +119,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
         'strain': lambda x: strain_dist(x, E_A, E_Minv)
     }
     dist = distFuncs[distName]
+    dist_vec = lambda xs: Cauchy_dist_vec(xs, E_A, E_Minv)
 
     C_A = Lat_A.getConventionalTrans()
     C_M = Lat_M.getConventionalTrans()
@@ -131,24 +135,19 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     lprint(" - Martensite lattice:")
     lprint("    {:s}".format(str(Lat_M)))
     lprint("")
-    
-    # Determine the list of Hermite Normal Forms
-    r = la.det(E_M)/la.det(E_A)  # ratio of the volumes of the unit cells
 
     # minimum gamma
     gamma = lambda x: 3 + 2 * np.sqrt(3 * x) + x
 
-    # 9 x 9 matrix
+    lprint("Searching")
+    lprint("=========")
+
     C1 = np.tensordot(E_A, E_Minv, axes=([], [])).transpose(0, 3, 1, 2)
     C2 = np.tensordot(C1, C1, axes=([1], [1]))\
         .transpose(0, 3, 1, 2, 4, 5)\
         .reshape(dim**2, dim**2, dim**2)
     D = np.tensordot(C2, C2, axes=([0], [0]))
     alpha = _quart_min(D)
-
-    lprint("Searching")
-    lprint("=========")
-
     lprint('alpha = {:>9.6f}'.format(alpha), 2)
 
     # start searching
@@ -157,7 +156,8 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
         if not tuple(sol['l']) in ext_sols:
             # insert the solution and update EXT_SOLS
             idx = np.searchsorted([s['d'] for s in sols], sol['d'])
-            sols.insert(idx, sol)
+            if la.det(sol['l'].reshape(dim, dim)) != 0:
+                sols.insert(idx, sol)
             ext_sols = ext_sols.union(eqlatcor(sol['l']))
             if len(sols) > nsol:
                 while sols[-1]['d'] > sols[nsol-1]['d']:
@@ -166,12 +166,28 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
                     ext_sols = ext_sols.difference(eqlatcor(delSol['l']))
         return sols, ext_sols, sols[-1]['d']
 
+    def update_sol(ls, sols, ext_sols, dmax):
+        updated = False
+        ds = dist_vec(ls)
+        ps = sorted(zip(ls, ds), key=lambda p: p[1])
+
+        p1 = ps.pop(0)
+        while p1[1] <= dmax:
+            sols, ext_sols, newDmax = add_sol({'l': p1[0], 'd': p1[1]}, sols, ext_sols)
+            if newDmax < dmax:
+                updated = True
+                dmax = newDmax
+            if len(ps) == 0: break
+            p1 = ps.pop(0)
+        return updated, sols, ext_sols, dmax
+
     # initialization
     L0 = np.floor(la.inv(E_A).dot(E_M)).astype(np.int)
     SOLS = []
     EXT_SOLS = set()
     DMAX = float('inf')
-    for _ in xrange(nsol):
+
+    for _ in xrange(20 * nsol):
         shift = np.random.random_integers(-1, 1, (dim, dim))
         L = L0 + shift
         l = L.reshape(dim**2)
@@ -186,27 +202,35 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
 
     maxRadius = rmax(DMAX)
     lprint('start searching ...')
-    lprint('searching radius = {:>9.6f}, max distance = {:>9.6f}'.format(maxRadius, DMAX), 2)
     updated = True
+    checkpoint = np.zeros(dim**2)
 
     # iteration
     while updated:
         updated = False
-        g = _vec_generator(maxRadius, dim**2)
-        for l in g:
-            l = np.array(l)
-            d = dist(l)
-            if d <= DMAX:
-                oldDMAX = DMAX
-                SOLS, EXT_SOLS, DMAX = add_sol({'l': l, 'd': d}, SOLS, EXT_SOLS)
-                if oldDMAX > DMAX:
-                    maxRadius = rmax(DMAX)
-                    lprint('searching radius = {:>9.6f}, max distance = {:>9.6f}'.format(maxRadius, DMAX), 2)
-                    updated = True
-                    break
+        g = _vec_generator(maxRadius, dim**2, checkpoint)
+        lprint('searching radius = {:>9.6f}, max distance = {:>9.6f}, starting at {:s}'.format(
+            maxRadius, DMAX, str(checkpoint)
+        ), 2)
+        ary = np.array(list(itertools.islice(g, slice_sz)))
+        while len(ary) > 0:
+            updated, SOLS, EXT_SOLS, DMAX = update_sol(ary, SOLS, EXT_SOLS, DMAX)
+            if updated:
+                maxRadius = rmax(DMAX)
+                checkpoint = np.array(g.next())
+                break
+            else:
+                ary = np.array(list(itertools.islice(g, slice_sz)))
 
     for sol in SOLS:
+        eqls = eqlatcor(sol['l'])
         sol['l'] = sol['l'].reshape(dim, dim)
+        for l in eqls:
+            L = np.array(l).reshape(dim, dim)
+            if la.det(L) > 0:
+                sol['l'] = L
+                break
+
         cor = np.dot(np.dot(la.inv(C_A), sol['l']), C_M)
         sol['cor'] = cor[:]
         # Cauchy-Born deformation gradient: F.EA.H.L = EM
