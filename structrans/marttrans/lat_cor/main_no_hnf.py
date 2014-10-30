@@ -5,8 +5,7 @@ import itertools
 
 from structrans import BravaisLattice
 from structrans.marttrans.lat_cor.quartic_opt import _quart_min
-from structrans.marttrans.lat_cor.dist import Cauchy_dist, Eric_dist, strain_dist
-from structrans.marttrans.lat_cor.dist import Cauchy_dist_vec
+from structrans.marttrans.lat_cor.dist import Cauchy_dist, Cauchy_dist_vec
 
 # create logger
 logger = logging.getLogger(__name__)
@@ -48,8 +47,6 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     allowed kwargs:
      - dim: dimension of the Bravais lattice, default is 3, the only other option is 2
      - nsol: number of solutions
-     - vol_th: volume change threshold
-     - dist: choose from "Cauchy", "Ericksen" and "strain", default is "Cauchy"
      - slice_sz: size of each slice of L's for vectorized calculation, default is 1000
      - disp: level of detail of printing, default is 2
              0 => no print
@@ -57,6 +54,8 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
              2 => progress over HNFs
              3 => more info in the lat_opt
              4 => all info in the lat_opt (not implemented)
+     - logfile: name of the logfile
+     - loglevel: level of the logging
     '''
     
     ''' 
@@ -88,6 +87,13 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
         elif lev >= 2:
             logger.debug(msg)
 
+    # setup logging
+    loglevel =readkw('loglevel', logging.INFO)
+    if 'logfile' in kwargs:
+        # FORMAT = '[%(levelname)s] %(asctime)-15s %(name)s: %(message)s'
+        FORMAT = '%(message)s'
+        logging.basicConfig(filename=kwargs['logfile'], filemode='w', level=loglevel, format=FORMAT)
+
     ''' 
     ====================
     Preparation - finish
@@ -109,16 +115,9 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     
     E_A = Lat_A.base()
     E_M = Lat_M.base()
-    #E_Mr = LLL(E_M)
-    #chi = np.array(np.rint(la.inv(E_Mr).dot(E_M)), dtype='int')
 
     E_Minv = la.inv(E_M)
-    distFuncs = {
-        'Ericksen': lambda x: Eric_dist(x, E_A, E_M),
-        'Cauchy': lambda x: Cauchy_dist(x, E_A, E_Minv),
-        'strain': lambda x: strain_dist(x, E_A, E_Minv)
-    }
-    dist = distFuncs[distName]
+    dist = lambda x: Cauchy_dist(x, E_A, E_Minv)
     dist_vec = lambda xs: Cauchy_dist_vec(xs, E_A, E_Minv)
 
     C_A = Lat_A.getConventionalTrans()
@@ -167,18 +166,19 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
         return sols, ext_sols, sols[-1]['d']
 
     def update_sol(ls, sols, ext_sols, dmax):
-        updated = False
+        dmax_ref = dmax
         ds = dist_vec(ls)
-        ps = sorted(zip(ls, ds), key=lambda p: p[1])
-
-        p1 = ps.pop(0)
-        while p1[1] <= dmax:
-            sols, ext_sols, newDmax = add_sol({'l': p1[0], 'd': p1[1]}, sols, ext_sols)
-            if newDmax < dmax:
-                updated = True
-                dmax = newDmax
-            if len(ps) == 0: break
-            p1 = ps.pop(0)
+        while len(ds) > 0:
+            minidx = np.argmin(ds)
+            dmin = ds[minidx]
+            ds = np.delete(ds, minidx)
+            lmin = ls[minidx].reshape(dim**2)
+            ls = np.delete(ls, minidx, axis=0)
+            if dmin <= dmax:
+                sols, ext_sols, dmax = add_sol({'l': lmin, 'd': dmin}, sols, ext_sols)
+            else:
+                break
+        updated = (dmax < dmax_ref)
         return updated, sols, ext_sols, dmax
 
     # initialization
@@ -217,7 +217,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
             updated, SOLS, EXT_SOLS, DMAX = update_sol(ary, SOLS, EXT_SOLS, DMAX)
             if updated:
                 maxRadius = rmax(DMAX)
-                checkpoint = np.array(g.next())
+                checkpoint = np.array(next(g))
                 break
             else:
                 ary = np.array(list(itertools.islice(g, slice_sz)))

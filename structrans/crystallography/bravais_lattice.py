@@ -35,21 +35,22 @@ class BravaisLattice(Lattice):
             pramlen = [1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 6] 
             if not np.alen(latParam) == pramlen[latID - 1]:
                 raise ValueError('the number of lattice parameters does not match the type of Bravais lattice.')
-            E, C = self.__primitiveBase3D__(latID, latParam)
+            E, C = BravaisLattice.__primitiveBase3D__(latID, latParam)
         if dim == 2:
             if not latID in range(1, 6):
                 raise ValueError('2D Bravais lattice ID must be between 1 and 5.')
             pramlen = [1, 2, 2, 1, 3] 
             if not np.alen(latParam) == pramlen[latID-1]:
                 raise ValueError('the number of lattice parameters does not match the type of Bravais lattice.')
-            E, C = self.__primitiveBase2D__(latID, latParam)
+            E, C = BravaisLattice.__primitiveBase2D__(latID, latParam)
 
         Lattice.__init__(self, E)
         self.__latID = latID        
         self.__latParam = latParam
         self.__C = C
-        
-    def __primitiveBase2D__(self, n, p):
+
+    @staticmethod
+    def __primitiveBase2D__(n, p):
         '''
         generate the base matrix for primitive cell of 2D Bravais lattices
         '''
@@ -78,8 +79,8 @@ class BravaisLattice(Lattice):
             e2 = p[1]*np.array([np.cos(gamma), np.sin(gamma)])        
         return np.array([e1, e2]).T, la.inv(C)
 
-
-    def __primitiveBase3D__(self, n, p):
+    @staticmethod
+    def __primitiveBase3D__(n, p):
         '''
         generate the base matrix for primitive cell of 3D Bravais lattices
         '''
@@ -280,50 +281,56 @@ class BravaisLattice(Lattice):
               
         return des_str
 
-    def getLatID(self):
+    def Bravais_id(self):
         '''
-        get the lattice ID
+        get the Bravaise lattice ID
         '''
         return self.__latID
 
-    def getLatParam(self):
+    def getLatID(self):
+        warn("getLatID() is deprecated, please use Bravais_id() instead.", DeprecationWarning)
+        return self.Bravais_id()
+
+    def lat_param(self):
         '''
         get the lattice parameters
         '''
         return self.__latParam
 
-    def getConventionalTrans(self):
+    def getLatParam(self):
+        warn("getLatParam() is deprecated, please use lat_param() instead.", DeprecationWarning)
+        return self.lat_param()
+
+    def conventional_trans(self):
         '''
         get the conversion matrix from the primitive base to the conventional base
-        
-        conv_base = prim_base * trans_mat
-        
-        or 
-        
-        prim_idx = trans_mat * conv_idx
-        
-        :return: (*2D numpy array*) conversion matrix
+
+        - conv_base = prim_base * **cnvr_mat**
+        - prim_idx = **cnvr_mat** * conv_idx
         '''
         return self.__C
-    
-    def getConventionalBase(self):
+
+    def getConventionalTrans(self):
+        warn("getConventionalTrans() is deprecated, please use conventional_trans() instead.", DeprecationWarning)
+        return self.conventional_trans()
+
+    def conventional_base(self):
         '''
         get the base matrix for conventional unit cell
-        
-        :return: (*2D numpy array*) conventional base matrix
         '''
-        return np.dot(self.getbase(), self.getConventionalTrans())
+        return np.dot(self.base(), self.conventional_trans())
 
-    def toPrimitive(self, idx):
+    def getConventionalBase(self):
+        warn("getConventionalBase() is deprecated, please use conventional_base() instead.", DeprecationWarning)
+        return self.conventional_base()
+
+    def to_primitive_Miller(self, idx):
         """
-        convert a index or a list of indices
-        from conventional to primitive
+        convert a Miller index or a list of Miller indices
+        from conventional base to primitive base
 
-        :param idx: a index
-        :return: the index in primitive base
-        or
-        :param idx: list of indices
-        :return: the list of indices in primitive base
+        :param idx: a Miller index or a list of Miller indices
+        :return: the Miller index or the list of Miller indices in primitive base
         """
         try:
             idx = np.array(idx)
@@ -339,16 +346,17 @@ class BravaisLattice(Lattice):
         res = (self.__C.dot(idx.T)).T
         return res[0] if len(idx) == 1 else res
 
-    def toConventional(self, idx):
+    def toPrimitive(self, idx):
+        warn("toPrimitive() is deprecated, please use to_primitive() instead.", DeprecationWarning)
+        return self.to_primitive()
+
+    def to_conventional_Miller(self, idx):
         """
         convert a Miller index or a list of Miller indices
         from primitive to conventional
 
-        :param idx: a index
-        :return: the index in conventional base
-        or
-        :param idx: list of indices
-        :return: the list of indices in conventional base
+        :param idx: a Miller index or a list of Miller indices
+        :return: the Miller index or the Miller list of indices in conventional base
         """
         try:
             if not isinstance(idx, np.ndarray):
@@ -364,5 +372,7 @@ class BravaisLattice(Lattice):
 
         res = (la.inv(self.__C).dot(idx.T)).T
         return res[0] if len(idx) == 1 else res
-    
-    
+
+    def toConventional(self, idx):
+        warn("toConventional() is deprecated, please use to_conventional_Miller() instead.", DeprecationWarning)
+        return self.to_conventional_Miller()

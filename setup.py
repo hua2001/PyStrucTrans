@@ -4,7 +4,7 @@ import structrans
 setup(name='PyStrucTrans',
       version=structrans.__verison__,
       description='A python package for structural phase transformation',
-      url='http://github.com/structrans/pystructrans',
+      url='http://github.com/structrans/PyStrucTrans',
       author=('Yintao Song', 'Xian Chen'),
       author_email=('yintaosong@gmail.com', 'x.ch.msti@gmail.com'),
       license='LICENSE',
@@ -27,9 +27,10 @@ setup(name='PyStrucTrans',
           'structrans.tests'
       ),
       install_requires=(
-          'numpy >= 1.6.0'
+          'numpy >= 1.6.0',
+          'scipy >= 0.11.0'
       ),
-      scripts=('bin/lattcorr',),
+      scripts=['bin/lattcorr'],
       entry_points={
         # 'console_scripts': []
       },

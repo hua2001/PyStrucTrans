@@ -12,8 +12,7 @@ def _quart_min(T):
 
     dim = int(np.sqrt(len(T)))
     constrains = (
-        {'type': 'ineq', 'fun': lambda x: x.dot(x) - 1},
-        {'type': 'ineq', 'fun': lambda x: 1 - x.dot(x)}
+        {'type': 'eq', 'fun': lambda x: 1 - x.dot(x)}
     )
     # l0 = np.eye(dim).reshape(dim**2)
     # l0 = - np.ones(dim**2) / np.sqrt(dim)

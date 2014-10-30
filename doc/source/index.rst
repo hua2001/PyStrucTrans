@@ -14,4 +14,5 @@ PyStrucTrans
 
     tutorials/index
     modules/index
+    installation
 
