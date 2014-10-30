@@ -20,8 +20,8 @@ For more detail, refer to the `documentation <http://python.structrans.org>`_.
 
 ## Dependencies
 
-Numpy >= 1.6.0
-Scipy >= 0.11.0
+- Numpy >= 1.6.0
+- Scipy >= 0.11.0
 
 ## Licence
 
