@@ -16,7 +16,7 @@ There is one shell command, `lattcorr`, that can be directly used after the inst
 
 will search for the 3 best lattice correspondences from f.c.c. (id = 2) with *a*=2 to tetragonal (id = 6) with *a*=1.414 and *c*=2.
 
-For more detail, refer to the `documentation <http://python.structrans.org>`_.
+For more detail, refer to the [documentation](http://python.structrans.org).
 
 ## Dependencies
 
