@@ -73,6 +73,7 @@
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/index.html">Module References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installing PyStrucTrans</a></li>
 </ul>
 </ul>
 </li>
@@ -133,8 +134,13 @@
   <div class="section" id="search-lattice-correspondences">
 <h1>Search lattice correspondences<a class="headerlink" href="#search-lattice-correspondences" title="Permalink to this headline">¶</a></h1>
 <p>The following example uses <tt class="xref py py-func docutils literal"><span class="pre">structrans.lat_cor()</span></tt> to find
-the best two lattice correspondences from <em>face centered cubic</em> with <cite>a</cite> = 2
-to <em>primitive tetragonal</em> with <cite>a</cite> = 1.414 and <cite>c</cite> = 2.</p>
+the best <em>two</em> lattice correspondences</p>
+<ul class="simple">
+<li>from <em>face centered cubic</em> with <cite>a</cite> = 2</li>
+<li>to <em>primitive tetragonal</em> with <cite>a</cite> = 1.414 and <cite>c</cite> = 2.</li>
+</ul>
+<p>The Bravais lattice id and associated lattice parameter lists
+can be found in the documentation of <a class="reference external" href="../modules/crystallography/bravais_lattice.html">here</a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">structrans</span> <span class="kn">import</span> <span class="n">lat_cor</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">res</span> <span class="o">=</span> <span class="n">lat_cor</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.414</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">disp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nsol</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="go">Input data</span>
@@ -147,13 +153,8 @@ to <em>primitive tetragonal</em> with <cite>a</cite> = 1.414 and <cite>c</cite> 
 <span class="go">Solution 1 out of 2:</span>
 <span class="go">----------------------</span>
 <span class="go"> - Lattice correspondence:</span>
-<span class="go">    [ 0.00  0.50 -0.50] ==&gt; [ 1 0 0 ]</span>
-<span class="go">    [ 0.00  0.50  0.50] ==&gt; [ 0 1 0 ]</span>
-<span class="go">    [ 1.00  0.00  0.00] ==&gt; [ 0 0 1 ]</span>
+<span class="go"> ...</span>
 <span class="go"> - Transformation stretch matrix:</span>
-<span class="go">   U = [ 1.000000  0.000000  0.000000]</span>
-<span class="go">       [ 0.000000  0.999849  0.000000]</span>
-<span class="go">       [ 0.000000  0.000000  0.999849]</span>
 <span class="go"> ...</span>
 <span class="go"> - Sorted eigen strains:</span>
 <span class="go">    lambda_1 = 0.999849, lambda_2 = 0.999849, lambda_3 = 1.</span>
@@ -162,16 +163,11 @@ to <em>primitive tetragonal</em> with <cite>a</cite> = 1.414 and <cite>c</cite> 
 <span class="go">Solution 2 out of 2:</span>
 <span class="go">----------------------</span>
 <span class="go"> - Lattice correspondence:</span>
-<span class="go">    [ 0.50  0.50  0.00] ==&gt; [ 1 0 0 ]</span>
-<span class="go">    [ 0.00  0.50  0.50] ==&gt; [ 0 1 0 ]</span>
-<span class="go">    [ 1.00 -0.50  0.50] ==&gt; [ 0 0 1 ]</span>
+<span class="go"> ...</span>
 <span class="go"> - Transformation stretch matrix:</span>
-<span class="go">   U = [ 0.891999  0.044213 -0.277838]</span>
-<span class="go">       [ 0.044213  0.920273 -0.161105]</span>
-<span class="go">       [-0.277838 -0.161105  1.330925]</span>
 <span class="go"> ...</span>
 <span class="go"> - Sorted eigen strains:</span>
-<span class="go">    lambda_1 = 0.750388, lambda_2 = 0.881537, lambda_3 = 1.51127.</span>
+<span class="go">    lambda_1 = 0.873937, lambda_2 = 0.999849, lambda_3 = 2.28815.</span>
 <span class="go"> ...</span>
 <span class="gp">...</span>
 </pre></div>
@@ -191,7 +187,7 @@ to <em>primitive tetragonal</em> with <cite>a</cite> = 1.414 and <cite>c</cite> 
     </p>
     <p>
         &copy; Copyright 2014, Yintao Song and Xian Chen.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
     </p>
   </div>
 </footer>

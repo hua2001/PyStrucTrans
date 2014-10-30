@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Bravais lattice &mdash; PyStrucTrans 1.0.0b documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootswatch-3.2.0/simplex/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/extra-styles.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0.0b',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="PyStrucTrans 1.0.0b documentation" href="../../index.html" />
+    <link rel="up" title="Crystallography" href="index.html" />
+    <link rel="next" title="Installing PyStrucTrans" href="../../installation.html" />
+    <link rel="prev" title="Lattice" href="lattice.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html">
+          PyStrucTrans</a>
+        <span class="navbar-text navbar-version pull-left"><b>1.0.0</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Module References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installing PyStrucTrans</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Bravais lattice</a><ul>
+<li><a class="reference internal" href="#bravaislattice-object">BravaisLattice object</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="lattice.html" title="Previous Chapter: Lattice"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm">&laquo; Lattice</span>
+    </a>
+  </li>
+  <li>
+    <a href="../../installation.html" title="Next Chapter: Installing PyStrucTrans"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Installing PyStr... &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="bravais-lattice">
+<h1>Bravais lattice<a class="headerlink" href="#bravais-lattice" title="Permalink to this headline">¶</a></h1>
+<p><strong>Definition</strong></p>
+<p>A lattice defined in the class <a class="reference internal" href="lattice.html#structrans.Lattice" title="structrans.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">Lattice</span></tt></a> is also called a Bravais lattice.
+In 2D and 3D, these lattices have been systematically classified.
+Using this classification, a 2D or 3D lattice can be simply defined
+by its <em>Bravais lattice type</em> and <em>lattice parameters</em>.
+Five 2D Bravais lattices and fourteen 3D Bravais lattices are defined as following two tables.</p>
+<ul>
+<li><p class="first"><em>2D Bravais lattices:</em></p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="37%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><strong>ID</strong></th>
+<th class="head"><strong>Name</strong></th>
+<th class="head"><strong>Lattice Parameters</strong></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>1</td>
+<td>Square P</td>
+<td><em>a</em></td>
+</tr>
+<tr class="row-odd"><td>2</td>
+<td>Rectangular P</td>
+<td><em>a</em>, <em>b</em></td>
+</tr>
+<tr class="row-even"><td>3</td>
+<td>Rectangular I</td>
+<td><em>a</em>, <em>b</em></td>
+</tr>
+<tr class="row-odd"><td>4</td>
+<td>Hexagonal P</td>
+<td><em>a</em></td>
+</tr>
+<tr class="row-even"><td>5</td>
+<td>Oblique P</td>
+<td><em>a</em>, <em>b</em>, <em>γ</em></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+<li><p class="first"><em>3D Bravais lattices:</em></p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="37%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><strong>ID</strong></th>
+<th class="head"><strong>Name</strong></th>
+<th class="head"><strong>Lattice Parameters</strong></th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>1</td>
+<td>Cubic P</td>
+<td><em>a</em></td>
+</tr>
+<tr class="row-odd"><td>2</td>
+<td>Cubic F</td>
+<td><em>a</em></td>
+</tr>
+<tr class="row-even"><td>3</td>
+<td>Cubic I</td>
+<td><em>a</em></td>
+</tr>
+<tr class="row-odd"><td>4</td>
+<td>Hexagonal P</td>
+<td><em>a</em>, <em>c</em></td>
+</tr>
+<tr class="row-even"><td>5</td>
+<td>Rhombohedral P</td>
+<td><em>a</em>, <em>α</em></td>
+</tr>
+<tr class="row-odd"><td>6</td>
+<td>Tetragonal P</td>
+<td><em>a</em>, <em>c</em></td>
+</tr>
+<tr class="row-even"><td>7</td>
+<td>Tetragonal I</td>
+<td><em>a</em>, <em>c</em></td>
+</tr>
+<tr class="row-odd"><td>8</td>
+<td>Orthorhombic P</td>
+<td><em>a</em>, <em>b</em>, <em>c</em></td>
+</tr>
+<tr class="row-even"><td>9</td>
+<td>Orthorhombic C</td>
+<td><em>a</em>, <em>b</em>, <em>c</em></td>
+</tr>
+<tr class="row-odd"><td>10</td>
+<td>Orthorhombic F</td>
+<td><em>a</em>, <em>b</em>, <em>c</em></td>
+</tr>
+<tr class="row-even"><td>11</td>
+<td>Orthorhombic I</td>
+<td><em>a</em>, <em>b</em>, <em>c</em></td>
+</tr>
+<tr class="row-odd"><td>12</td>
+<td>Monoclinic P</td>
+<td><em>a</em>, <em>b</em>, <em>c</em>, <em>β</em></td>
+</tr>
+<tr class="row-even"><td>13</td>
+<td>Monoclinic C</td>
+<td><em>a</em>, <em>b</em>, <em>c</em>, <em>β</em></td>
+</tr>
+<tr class="row-odd"><td>14</td>
+<td>Triclinic  P</td>
+<td><em>a</em>, <em>b</em>, <em>c</em>, <em>α</em>, <em>β</em>, <em>γ</em></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</li>
+</ul>
+<p><a class="reference internal" href="#structrans.BravaisLattice" title="structrans.BravaisLattice"><tt class="xref py py-class docutils literal"><span class="pre">BravaisLattice</span></tt></a> is a subclass of <a class="reference internal" href="lattice.html#structrans.Lattice" title="structrans.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">Lattice</span></tt></a>.
+It is defined based on this classification.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Mathematically, all <a class="reference internal" href="lattice.html#structrans.Lattice" title="structrans.Lattice"><tt class="xref py py-class docutils literal"><span class="pre">Lattice</span></tt></a> objects are Bravais lattices.
+Our naming is only for the convenience of implementation.</p>
+</div>
+<div class="section" id="bravaislattice-object">
+<h2>BravaisLattice object<a class="headerlink" href="#bravaislattice-object" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="structrans.BravaisLattice">
+<em class="property">class </em><tt class="descclassname">structrans.</tt><tt class="descname">BravaisLattice</tt><big>(</big><em>latID</em>, <em>latParam</em>, <em>dim=3</em><big>)</big><a class="headerlink" href="#structrans.BravaisLattice" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the class of Bravais lattices according to conventional classification.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>latID</strong> &#8211; id of the Bravais lattice type</li>
+<li><strong>latParam</strong> &#8211; lattice parameters</li>
+<li><strong>dim</strong> &#8211; dimension of the Bravais lattice, 2 or 3.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="structrans.BravaisLattice.Bravais_id">
+<tt class="descname">Bravais_id</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.BravaisLattice.Bravais_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the Bravaise lattice ID</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.BravaisLattice.conventional_base">
+<tt class="descname">conventional_base</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.BravaisLattice.conventional_base" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the base matrix for conventional unit cell</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.BravaisLattice.conventional_trans">
+<tt class="descname">conventional_trans</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.BravaisLattice.conventional_trans" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the conversion matrix from the primitive base to the conventional base</p>
+<ul class="simple">
+<li>conv_base = prim_base * <strong>cnvr_mat</strong></li>
+<li>prim_idx = <strong>cnvr_mat</strong> * conv_idx</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.BravaisLattice.lat_param">
+<tt class="descname">lat_param</tt><big>(</big><big>)</big><a class="headerlink" href="#structrans.BravaisLattice.lat_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the lattice parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.BravaisLattice.to_conventional_Miller">
+<tt class="descname">to_conventional_Miller</tt><big>(</big><em>idx</em><big>)</big><a class="headerlink" href="#structrans.BravaisLattice.to_conventional_Miller" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert a Miller index or a list of Miller indices
+from primitive to conventional</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>idx</strong> &#8211; a Miller index or a list of Miller indices</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the Miller index or the Miller list of indices in conventional base</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="structrans.BravaisLattice.to_primitive_Miller">
+<tt class="descname">to_primitive_Miller</tt><big>(</big><em>idx</em><big>)</big><a class="headerlink" href="#structrans.BravaisLattice.to_primitive_Miller" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert a Miller index or a list of Miller indices
+from conventional base to primitive base</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>idx</strong> &#8211; a Miller index or a list of Miller indices</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the Miller index or the list of Miller indices in primitive base</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2014, Yintao Song and Xian Chen.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
