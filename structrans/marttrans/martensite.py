@@ -7,7 +7,7 @@ class Martensite():
     The class of martensitic phase transformations.
 
     * the first argument (:py:class:`numpy.ndarray`) is the transformation stretch tensor `U`
-    * the second argument (:py:class:`pystructrans.MatrixGroup`) is the Laue group of the parent phase (usually chosen to be the high symmetry one),
+    * the second argument (:py:class:`structrans.MatrixGroup`) is the Laue group of the parent phase (usually chosen to be the high symmetry one),
       the default value is the full `cubic Laue group`
 
     Both arguments are optional, `i.e.` one can instantiate an empty Martensite object.
@@ -146,7 +146,9 @@ class Martensite():
         """
         if self.__Ulist is None:
             if not self.isreversible():
-                raise AttributeError("irreversible martensitic transformations have no variants")
+                raise AttributeError(
+                    "variants for irreversible martensitic transformations have not been implemented yet"
+                )
 
             U1 = self.getU()
             ulist = [U1]
@@ -155,7 +157,7 @@ class Martensite():
                 V = Q.dot(U1).dot(Q.T)
                 newU = True
                 for j, U in enumerate(ulist):
-                    if nanmax(np.abs(U - V)) < SMALL:
+                    if np.allclose(U, V):
                         newU = False
                         idx[j].append(i)
 
@@ -216,8 +218,3 @@ class Martensite():
 #                 raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
 #         else:
 #             raise MartensiteError('Please input lattice base vectors E in R^{3x3} and correspondence matrix L.')
-        
-        
-        
-        
-        

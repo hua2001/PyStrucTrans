@@ -92,7 +92,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     if 'logfile' in kwargs:
         # FORMAT = '[%(levelname)s] %(asctime)-15s %(name)s: %(message)s'
         FORMAT = '%(message)s'
-        logging.basicConfig(filename=kwargs['logfile'], filemode='w', level=loglevel, format=FORMAT)
+        logging.basicConfig(filename=logfile, filemode='w', level=loglevel, format=FORMAT)
 
     ''' 
     ====================
@@ -120,8 +120,8 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     dist = lambda x: Cauchy_dist(x, E_A, E_Minv)
     dist_vec = lambda xs: Cauchy_dist_vec(xs, E_A, E_Minv)
 
-    C_A = Lat_A.getConventionalTrans()
-    C_M = Lat_M.getConventionalTrans()
+    C_A = Lat_A.conventional_trans()
+    C_M = Lat_M.conventional_trans()
 
     LG_A = Lat_A.lattice_group().matrices()
     LG_M = Lat_M.lattice_group().matrices()
@@ -146,6 +146,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
         .transpose(0, 3, 1, 2, 4, 5)\
         .reshape(dim**2, dim**2, dim**2)
     D = np.tensordot(C2, C2, axes=([0], [0]))
+    lprint('finding alpha by quartic minimization ...', 2)
     alpha = _quart_min(D)
     lprint('alpha = {:>9.6f}'.format(alpha), 2)
 
@@ -203,7 +204,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     maxRadius = rmax(DMAX)
     lprint('start searching ...')
     updated = True
-    checkpoint = np.zeros(dim**2)
+    checkpoint = np.zeros(dim**2, np.int)
 
     # iteration
     while updated:

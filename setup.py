@@ -27,8 +27,7 @@ setup(name='PyStrucTrans',
           'structrans.tests'
       ),
       install_requires=(
-          'numpy >= 1.6.0',
-          'scipy >= 0.11.0'
+          'numpy >= 1.6.0'
       ),
       scripts=['bin/lattcorr'],
       entry_points={

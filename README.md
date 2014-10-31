@@ -20,8 +20,14 @@ For more detail, refer to the [documentation](http://python.structrans.org).
 
 ## Dependencies
 
+### Required
+
 - Numpy >= 1.6.0
+
+### Optional
+
 - Scipy >= 0.11.0
+- numba
 
 ## Licence
 

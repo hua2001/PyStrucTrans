@@ -1,11 +1,12 @@
 from structrans.general_imports import *
 from structrans.util import divisors
 
+
 class MatrixGroup():
     """
     Matrix representation of a group, in particular point groups and Laue groups.
 
-    ``matrices`` should be a datatype that can be converted to a 3D :py:class:`numpy.ndarray`
+    ``matrices`` should be a datatype that can be converted to a [*M* x *N* x *N*] :py:class:`numpy.ndarray`
     and the last two dimensions define a square matrix.
     """
 
@@ -69,7 +70,7 @@ class MatrixGroup():
     #     return mtable
 
     def __init__(self, matrices):
-        self.__mtable = None
+        # self.__mtable = mtable
         # self.__mtable = self.isgroup(matrices)
         # if self.__mtable is False:
         #     raise ValueError("input does not form a group")
@@ -79,7 +80,7 @@ class MatrixGroup():
     def matrices(self):
         """
         :return: all the elements
-        :rtype: :py:class:`numpy.ndarray`
+        :rtype: list of :py:class:`arrays <numpy.ndarray>`
         """
         return [np.array(m[:]) for m in self.__mats]
 
@@ -93,7 +94,7 @@ class MatrixGroup():
     # def multable(self):
     #     """
     #     :return: multiplication table
-    #     :rtype: :py:class:`numpy.ndarray`
+    #     :rtype: :py:class:`numpy.ndarray` or ``None``
     #     """
     #     return self.__mtable
     #
@@ -112,9 +113,9 @@ class MatrixGroup():
     def hassubgroup(self, g):
         """
         :param g: another MatrixGroup
-        :return: if ``g`` is a subgroup of the invoking group
+        :return: if **g** is a subgroup of the invoking group
         :rtype: boolean
-        :raises ValueError: if `g` is not an instance of :py:class:`pystructrans.MatrixGroup`
+        :raises TypeError: if `g` is not an instance of :py:class:`pystructrans.MatrixGroup`
 
         """
         if not isinstance(g, MatrixGroup):

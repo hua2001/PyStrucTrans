@@ -2,6 +2,7 @@
 
 # sphinx build folder
 !source/
+!_static/
 !.gitignore
 !.make.bat
 !Makefile
