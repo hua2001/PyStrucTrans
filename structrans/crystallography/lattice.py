@@ -204,4 +204,4 @@ def _in_O3(Q):
         if Q.dtype == np.int:
             return abs(la.det(Q)) == 1 and np.array_equal(np.dot(Q, Q.T), np.eye(len(Q)))
         else:
-            return np.isclose(abs(la.det(Q)), 1.0) and np.allclose(np.dot(Q, Q.T), np.eye(len(Q)))
+            return abs(abs(la.det(Q)) - 1.0)<1E-6 and np.allclose(np.dot(Q, Q.T), np.eye(len(Q)))
