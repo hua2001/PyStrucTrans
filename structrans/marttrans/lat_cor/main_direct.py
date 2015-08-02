@@ -42,7 +42,7 @@ def _vec_generator(maxlen, dim, x0=None):
             xs = None
 
 def lat_cor(brava, pa, bravm, pm, **kwargs):
-    '''
+    """
     find the optimal lattice invarient shear move E1 as close as possible to E2
     allowed kwargs:
      - dim: dimension of the Bravais lattice, default is 3, the only other option is 2
@@ -56,7 +56,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
              4 => all info in the lat_opt (not implemented)
      - logfile: name of the logfile
      - loglevel: level of the logging
-    '''
+    """
     
     ''' 
     ===========
@@ -76,7 +76,6 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     dim = readkw('dim', 3)
     slice_sz = readkw('slice_sz', 100)
     distName = readkw('dist', 'Cauchy')
-
 
     def lprint(msg, lev=1):
         # print with level
@@ -126,6 +125,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
 
     LG_A = Lat_A.lattice_group().matrices()
     LG_M = Lat_M.lattice_group().matrices()
+
     def eqlatcor(l):
         L = l.reshape(dim, dim)
         return set(tuple(M1.dot(L).dot(M2).flatten()) for M1 in LG_A for M2 in LG_M)
@@ -309,7 +309,6 @@ def _sols_tostr(sols, nsol, dim, dist):
                 msg += '{:>9.6f} '.format(sol['u'][j, k])
             msg = msg[:-1] + ']'
             output += msg + "\n"
-
 
         # ordered eigen strains
         lams = sol['lams']
