@@ -5,7 +5,7 @@ from structrans.general_imports import *
 try:
     from scipy.optimize import minimize
 
-    def _quart_min(T):
+    def quart_min(T):
         """
         :param T: a forth order tensor
         :return: the minimum quartic form of unit vectors
@@ -22,7 +22,7 @@ try:
             D4 = T.transpose(3, 0, 1, 2).dot(x).dot(x).dot(x)
             return D1 + D2 + D3 + D4
         fmin = float('inf')
-        for _ in xrange(20):
+        for _ in xrange(100):
             l0 = np.random.rand(dim**2)
             l0 /= la.norm(l0)
             res = minimize(lambda x: T.dot(x).dot(x).dot(x).dot(x), l0, jac=jac, method="SLSQP", constraints=constrains)
@@ -91,7 +91,7 @@ except ImportError:
             itr += 1
         return x[:dim], x[-1]
 
-    def _quart_min(T):
+    def quart_min(T):
         """
         :param T: a forth order tensor
         :return: the minimum quartic form of unit vectors

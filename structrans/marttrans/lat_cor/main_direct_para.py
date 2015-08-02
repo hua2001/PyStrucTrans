@@ -1,7 +1,11 @@
-from __future__ import absolute_import
-from structrans.general_imports import *
-from timeit import default_timer as timer
+import logging
 import itertools
+from timeit import default_timer as timer
+from main_direct import vec_generator as vgen
+from main_direct import _sols_tostr
+import numpy as np
+import numpy.linalg as la
+import multiprocessing as mp
 
 from structrans import BravaisLattice
 from structrans.marttrans.lat_cor.quartic_opt import quart_min
@@ -10,74 +14,35 @@ from structrans.marttrans.lat_cor.dist import Cauchy_dist, Cauchy_dist_vec
 # create logger
 logger = logging.getLogger(__name__)
 
+if __name__ == "__main__":
+    # brava = 2
+    # pa = 6.1606
+    # bravm = 12
+    # pm = [4.4580, 5.7684, 40.6980, 86.80]
 
-def vec_generator(maxlen, dim, x0=None):
-    """
-    generate dim-dimensional vectors with maximum length maxlen
-    """
-    if x0 is None:
-        x0 = [0] * dim
-    if dim == 1:
-        n = x0[0]
-        while n <= maxlen:
-            yield [n]
-            if n > 0:
-                yield [-n]
-            n = abs(n) + 1
-    else:
-        firstDigit = x0[0]
-        xs = x0[1:]
-        while firstDigit <= maxlen:
-            g = vec_generator(np.sqrt(max(0, maxlen**2 - firstDigit**2)), dim - 1, xs)
-            for subvec in g:
-                v = [firstDigit] * dim
-                v[1:] = subvec[:]
-                yield v
-            if firstDigit > 0:
-                g = vec_generator(np.sqrt(max(0, maxlen**2 - firstDigit**2)), dim - 1, xs)
-                for subvec in g:
-                    v = [-firstDigit] * dim
-                    v[1:] = subvec[:]
-                    yield v
-            firstDigit = abs(firstDigit) + 1
-            xs = None
+    brava = 2
+    pa = 2
+    bravm = 6
+    pm = [1.414, 2]
 
+    nsol = 3
+    vol_th = 0.1
+    disp = 2
 
-def lat_cor(brava, pa, bravm, pm, **kwargs):
-    """
-    find the optimal lattice invarient shear move E1 as close as possible to E2
-    allowed kwargs:
-     - dim: dimension of the Bravais lattice, default is 3, the only other option is 2
-     - nsol: number of solutions
-     - slice_sz: size of each slice of L's for vectorized calculation, default is 1000
-     - disp: level of detail of printing, default is 2
-             0 => no print
-             1 => two lattices and solution
-             2 => progress over HNFs
-             3 => more info in the lat_opt
-             4 => all info in the lat_opt (not implemented)
-     - logfile: name of the logfile
-     - loglevel: level of the logging
-    """
-    
-    ''' 
+    dim = 3
+    distName = 'Cauchy'
+
+    ncpu = 4
+    batch = 20
+    slice_sz = 100
+
+    '''
     ===========
     Preparation
-    =========== 
+    ===========
     '''
     # start the timer
     t_start = timer()
-    
-    # read kwargs
-    def readkw(field, default):
-        return kwargs[field] if field in kwargs else default
-
-    nsol = readkw('nsol', 1)
-    vol_th = readkw('vol_th', 0.1)
-    disp = readkw('disp', 1)
-    dim = readkw('dim', 3)
-    slice_sz = readkw('slice_sz', 100)
-    distName = readkw('dist', 'Cauchy')
 
     def lprint(msg, lev=1):
         # print with level
@@ -88,21 +53,23 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
         elif lev >= 2:
             logger.debug(msg)
 
-    # setup logging
-    loglevel =readkw('loglevel', logging.INFO)
-    if 'logfile' in kwargs:
-        # FORMAT = '[%(levelname)s] %(asctime)-15s %(name)s: %(message)s'
-        FORMAT = '%(message)s'
-        logfile = readkw('logfile', 'untitled.log')
-        logging.basicConfig(filename=logfile, filemode='w', level=loglevel, format=FORMAT)
+    def log_progress(rmax, dmax, checkpoint):
+            lprint('searching radius = {:>9.6f}, max distance = {:>9.6f}, starting at {:s}'
+                   .format(rmax, dmax, str(checkpoint)), 2)
 
-    ''' 
+    # setup logging
+    # loglevel = logging.INFO
+    # FORMAT = '[%(levelname)s] %(asctime)-15s %(name)s: %(message)s'
+    # logfile = readkw('logfile', 'untitled.log')
+    # logging.basicConfig(filename=logfile, filemode='w', level=loglevel, format=FORMAT)
+
+    '''
     ====================
     Preparation - finish
     ====================
     '''
-        
-    ''' 
+
+    '''
     ============
     Core process
     ============
@@ -110,11 +77,11 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
 
     lprint("Input data")
     lprint("==========")
-    
+
     # construct
     Lat_A = BravaisLattice(brava, pa, dim=dim)
     Lat_M = BravaisLattice(bravm, pm, dim=dim)
-    
+
     E_A = Lat_A.base()
     E_M = Lat_M.base()
 
@@ -191,7 +158,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     EXT_SOLS = set()
     DMAX = float('inf')
 
-    for _ in xrange(20 * nsol):
+    for _ in xrange(max(50, 20 * nsol)):
         shift = np.random.random_integers(-1, 1, (dim, dim))
         L = L0 + shift
         l = L.reshape(dim**2)
@@ -206,25 +173,54 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
 
     maxRadius = rmax(DMAX)
     lprint('start searching ...')
-    updated = True
     checkpoint = np.zeros(dim**2, np.int)
+    log_progress(maxRadius, DMAX, checkpoint)
 
-    # iteration
-    while updated:
+    def calc_dist(ary, dmax, n_visited, n_total):
+        ds = dist_vec(ary)
+        candidates = None
+        dsmin = np.min(ds)
+        if dsmin <= dmax:
+            dmax = dsmin
+            candidates = ary[np.where(ds <= dmax)]
+        workder_id = int(mp.current_process()._identity[0])
+        msg = '[%s] Processed %d/%g points within rmax=%g using %g secs' % \
+              (mp.current_process().name, n_visited + len(ary) * workder_id, n_total, rmax(dmax), timer() - t_start)
+        if candidates is not None:
+            msg += ' Found %d candidates' % len(candidates)
+        print msg
+        return candidates
+
+    pool = mp.Pool(ncpu)
+    n_visited = 0
+    while True:
         updated = False
-        g = vec_generator(maxRadius, dim**2, checkpoint)
-        lprint('searching radius = {:>9.6f}, max distance = {:>9.6f}, starting at {:s}'.format(
-            maxRadius, DMAX, str(checkpoint)
-        ), 2)
-        ary = np.array(list(itertools.islice(g, slice_sz)))
-        while len(ary) > 0:
-            updated, SOLS, EXT_SOLS, DMAX = update_sol(ary, SOLS, EXT_SOLS, DMAX)
-            if updated:
-                maxRadius = rmax(DMAX)
-                checkpoint = np.array(next(g))
-                break
-            else:
-                ary = np.array(list(itertools.islice(g, slice_sz)))
+        g = vgen(maxRadius, dim**2, checkpoint)
+        n_total = (32. * (np.pi ** 4) * (maxRadius ** 9)) / 945.
+        results = []
+        for _ in xrange(ncpu * batch):
+            ary = np.array(list(itertools.islice(g, slice_sz)))
+            results.append(pool.apply_async(calc_dist, args=(ary, DMAX, n_visited, n_total)))
+            n_visited += len(ary)
+        try:
+            checkpoint = np.array(next(g))
+        except StopIteration:
+            break
+
+        candidates = None
+        for res in results:
+            new_cands = res.get()
+            if new_cands is not None:
+                if candidates is None:
+                    candidates = new_cands
+                else:
+                    candidates = np.append(candidates, new_cands, axis=0)
+
+        if candidates is not None:
+            updated, SOLS, EXT_SOLS, DMAX = update_sol(candidates, SOLS, EXT_SOLS, DMAX)
+
+        maxRadius = rmax(DMAX)
+        log_progress(maxRadius, DMAX, checkpoint)
 
     for sol in SOLS:
         eqls = eqlatcor(sol['l'])
@@ -251,12 +247,6 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     lprint("")
 
     '''
-    =====================
-    Core process - finish
-    =====================
-    '''
-
-    '''
     ============
     Print result
     ============
@@ -278,60 +268,5 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
 
     # timer
     lprint("All done in {:g} secs.".format(timer()-t_start), 1)
-
-    return SOLS
-
-
-def _sols_tostr(sols, nsol, dim, dist):
-    """convert solutions to formatted string so that it can be logged or printed to the screen"""
-    output = ""
-    for i, sol in enumerate(sols):
-
-        output += 'Solution {:d} out of {:d}:\n'.format(i+1, nsol)
-        output += '----------------------\n'
-
-        cor = sol['cor']
-        output += ' - Lattice correspondence:\n'
-        for j in xrange(dim):
-            msg = '    ['
-            for k in xrange(dim):
-                msg += '{:>5.2f} '.format(cor[k, j])
-            msg = msg[:-1] + '] ==> [ '
-            for k in xrange(dim):
-                msg += '%1d ' % np.eye(dim)[j, k]
-            msg += ']'
-            output += msg + "\n"
-
-        output += ' - Transformation stretch matrix:\n'
-        for j in xrange(dim):
-            if j == 0:
-                msg = '   U = ['
-            else:
-                msg = '       ['
-            for k in xrange(dim):
-                msg += '{:>9.6f} '.format(sol['u'][j, k])
-            msg = msg[:-1] + ']'
-            output += msg + "\n"
-
-        # ordered eigen strains
-        lams = sol['lams']
-        output += ' - Sorted eigen strains:\n'
-        msg = '    '
-        for j in xrange(dim):
-            msg += 'lambda_%d = %g, ' % (j+1, lams[j])
-        msg = msg[:-2]+'.'
-        output += msg + "\n"
-
-        # distance
-        msg = ' - Assigned distance '
-        if dist == 'Ericksen':
-            msg += '(Ericksen distance):'
-        if dist == 'strain':
-            msg += '(strain):'
-        if dist == 'Cauchy':
-            msg += '(Cauchy distance)'
-        output += msg + "\n"
-        output += '    dist = {:g}\n \n'.format(sol['d'])
-    return output
 
 
