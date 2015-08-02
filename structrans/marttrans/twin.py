@@ -135,7 +135,7 @@ class TwinPair():
     """
     
     global tol
-    tol = 1e-3
+    tol = 5*1e-3
     
     def __init__(self, Ui, Uj, skipcheck=False):
 

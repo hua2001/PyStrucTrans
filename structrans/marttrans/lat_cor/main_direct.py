@@ -92,6 +92,7 @@ def lat_cor(brava, pa, bravm, pm, **kwargs):
     if 'logfile' in kwargs:
         # FORMAT = '[%(levelname)s] %(asctime)-15s %(name)s: %(message)s'
         FORMAT = '%(message)s'
+        logfile = readkw('logfile', 'untitled.log')
         logging.basicConfig(filename=logfile, filemode='w', level=loglevel, format=FORMAT)
 
     ''' 

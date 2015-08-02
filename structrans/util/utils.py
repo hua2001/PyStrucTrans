@@ -85,3 +85,40 @@ def rotation(angle, axis, unit="deg"):
     R1 = np.cos(t)*(np.outer(z1, z1) + np.outer(z2, z2))
     R2 = np.sin(t)*(np.outer(z2, z1) - np.outer(z1, z2))
     return R1 + R2 + np.outer(z, z)
+
+def solve_rank1(C):
+    """
+    solve rank1 a \tensor n from the equation in the form of
+    C = (I + n \tensor a) (I + a \tensor n)
+    """
+    if not pos_def_sym(C):
+        raise TypeError('The input should be a positive symmetric matrix! {:s}'.format(str(C)))
+
+    eval, evec = sort_eig(C)
+    c = np.sqrt(eval[2] - eval[0])
+    c1 = np.sqrt(abs(1 - eval[0]))
+    c3 = np.sqrt(abs(eval[2] - 1))
+    kappa = 1
+
+    if c < SMALL:
+        # TODO: solution is b = e, m = - 2 e where |e| = 1.
+        print('solution is b = e, m = - 2 e where |e| = 1.')
+        return
+    else:
+        # if abs(eval[1] - 1) < 0.001:
+        if True:
+            m1 = ((np.sqrt(eval[2]) - np.sqrt(eval[0])) / c) * (-c1 * evec[0] + kappa * c3 * evec[2])
+            m2 = ((np.sqrt(eval[2]) - np.sqrt(eval[0])) / c) * (-c1 * evec[0] - kappa * c3 * evec[2])
+            rho1 = la.norm(m1)
+            rho2 = la.norm(m2)
+            m1 /= rho1
+            m2 /= rho2
+            b1 = rho1 * ((np.sqrt(eval[2]) * c1 / c) * evec[0] + kappa*(np.sqrt(eval[0]) * c3 / c) * evec[2])
+            b2 = rho2 * ((np.sqrt(eval[2]) * c1 / c) * evec[0] - kappa*(np.sqrt(eval[0]) * c3 / c) * evec[2])
+            # ec, vc = la.eig(C)
+            # ec = np.sqrt(ec)
+            # Csqrt = np.dot(vc.dot(np.diag(ec)), la.inv(vc))
+            # print(la.norm((Csqrt.dot(Csqrt) - C).reshape(9))<1e-4)
+            # R1 = (np.eye(3) + np.outer(b1, m1)).dot(la.inv(Csqrt))
+            # R2 = (np.eye(3) + np.outer(b2, m2)).dot(la.inv(Csqrt))
+            return (b1, m1), (b2, m2)

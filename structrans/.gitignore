@@ -5,3 +5,4 @@
 *.py[ocd]
 *.DS_Store
 *pycache__
+.idea

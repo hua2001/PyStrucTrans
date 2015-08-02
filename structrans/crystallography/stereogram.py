@@ -44,7 +44,7 @@ def stereo_proj(p, z):
     else:
         return np.array([0, 0])    
 
-def pole_figure(plist,z):
+def pole_figure(plist, z):
     
     if z[0]**2+z[1]**2>1e-6:
         z_1 = np.array([-z[1],z[0],0])
@@ -58,11 +58,11 @@ def pole_figure(plist,z):
     plist = np.array(plist)
     if len(plist.shape)>2:
         print('The input should be triplets of numbers.')
-        return None;
+        return None
     plist = np.array([plist]) if len(plist.shape)==1 else plist
     if plist.shape[1]!=3:
         print('The input should be triplets of numbers.')
-        return None;
+        return None
     p_pole = []
     for p in plist:
         p_proj = stereo_proj(p, z)
